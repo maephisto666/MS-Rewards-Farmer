@@ -3,6 +3,7 @@
 ```diff
 - Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
 ```
+## Group Chat - [Telegram](https://t.me/klept0_MS_Rewards_Farmer/)
 ## Original bot by @charlesbel - refactored and updated by @klept0 and the community
 ## Docker version by @LtCMDstone - [here](https://github.com/LtCMDstone/MS-Rewards-Farmer-Docker)
 

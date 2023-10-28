@@ -4,6 +4,8 @@
 - Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
 ```
 ## Original bot by @charlesbel - refactored and updated by @klept0 and the community
+## Docker version by @LtCMDstone - [here](https://github.com/LtCMDstone/MS-Rewards-Farmer-Docker)
+
 
 ![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
 ![MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)

@@ -16,11 +16,11 @@
 > 
 > Do not use more than one phone number per 5 accounts.
 > 
-> Do not Redeem more than one reward per day.
+> Do not redeem more than one reward per day.
 ---
 #### Group Chat - [Telegram](https://t.me/klept0_MS_Rewards_Farmer/)
 #### Original bot by [@charlesbel](https://github.com/charlesbel) - refactored/updated/maintained by [@klept0](https://github.com/klept0) and a community of volunteers.
-#### Docker version by @LtCMDstone - [here](https://github.com/LtCMDstone/MS-Rewards-Farmer-Docker)
+#### Docker version by [@LtCMDstone](https://github.com/LtCMDstone) - [here](https://github.com/LtCMDstone/MS-Rewards-Farmer-Docker)
 
 ---
 

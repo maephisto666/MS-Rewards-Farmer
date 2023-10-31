@@ -46,7 +46,7 @@ def main():
                 f"[POINTS] Data for '{account_name}' appended to the file."
             )
         except Exception as e:
-            notifier.send(f"⚠️ Error occurred, please check the log", currentAccount)
+            notifier.send("⚠️ Error occurred, please check the log", currentAccount)
             logging.exception(f"{e.__class__.__name__}: {e}")
 
     # Save the current day's points data for the next day in the "logs" folder

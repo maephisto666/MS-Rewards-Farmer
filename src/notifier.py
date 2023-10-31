@@ -22,8 +22,8 @@ class Notifier:
                     f"👤 Account: {user.get('username', '')}",
                     message
                 ]
-            ),
-            
+            )
+
         for type in self.args:
             if len(message) > MAX_LENGTHS[type]:
                 for i in range(0, len(message), MAX_LENGTHS[type]):

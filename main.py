@@ -46,6 +46,7 @@ def main():
                 f"[POINTS] Data for '{account_name}' appended to the file."
             )
         except Exception as e:
+            notifier.send(f"⚠️ Error occurred, please check the log", currentAccount)
             logging.exception(f"{e.__class__.__name__}: {e}")
 
     # Save the current day's points data for the next day in the "logs" folder
@@ -234,13 +235,12 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
     notifier.send(
         "\n".join(
             [
-                "🏅 MS Rewards Farmer",
-                f"👤 Account: {currentAccount.get('username', '')}",
                 f"⭐️ Points earned today: {desktopBrowser.utils.formatNumber(accountPointsCounter - startingPoints)}",
                 f"💰 Total points: {desktopBrowser.utils.formatNumber(accountPointsCounter)}",
                 goalNotifier,
             ]
-        )
+        ),
+        currentAccount
     )
     
     return accountPointsCounter

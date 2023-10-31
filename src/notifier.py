@@ -14,7 +14,16 @@ class Notifier:
             if key in MAX_LENGTHS.keys() and value is not None
         }
 
-    def send(self, message: str):
+    def send(self, message: str, user = None):
+        if user != None:
+            message = "\n".join(
+                [
+                    "🏅 MS Rewards Farmer",
+                    f"👤 Account: {user.get('username', '')}",
+                    message
+                ]
+            )
+
         for type in self.args:
             if len(message) > MAX_LENGTHS[type]:
                 for i in range(0, len(message), MAX_LENGTHS[type]):

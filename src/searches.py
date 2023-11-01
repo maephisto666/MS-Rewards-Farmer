@@ -79,15 +79,23 @@ class Searches:
         
     def bingSearch(self, word: str):
         i = 0
+
         while True:
             try:
-                self.webdriver.get("https://bing.com")
-                
                 self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 searchbar = self.webdriver.find_element(By.ID, "sb_form_q")
+                searchbar.clear()
                 searchbar.send_keys(word)
                 searchbar.submit()
-                time.sleep(random.randint(10, 15))
+                time.sleep(Utils.randomSeconds(10, 15))
+
+                # Scroll down after the search (adjust the number of scrolls as needed)
+                for _ in range(3):  # Scroll down 3 times
+                    self.webdriver.execute_script(
+                        "window.scrollTo(0, document.body.scrollHeight);"
+                    )
+                    time.sleep(Utils.randomSeconds(1, 2))  # Random wait between scrolls
+
                 return self.browser.utils.getBingAccountPoints()
             except TimeoutException:
                 if i == 5:
@@ -98,14 +106,6 @@ class Searches:
                         "https": f"https://"+proxyChange,
                         "no_proxy": "localhost,127.0.0.1",
                      }
-                if i == 10:
-                    logging.error(
-                        "[BING] "
-                        + "Cancelling mobile searches due to too many retries."
-                    )
-                    return self.browser.utils.getBingAccountPoints()
-                self.browser.utils.tryDismissAllMessages()
                 logging.error("[BING] " + "Timeout, retrying in 5~ seconds...")
-                time.sleep(Utils.randomSeconds(4, 6))
                 i += 1
                 continue

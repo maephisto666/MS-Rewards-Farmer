@@ -76,29 +76,29 @@ class Searches:
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )
         return pointsCounter
-
+        
     def bingSearch(self, word: str):
         i = 0
-
         while True:
             try:
+                self.webdriver.get("https://bing.com")
+                
                 self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 searchbar = self.webdriver.find_element(By.ID, "sb_form_q")
-                searchbar.clear()
                 searchbar.send_keys(word)
                 searchbar.submit()
-                time.sleep(Utils.randomSeconds(10, 15))
-
-                # Scroll down after the search (adjust the number of scrolls as needed)
-                for _ in range(3):  # Scroll down 3 times
-                    self.webdriver.execute_script(
-                        "window.scrollTo(0, document.body.scrollHeight);"
-                    )
-                    time.sleep(Utils.randomSeconds(1, 2))  # Random wait between scrolls
-
+                time.sleep(random.randint(10, 15))
                 return self.browser.utils.getBingAccountPoints()
             except TimeoutException:
                 if i == 5:
+                     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
+                     proxyChange = self.browser.giveMeProxy()
+                     self.webdriver.proxy = {
+                        "http": f"http://"+proxyChange,
+                        "https": f"https://"+proxyChange,
+                        "no_proxy": "localhost,127.0.0.1",
+                     }
+                if i == 10:
                     logging.error(
                         "[BING] "
                         + "Cancelling mobile searches due to too many retries."

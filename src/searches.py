@@ -106,6 +106,14 @@ class Searches:
                         "https": f"https://"+proxyChange,
                         "no_proxy": "localhost,127.0.0.1",
                      }
+                elif i == 10:
+                    logging.error(
+                        "[BING] "
+                        + "Cancelling mobile searches due to too many retries."
+                    )
+                    return self.browser.utils.getBingAccountPoints()
+                self.browser.utils.tryDismissAllMessages()
                 logging.error("[BING] " + "Timeout, retrying in 5~ seconds...")
+                time.sleep(Utils.randomSeconds(4, 6))
                 i += 1
                 continue

@@ -76,7 +76,7 @@ class Searches:
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )
         return pointsCounter
-
+        
     def bingSearch(self, word: str):
         i = 0
 
@@ -99,6 +99,9 @@ class Searches:
                 return self.browser.utils.getBingAccountPoints()
             except TimeoutException:
                 if i == 5:
+                     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
+                     self.webdriver.proxy = self.browser.giveMeProxy()
+                elif i == 10:
                     logging.error(
                         "[BING] "
                         + "Cancelling mobile searches due to too many retries."

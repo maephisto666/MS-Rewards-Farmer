@@ -100,12 +100,7 @@ class Searches:
             except TimeoutException:
                 if i == 5:
                      logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
-                     proxyChange = self.browser.giveMeProxy()
-                     self.webdriver.proxy = {
-                        "http": f"http://"+proxyChange,
-                        "https": f"https://"+proxyChange,
-                        "no_proxy": "localhost,127.0.0.1",
-                     }
+                     self.webdriver.proxy = self.browser.giveMeProxy()
                 elif i == 10:
                     logging.error(
                         "[BING] "

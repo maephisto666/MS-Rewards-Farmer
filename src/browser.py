@@ -24,7 +24,7 @@ class Browser:
                 output = line[2] + ":" + line[3] + "@" + line[0] + ":" + line[1]
             else:
                 output = line[0] + ":" + line[1]
-            print(output)
+            #print(output)
             return {
                     "http": f"http://"+output,
                     "https": f"https://"+output,

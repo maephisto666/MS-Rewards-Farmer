@@ -15,7 +15,17 @@ from src.utils import Utils
 
 class Browser:
     """WebDriver wrapper class."""
-
+    def giveMeProxy(self):
+        f = open("proxy.txt")
+        line = str(random.choice(f.readlines())).strip().split(":")
+        f.close()
+        if len(line) == 4:
+            output = line[2] + ":" + line[3] + "@" + line[0] + ":" + line[1]
+        else:
+            output = line[0] + ":" + line[1]
+        print(output)
+        return output
+        
     def __init__(self, mobile: bool, account, args: Any) -> None:
         self.mobile = mobile
         self.browserType = "mobile" if mobile else "desktop"

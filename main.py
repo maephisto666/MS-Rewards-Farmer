@@ -143,6 +143,13 @@ def argumentParser() -> argparse.Namespace:
         action="store_true",
         help="Optional: Send all the logs to discord/telegram",
     )
+    parser.add_argument(
+        "-cv",
+        "--chromeversion",
+        type=int,
+        default=None,
+        help="Optional: Set fixed Chrome version (ex. 118)",
+    )
     return parser.parse_args()
 
 

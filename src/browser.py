@@ -40,6 +40,7 @@ class Browser:
         self.password = account["password"]
         self.localeLang, self.localeGeo = self.getCCodeLang(args.lang, args.geo)
         self.proxy = None
+        self.chromeversion = args.chromeversion
         if args.proxy:
             self.proxy = args.proxy
         elif account.get("proxy"):
@@ -90,7 +91,11 @@ class Browser:
                 "no_proxy": "localhost,127.0.0.1",
             }
 
+        if(self.chromeversion != None):
+            logging.info(f"Chrome version: {self.chromeversion}")
+            
         driver = webdriver.Chrome(
+            version_main=self.chromeversion,
             options=options,
             seleniumwire_options=seleniumwireOptions,
             user_data_dir=self.userDataDir.as_posix(),

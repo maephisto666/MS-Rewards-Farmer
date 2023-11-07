@@ -82,6 +82,9 @@
   ```(ex: https://discord.com/api/webhooks/123456789/ABCdefGhIjKlmNoPQRsTUVwxyZ)```
 - -vn/--verbose notifications to notification listeners (Discord, Telegram)
 
+- -cv/--chromeversion to use a specifiv version of chrome
+
+  ```(ex: 118)```
 ---
 
 ## Features

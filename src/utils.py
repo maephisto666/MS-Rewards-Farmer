@@ -125,6 +125,8 @@ class Utils:
                 time.sleep(1)
                 self.webdriver.get(BASE_URL)
             time.sleep(interval)
+            if("proofs" in str(self.webdriver.current_url)):
+                return "Verify"
             intervalCount += 1
             if intervalCount >= reloadInterval:
                 intervalCount = 0

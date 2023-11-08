@@ -185,6 +185,12 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         accountPointsCounter = Login(desktopBrowser).login()
         startingPoints = accountPointsCounter
+        if(startingPoints=="Locked"):
+        	notifier.send("🚫 Account is Locked", currentAccount)
+        	return 0
+        if(startingPoints=="Verify"):
+        	notifier.send("❗ Account needs to be verified", currentAccount)
+        	return 0
         logging.info(
             f"[POINTS] You have {desktopBrowser.utils.formatNumber(accountPointsCounter)} points on your account"
         )

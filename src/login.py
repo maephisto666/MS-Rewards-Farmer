@@ -34,7 +34,9 @@ class Login:
                         continue
 
         if not alreadyLoggedIn:
-            self.executeLogin()
+            isLocked = self.executeLogin()
+            if(isLocked):
+            	return "Locked"
         self.utils.tryDismissCookieBanner()
 
         logging.info("[LOGIN] " + "Logged-in !")
@@ -72,6 +74,10 @@ class Login:
             and urllib.parse.urlparse(self.webdriver.current_url).hostname
             == "account.microsoft.com"
         ):
+            if("Abuse" in str(self.webdriver.current_url)):
+                logging.error(f"[LOGIN] {self.browser.username} is locked")
+                self.webdriver.close
+                return True
             self.utils.tryDismissAllMessages()
             time.sleep(1)
 

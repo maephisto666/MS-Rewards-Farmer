@@ -76,7 +76,6 @@ class Login:
         ):
             if("Abuse" in str(self.webdriver.current_url)):
                 logging.error(f"[LOGIN] {self.browser.username} is locked")
-                self.webdriver.close
                 return True
             self.utils.tryDismissAllMessages()
             time.sleep(1)

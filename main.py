@@ -146,15 +146,6 @@ def argumentParser() -> argparse.Namespace:
         help="Optional: Send all the logs to discord/telegram",
     )
     parser.add_argument(
-        "-p",
-        "--pushover",
-        metavar=("APP_TOKEN", "USER_KEY"),
-        nargs=2,
-        type=str,
-        default=None,
-        help="Optional: Pushover Token and User Key (ex: 12345678912345678912345678900, fhgjdkeisudhgthrlcvbnmxdfhaswe)",
-    )
-    parser.add_argument(
         "-cv",
         "--chromeversion",
         type=int,

@@ -6,16 +6,18 @@ import logging.handlers as handlers
 import random
 import sys
 import time
-from pathlib import Path
-import pandas as pd
 from datetime import datetime
+from pathlib import Path
 
-from src import Browser, DailySet, Login, MorePromotions, PunchCards, Searches, GamingTab
+import pandas as pd
+
+from src import Browser, DailySet, Login, MorePromotions, PunchCards, Searches
 from src.loggingColoredFormatter import ColoredFormatter
 from src.notifier import Notifier
 from src.utils import Utils
 
 POINTS_COUNTER = 0
+
 
 def main():
     print("test", Utils.randomSeconds(5, 10))
@@ -42,9 +44,7 @@ def main():
             # Update the previous day's points data
             previous_points_data[account_name] = earned_points
 
-            logging.info(
-                f"[POINTS] Data for '{account_name}' appended to the file."
-            )
+            logging.info(f"[POINTS] Data for '{account_name}' appended to the file.")
         except Exception as e:
             notifier.send("⚠️ Error occurred, please check the log", currentAccount)
             logging.exception(f"{e.__class__.__name__}: {e}")
@@ -52,6 +52,7 @@ def main():
     # Save the current day's points data for the next day in the "logs" folder
     save_previous_points_data(previous_points_data)
     logging.info("[POINTS] Data saved for the next day.")
+
 
 def log_daily_points_to_csv(date, earned_points, points_difference):
     logs_directory = Path(__file__).resolve().parent / "logs"
@@ -70,11 +71,12 @@ def log_daily_points_to_csv(date, earned_points, points_difference):
 
     with open(csv_filename, mode="a", newline="") as file:
         writer = csv.DictWriter(file, fieldnames=fieldnames)
-        
+
         if is_new_file:
             writer.writeheader()
-        
+
         writer.writerow(new_row)
+
 
 def setupLogging(verbose_notifs, notifier):
     ColoredFormatter.verbose_notifs = verbose_notifs
@@ -144,6 +146,15 @@ def argumentParser() -> argparse.Namespace:
         help="Optional: Send all the logs to discord/telegram",
     )
     parser.add_argument(
+        "-p",
+        "--pushover",
+        metavar=("APP_TOKEN", "USER_KEY"),
+        nargs=2,
+        type=str,
+        default=None,
+        help="Optional: Pushover Token and User Key (ex: 12345678912345678912345678900, fhgjdkeisudhgthrlcvbnmxdfhaswe)",
+    )
+    parser.add_argument(
         "-cv",
         "--chromeversion",
         type=int,
@@ -185,26 +196,27 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         accountPointsCounter = Login(desktopBrowser).login()
         startingPoints = accountPointsCounter
-        if(startingPoints=="Locked"):
-        	notifier.send("🚫 Account is Locked", currentAccount)
-        	return 0
-        if(startingPoints=="Verify"):
-        	notifier.send("❗ Account needs to be verified", currentAccount)
-        	return 0
+        if startingPoints == "Locked":
+            notifier.send("🚫 Account is Locked", currentAccount)
+            return 0
+        if startingPoints == "Verify":
+            notifier.send("❗ Account needs to be verified", currentAccount)
+            return 0
         logging.info(
             f"[POINTS] You have {desktopBrowser.utils.formatNumber(accountPointsCounter)} points on your account"
         )
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()
-        GamingTab(desktopBrowser).completeGamingTab()
         (
             remainingSearches,
             remainingSearchesM,
         ) = desktopBrowser.utils.getRemainingSearches()
 
         # Introduce random pauses before and after searches
-        pause_before_search = random.uniform(1.0, 5.0)  # Random pause between 1 to 5 seconds
+        pause_before_search = random.uniform(
+            1.0, 5.0
+        )  # Random pause between 1 to 5 seconds
         time.sleep(pause_before_search)
 
         if remainingSearches != 0:
@@ -212,14 +224,16 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
                 remainingSearches
             )
 
-        pause_after_search = random.uniform(1.0, 5.0)  # Random pause between 1 to 5 seconds
+        pause_after_search = random.uniform(
+            1.0, 5.0
+        )  # Random pause between 1 to 5 seconds
         time.sleep(pause_after_search)
 
         desktopBrowser.utils.goHome()
         goalPoints = desktopBrowser.utils.getGoalPoints()
         goalTitle = desktopBrowser.utils.getGoalTitle()
         desktopBrowser.closeBrowser()
-    
+
     if remainingSearchesM != 0:
         desktopBrowser.closeBrowser()
         with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
@@ -254,9 +268,9 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
                 goalNotifier,
             ]
         ),
-        currentAccount
+        currentAccount,
     )
-    
+
     return accountPointsCounter
 
 

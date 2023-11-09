@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 from datetime import datetime
 
-from src import Browser, DailySet, Login, MorePromotions, PunchCards, Searches
+from src import Browser, DailySet, Login, MorePromotions, PunchCards, Searches, GamingTab
 from src.loggingColoredFormatter import ColoredFormatter
 from src.notifier import Notifier
 from src.utils import Utils

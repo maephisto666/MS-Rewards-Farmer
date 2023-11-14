@@ -234,18 +234,16 @@ class Utils:
         counters = dashboard["userStatus"]["counters"]
         if "pcSearch" not in counters:
             return 0, 0
-        progressDesktop = (
-            counters["pcSearch"][0]["pointProgress"]
-            + counters["pcSearch"][1]["pointProgress"]
-        )
-        targetDesktop = (
-            counters["pcSearch"][0]["pointProgressMax"]
-            + counters["pcSearch"][1]["pointProgressMax"]
-        )
+            
+        progressDesktop = counters["pcSearch"][0]["pointProgress"]
+        targetDesktop = counters["pcSearch"][0]["pointProgressMax"]
+        if len(counters["pcSearch"]) >= 2:
+            progressDesktop = progressDesktop + counters["pcSearch"][1]["pointProgress"]
+            targetDesktop = targetDesktop + counters["pcSearch"][1]["pointProgressMax"]
         if targetDesktop in [33, 102]:
             # Level 1 or 2 EU
             searchPoints = 3
-        elif targetDesktop == 55 or targetDesktop >= 170:
+        elif targetDesktop == 50 or targetDesktop >= 170:
             # Level 1 or 2 US
             searchPoints = 5
         remainingDesktop = int((targetDesktop - progressDesktop) / searchPoints)

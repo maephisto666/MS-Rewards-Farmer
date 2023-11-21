@@ -255,7 +255,7 @@ class Utils:
         dashboard = self.getDashboardData()
         searchPoints = 1
         counters = dashboard["userStatus"]["counters"]
-        if "pcSearch" not in counters:
+        if "PCSearch" not in counters:
             return 0, 0
 
         progressDesktop = counters["pcSearch"][0]["pointProgress"]

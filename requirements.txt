@@ -1,8 +1,8 @@
 requests
-selenium
+selenium>=4.15.2 # not directly required, pinned by Snyk to avoid a vulnerability
 ipapi
 undetected-chromedriver
 selenium-wire
 pandas
 numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
-setuptools
+setuptools>=69.0.2 # not directly required, pinned by Snyk to avoid a vulnerability

@@ -206,8 +206,8 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
 
         # Introduce random pauses before and after searches
         pause_before_search = random.uniform(
-            1.0, 5.0
-        )  # Random pause between 1 to 5 seconds
+            11.0, 15.0
+        )  # Random pause between 11 to 15 seconds
         time.sleep(pause_before_search)
 
         if remainingSearches != 0:
@@ -216,8 +216,8 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
             )
 
         pause_after_search = random.uniform(
-            1.0, 5.0
-        )  # Random pause between 1 to 5 seconds
+            11.0, 15.0
+        )  # Random pause between 11 to 15 seconds
         time.sleep(pause_after_search)
 
         desktopBrowser.utils.goHome()

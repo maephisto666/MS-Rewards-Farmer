@@ -1,4 +1,5 @@
 import argparse
+import atexit
 import csv
 import json
 import logging
@@ -51,12 +52,13 @@ def main():
             notifier.send("⚠️ Error occurred, please check the log", currentAccount)
             logging.exception(f"{e.__class__.__name__}: {e}")
 
-    def cleanupChromeProcesses():
+
+def cleanupChromeProcesses():
     # Use psutil to find and terminate Chrome processes
-    for process in psutil.process_iter(['pid', 'name']):
-        if process.info['name'] == 'chrome.exe':
+    for process in psutil.process_iter(["pid", "name"]):
+        if process.info["name"] == "chrome.exe":
             try:
-                psutil.Process(process.info['pid']).terminate()
+                psutil.Process(process.info["pid"]).terminate()
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
 

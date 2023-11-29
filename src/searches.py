@@ -76,7 +76,7 @@ class Searches:
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )
         return pointsCounter
-        
+
     def bingSearch(self, word: str):
         i = 0
 
@@ -94,13 +94,15 @@ class Searches:
                     self.webdriver.execute_script(
                         "window.scrollTo(0, document.body.scrollHeight);"
                     )
-                    time.sleep(Utils.randomSeconds(1, 2))  # Random wait between scrolls
+                    time.sleep(
+                        Utils.randomSeconds(5, 10)
+                    )  # Random wait between scrolls
 
                 return self.browser.utils.getBingAccountPoints()
             except TimeoutException:
                 if i == 5:
-                     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
-                     self.webdriver.proxy = self.browser.giveMeProxy()
+                    logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
+                    self.webdriver.proxy = self.browser.giveMeProxy()
                 elif i == 10:
                     logging.error(
                         "[BING] "
@@ -109,6 +111,6 @@ class Searches:
                     return self.browser.utils.getBingAccountPoints()
                 self.browser.utils.tryDismissAllMessages()
                 logging.error("[BING] " + "Timeout, retrying in 5~ seconds...")
-                time.sleep(Utils.randomSeconds(4, 6))
+                time.sleep(Utils.randomSeconds(7, 15))
                 i += 1
                 continue

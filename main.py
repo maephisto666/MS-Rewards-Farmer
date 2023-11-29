@@ -11,6 +11,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
+import psutil
 
 from src import Browser, DailySet, Login, MorePromotions, PunchCards, Searches
 from src.loggingColoredFormatter import ColoredFormatter
@@ -51,16 +52,6 @@ def main():
         except Exception as e:
             notifier.send("⚠️ Error occurred, please check the log", currentAccount)
             logging.exception(f"{e.__class__.__name__}: {e}")
-
-
-def cleanupChromeProcesses():
-    # Use psutil to find and terminate Chrome processes
-    for process in psutil.process_iter(["pid", "name"]):
-        if process.info["name"] == "chrome.exe":
-            try:
-                psutil.Process(process.info["pid"]).terminate()
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
 
     # Save the current day's points data for the next day in the "logs" folder
     save_previous_points_data(previous_points_data)
@@ -116,6 +107,16 @@ def setupLogging(verbose_notifs, notifier):
             terminalHandler,
         ],
     )
+
+
+def cleanupChromeProcesses():
+    # Use psutil to find and terminate Chrome processes
+    for process in psutil.process_iter(["pid", "name"]):
+        if process.info["name"] == "chrome.exe":
+            try:
+                psutil.Process(process.info["pid"]).terminate()
+            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+                pass
 
 
 def argumentParser() -> argparse.Namespace:

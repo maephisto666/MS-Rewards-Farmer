@@ -1,4 +1,4 @@
-### A simple bot that uses Selenium to farm M$ Rewards in Python
+### A "simple" python application that uses Selenium to help with your M$ Rewards
 ---
 
 ![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
@@ -6,6 +6,10 @@
 ![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)
 ![GitHub contributors](https://img.shields.io/github/contributors/klept0/MS-Rewards-Farmer?style=for-the-badge)
 ![GitHub issues](https://img.shields.io/github/issues/klept0/MS-Rewards-Farmer?style=for-the-badge)
+
+---
+> [!IMPORTANT]  
+> If you are multi-accounting and abusing the service for which this is intended - ___DO NOT COMPLAIN ABOUT BANS!!!___
 
 ---
 
@@ -85,6 +89,11 @@
 - -cv/--chromeversion to use a specifiv version of chrome
 
   ```(ex: 118)```
+---
+
+> [!TIP]
+> If you are having issues first ask - did I make sure I have updated all of the files and cleared the sessions folder before running again?
+
 ---
 
 ## Features

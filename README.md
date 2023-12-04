@@ -1,4 +1,4 @@
-### A simple bot that uses Selenium to farm M$ Rewards in Python
+### A "simple" python application that uses Selenium to help with your M$ Rewards
 ---
 
 ![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
@@ -8,8 +8,12 @@
 ![GitHub issues](https://img.shields.io/github/issues/klept0/MS-Rewards-Farmer?style=for-the-badge)
 
 ---
+> [!IMPORTANT]  
+> If you are multi-accounting and abusing the service for which this is intended - ___DO NOT COMPLAIN ABOUT BANS!!!___
 
-> [!WARNING]
+---
+
+> [!CAUTION]
 > Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
 > 
 > Do not run more than one account at a time.
@@ -87,17 +91,22 @@
   ```(ex: 118)```
 ---
 
+> [!TIP]
+> If you are having issues first ask - did I make sure I have updated all of the files and cleared the sessions folder before running again?
+
+---
+
 ## Features
 
-- Bing searches (Desktop, Mobile and Edge) with current User-Agents
+- Bing searches (Desktop and Mobile) with current User-Agents
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
-- Headless Mode - _not recommended_
+- Headless Mode - _not recommended at all_
 - Multi-Account Management
-- Session storing (3.0)
-- 2FA Support (3.0)
-- Notifications (discord, telegram) (3.0)
+- Session storing
+- 2FA Support
+- Notifications (Discord/Telegram)
 - Proxy Support (3.0) - they need to be **high quality** proxies
 - Logs to CSV file for point tracking
 
@@ -106,10 +115,10 @@
 > [!NOTE]
 > You may see [WARNING] in your logs - this is currently enabled for debugging and to provide in any issues you may need to open
 
-## To Do List
+## To Do List (When time permits or someone makes a PR)
 
 - [x] ~~Complete shopping game~~ - No longer active
-- [ ] Complete Edge game tab - _currently disabled_
+- [ ] ~~Complete Edge game tab~~ - No longer active
 - [ ] Complete "Read To Earn" (30 pts)
 - [ ] Setup flags for mobile/desktop search only
 - [ ] Pull Telegram and Discord info to json files so you don't need to input them on command line. (partial groundwork done)

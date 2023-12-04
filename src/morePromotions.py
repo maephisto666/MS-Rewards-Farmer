@@ -11,7 +11,7 @@ class MorePromotions:
         self.activities = Activities(browser)
 
     def completeMorePromotions(self):
-        logging.info("[MORE PROMO] " + "Trying to complete More Promotions...")
+        logging.info("[MORE PROMOS] " + "Trying to complete More Promotions...")
         self.browser.utils.goHome()
         morePromotions = self.browser.utils.getDashboardData()["morePromotions"]
         i = 0
@@ -39,4 +39,4 @@ class MorePromotions:
                         self.activities.completeSearch()
             except Exception:  # pylint: disable=broad-except
                 self.browser.utils.resetTabs()
-        logging.info("[MORE PROMO] Completed More Promotions successfully !")
+        logging.info("[MORE PROMOS] Completed More Promotions successfully !")

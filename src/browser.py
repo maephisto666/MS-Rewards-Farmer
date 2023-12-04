@@ -64,7 +64,6 @@ class Browser:
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--ignore-certificate-errors-spki-list")
         options.add_argument("--ignore-ssl-errors")
-        options.add_extension("extensions/MS-Rewards.crx")
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
 

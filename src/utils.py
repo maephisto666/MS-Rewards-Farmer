@@ -240,8 +240,8 @@ class Utils:
         if len(counters["pcSearch"]) >= 2:
             progressDesktop = progressDesktop + counters["pcSearch"][1]["pointProgress"]
             targetDesktop = targetDesktop + counters["pcSearch"][1]["pointProgressMax"]
-        if targetDesktop in [33, 102]:
-            # Level 1 or 2 EU
+        if targetDesktop in [30, 90, 102]:
+            # Level 1 or 2 EU/South America
             searchPoints = 3
         elif targetDesktop == 50 or targetDesktop >= 170 or targetDesktop == 150:
             # Level 1 or 2 US

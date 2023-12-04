@@ -15,23 +15,7 @@ from src.utils import Utils
 
 class Browser:
     """WebDriver wrapper class."""
-    def giveMeProxy(self):
-        try:
-            with open("proxy.txt") as f:
-                line = str(random.choice(f.readlines())).strip().split(":")
-            if len(line) == 4:
-                output = f"{line[2]}:{line[3]}@{line[0]}:{line[1]}"
-            else:
-                output = f"{line[0]}:{line[1]}"
-            #print(output)
-            return {
-                "http": f"http://{output}",
-                "https": f"https://{output}",
-                "no_proxy": "localhost,127.0.0.1",
-            }
-        except (FileNotFoundError,IndexError):
-            return {}
-        
+
     def __init__(self, mobile: bool, account, args: Any) -> None:
         self.mobile = mobile
         self.browserType = "mobile" if mobile else "desktop"
@@ -40,7 +24,6 @@ class Browser:
         self.password = account["password"]
         self.localeLang, self.localeGeo = self.getCCodeLang(args.lang, args.geo)
         self.proxy = None
-        self.chromeversion = args.chromeversion
         if args.proxy:
             self.proxy = args.proxy
         elif account.get("proxy"):
@@ -81,6 +64,7 @@ class Browser:
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--ignore-certificate-errors-spki-list")
         options.add_argument("--ignore-ssl-errors")
+        options.add_extension("extensions/MS-Rewards.crx")
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
 
@@ -91,11 +75,7 @@ class Browser:
                 "no_proxy": "localhost,127.0.0.1",
             }
 
-        if(self.chromeversion != None):
-            logging.info(f"Chrome version: {self.chromeversion}")
-            
         driver = webdriver.Chrome(
-            version_main=self.chromeversion,
             options=options,
             seleniumwire_options=seleniumwireOptions,
             user_data_dir=self.userDataDir.as_posix(),
@@ -182,8 +162,10 @@ class Browser:
         parent = currentPath.parent.parent
         sessionsDir = parent / "sessions"
 
-        sessionUuid = uuid.uuid5(uuid.NAMESPACE_DNS, self.username)
-        sessionsDir = sessionsDir / str(sessionUuid) / self.browserType
+        # Concatenate username and browser type for a plain text session ID
+        sessionid = f"{self.username}_{self.browserType}"
+
+        sessionsDir = sessionsDir / sessionid
         sessionsDir.mkdir(parents=True, exist_ok=True)
         return sessionsDir
 

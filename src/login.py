@@ -73,7 +73,7 @@ class Login:
         while not (
             urllib.parse.urlparse(self.webdriver.current_url).path == "/"
             and urllib.parse.urlparse(self.webdriver.current_url).hostname
-            in ("account.microsoft.com", "rewards.bing.com")
+            == "account.microsoft.com"
         ):
             if "Abuse" in str(self.webdriver.current_url):
                 logging.error(f"[LOGIN] {self.browser.username} is locked")
@@ -81,7 +81,9 @@ class Login:
             self.utils.tryDismissAllMessages()
             time.sleep(1)
 
-        time.sleep(10)
+        self.utils.waitUntilVisible(
+            By.CSS_SELECTOR, 'html[data-role-name="MeePortal"]', 10
+        )
 
     def enterPassword(self, password):
         self.utils.waitUntilClickable(By.NAME, "passwd", 10)

@@ -174,8 +174,8 @@ def setupAccounts() -> list:
     def email(email):
         """Validate Email."""
         pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
-        return True if re.match(pattern, email) else False
-        
+        return bool(re.match(pattern, email))
+
     accountPath = Path(__file__).resolve().parent / "accounts.json"
     if not accountPath.exists():
         accountPath.write_text(

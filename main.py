@@ -170,6 +170,12 @@ def argumentParser() -> argparse.Namespace:
 
 
 def setupAccounts() -> list:
+    """Sets up and validates a list of accounts loaded from 'accounts.json'."""
+    def email(email):
+        """Validate Email."""
+        pattern = r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$'
+        return bool(re.match(pattern, email))
+
     accountPath = Path(__file__).resolve().parent / "accounts.json"
     if not accountPath.exists():
         accountPath.write_text(
@@ -185,6 +191,10 @@ def setupAccounts() -> list:
         logging.warning(noAccountsNotice)
         exit()
     loadedAccounts = json.loads(accountPath.read_text(encoding="utf-8"))
+    for account in loadedAccounts:
+        if not email(account['email']):
+            logging.error(f"[CREDENTIALS] Wrong Email Address: \'{account['email']}\'")
+            exit()
     random.shuffle(loadedAccounts)
     return loadedAccounts
 

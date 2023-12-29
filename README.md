@@ -1,4 +1,5 @@
 ### A "simple" python application that uses Selenium to help with your M$ Rewards
+
 ---
 
 ![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
@@ -8,22 +9,27 @@
 ![GitHub issues](https://img.shields.io/github/issues/klept0/MS-Rewards-Farmer?style=for-the-badge)
 
 ---
-> [!IMPORTANT]  
-> If you are multi-accounting and abusing the service for which this is intended - ___DO NOT COMPLAIN ABOUT BANS!!!___
+
+> [!IMPORTANT]
+> If you are multi-accounting and abusing the service for which this is intended - **_DO NOT COMPLAIN ABOUT BANS!!!_**
 
 ---
 
 > [!CAUTION]
 > Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
-> 
+>
 > Do not run more than one account at a time.
-> 
+>
 > Do not use more than one phone number per 5 accounts.
-> 
+>
 > Do not redeem more than one reward per day.
+
 ---
+
 #### Group Chat - [Telegram](https://t.me/klept0_MS_Rewards_Farmer/) (pay attention to captchas)
+
 #### Original bot by [@charlesbel](https://github.com/charlesbel) - refactored/updated/maintained by [@klept0](https://github.com/klept0) and a community of volunteers.
+
 #### Docker version by [@LtCMDstone](https://github.com/LtCMDstone) - [here](https://github.com/LtCMDstone/MS-Rewards-Farmer-Docker)
 
 ---
@@ -41,7 +47,7 @@
 
 3. (Windows Only) Make sure Visual C++ redistributable DLLs are installed
 
-   If they're not, install the current "vc_redist.exe" from this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170) and reboot your computer 
+   If they're not, install the current "vc_redist.exe" from this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170) and reboot your computer
 
 4. Edit the `accounts.json.sample` with your accounts credentials and rename it by removing `.sample` at the end.
 
@@ -64,7 +70,7 @@
    ]
    ```
 
-7. Run the script:
+5. Run the script:
 
    `python main.py`
 
@@ -77,18 +83,22 @@
 - -g/--geo to force a geolocation (ex: US)
 - -p/--proxy to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in accounts.json)
 
-  ```(ex: http://user:pass@host:port)```
+  `(ex: http://user:pass@host:port)`
+
 - -t/--telegram to add a telegram notification, requires Telegram Bot Token and Chat ID
 
-  ```(ex: 123456789:ABCdefGhIjKlmNoPQRsTUVwxyZ 123456789)```
+  `(ex: 123456789:ABCdefGhIjKlmNoPQRsTUVwxyZ 123456789)`
+
 - -d/--discord to add a discord notification, requires Discord Webhook URL
 
-  ```(ex: https://discord.com/api/webhooks/123456789/ABCdefGhIjKlmNoPQRsTUVwxyZ)```
+  `(ex: https://discord.com/api/webhooks/123456789/ABCdefGhIjKlmNoPQRsTUVwxyZ)`
+
 - -vn/--verbose notifications to notification listeners (Discord, Telegram)
 
 - -cv/--chromeversion to use a specifiv version of chrome
 
-  ```(ex: 118)```
+  `(ex: 118)`
+
 ---
 
 > [!TIP]
@@ -102,6 +112,7 @@
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
+- Complete Versus Game
 - Headless Mode - _not recommended at all_
 - Multi-Account Management
 - Session storing

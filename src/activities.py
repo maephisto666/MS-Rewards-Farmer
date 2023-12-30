@@ -13,6 +13,7 @@ class Activities:
         self.webdriver = browser.webdriver
 
     def openDailySetActivity(self, cardId: int):
+        # Open the Daily Set activity for the given cardId
         self.webdriver.find_element(
             By.XPATH,
             f'//*[@id="daily-sets"]/mee-card-group[1]/div/mee-card[{cardId}]/div/card-content/mee-rewards-daily-set-item-content/div/a',
@@ -20,6 +21,7 @@ class Activities:
         self.browser.utils.switchToNewTab(8)
 
     def openMorePromotionsActivity(self, cardId: int):
+        # Open the More Promotions activity for the given cardId
         self.webdriver.find_element(
             By.XPATH,
             f'//*[@id="more-activities"]/div/mee-card[{cardId}]/div/card-content/mee-rewards-more-activities-card-item/div/a',
@@ -27,15 +29,18 @@ class Activities:
         self.browser.utils.switchToNewTab(8)
 
     def completeSearch(self):
+        # Simulate completing a search activity
         time.sleep(Utils.randomSeconds(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def completeSurvey(self):
+        # Simulate completing a survey activity
         self.webdriver.find_element(By.ID, f"btoption{random.randint(0, 1)}").click()
         time.sleep(Utils.randomSeconds(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def completeQuiz(self):
+        # Simulate completing a quiz activity
         if not self.browser.utils.waitUntilQuizLoads():
             self.browser.utils.resetTabs()
             return
@@ -88,6 +93,7 @@ class Activities:
         self.browser.utils.closeCurrentTab()
 
     def completeABC(self):
+        # Simulate completing an ABC activity
         counter = self.webdriver.find_element(
             By.XPATH, '//*[@id="QuestionPane0"]/div[2]'
         ).text[:-1][1:]
@@ -103,6 +109,7 @@ class Activities:
         self.browser.utils.closeCurrentTab()
 
     def completeThisOrThat(self):
+        # Simulate completing a This or That activity
         if not self.browser.utils.waitUntilQuizLoads():
             self.browser.utils.resetTabs()
             return
@@ -128,6 +135,7 @@ class Activities:
         self.browser.utils.closeCurrentTab()
 
     def getAnswerAndCode(self, answerId: str) -> tuple:
+        # Helper function to get answer element and its code
         answerEncodeKey = self.webdriver.execute_script("return _G.IG")
         answer = self.webdriver.find_element(By.ID, answerId)
         answerTitle = answer.get_attribute("data-option")

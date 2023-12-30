@@ -87,7 +87,7 @@ class Searches:
                 searchbar.clear()
                 searchbar.send_keys(word)
                 searchbar.submit()
-                time.sleep(Utils.randomSeconds(10, 15))
+                time.sleep(Utils.randomSeconds(100, 180))
 
                 # Scroll down after the search (adjust the number of scrolls as needed)
                 for _ in range(3):  # Scroll down 3 times
@@ -95,7 +95,7 @@ class Searches:
                         "window.scrollTo(0, document.body.scrollHeight);"
                     )
                     time.sleep(
-                        Utils.randomSeconds(5, 10)
+                        Utils.randomSeconds(7, 10)
                     )  # Random wait between scrolls
 
                 return self.browser.utils.getBingAccountPoints()

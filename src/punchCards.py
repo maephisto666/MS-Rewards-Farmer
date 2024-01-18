@@ -22,12 +22,14 @@ class PunchCards:
         for child in childPromotions:
             if child["complete"] is False:
                 if child["promotionType"] == "urlreward":
-                    # Click on offer CTA and visit new tab for URL rewards
-                    self.webdriver.find_element(By.CLASS_NAME, "offer-cta").click()
+                    self.webdriver.find_element(
+                        By.XPATH, "//a[@class='offer-cta']/div"
+                    ).click()
                     self.browser.utils.visitNewTab(random.randint(13, 17))
                 if child["promotionType"] == "quiz":
-                    # Click on offer CTA and complete quiz in a new tab
-                    self.webdriver.find_element(By.CLASS_NAME, "offer-cta").click()
+                    self.webdriver.find_element(
+                        By.XPATH, "//a[@class='offer-cta']/div"
+                    ).click()
                     self.browser.utils.switchToNewTab(8)
                     counter = str(
                         self.webdriver.find_element(

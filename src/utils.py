@@ -255,6 +255,7 @@ class Utils:
         dashboard = self.getDashboardData()
         searchPoints = 1
         counters = dashboard["userStatus"]["counters"]
+
         if "pcSearch" not in counters:
             return 0, 0
 

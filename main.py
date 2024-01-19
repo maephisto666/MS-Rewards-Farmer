@@ -211,7 +211,7 @@ def setupAccounts() -> list:
 
 def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
     logging.info(
-        f'********************{ currentAccount.get("username", "") }********************'
+        f'********************{currentAccount.get("username", "")}********************'
     )
     accountPointsCounter = 0
     remainingSearches = 0

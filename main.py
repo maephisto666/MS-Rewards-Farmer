@@ -233,7 +233,7 @@ def executeBot(currentAccount, notifier: Notifier, args: argparse.Namespace):
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()
-        VersusGame(desktopBrowser).completeVersusGame()
+        # VersusGame(desktopBrowser).completeVersusGame()
         (
             remainingSearches,
             remainingSearchesM,

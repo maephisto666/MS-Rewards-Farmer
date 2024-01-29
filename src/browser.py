@@ -62,10 +62,14 @@ class Browser:
         options.headless = self.headless
         options.add_argument(f"--lang={self.localeLang}")
         options.add_argument("--log-level=3")
-
+        options.add_argument("--blink-settings=imagesEnabled=false")
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--ignore-certificate-errors-spki-list")
         options.add_argument("--ignore-ssl-errors")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--dns-prefetch-disable")
+        options.add_argument("--disable-gpu")
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
 

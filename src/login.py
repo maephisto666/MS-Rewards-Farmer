@@ -75,6 +75,9 @@ class Login:
             and urllib.parse.urlparse(self.webdriver.current_url).hostname
             == "account.microsoft.com"
         ):
+            if urllib.parse.urlparse(self.webdriver.current_url).hostname == "rewards.bing.com":
+                self.webdriver.get("https://account.microsoft.com")
+            
             if "Abuse" in str(self.webdriver.current_url):
                 logging.error(f"[LOGIN] {self.browser.username} is locked")
                 return True

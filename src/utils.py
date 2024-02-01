@@ -202,6 +202,7 @@ class Utils:
             (By.ID, "idSIButton9"),
             (By.CSS_SELECTOR, ".ms-Button.ms-Button--primary"),
             (By.ID, "bnp_btn_accept"),
+            (By.ID, "acceptButton")
         ]
         result = False
         for button in buttons:

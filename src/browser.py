@@ -70,8 +70,6 @@ class Browser:
         options.add_argument("--disable-extensions")
         options.add_argument("--dns-prefetch-disable")
         options.add_argument("--disable-gpu")
-        options.add_argument("--disable-web-app")
-        options.add_argument("--disable-translate")
         options.add_argument("--disable-default-apps")
         options.add_argument("--disable-features=Translate")
 

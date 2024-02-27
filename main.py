@@ -117,25 +117,23 @@ def setupLogging(verbose_notifs, notifier):
             terminalHandler,
         ],
     )
-
-
+    
 def cleanupChromeProcesses():
     # Get the current user's PID
     current_pid = os.getpid()
 
-    # Get the list of all processes
-    all_processes = psutil.process_iter()
-
     # Function to recursively terminate child processes
     def terminate_children(parent_pid):
+        # Get the list of all processes
+        all_processes = psutil.process_iter()
         for process in all_processes:
             if process.ppid() == parent_pid:
+                # Recursively terminate children of this process first
+                terminate_children(process.pid)
                 try:
                     process.terminate()
                 except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                     pass
-                # Recursively terminate children of this process
-                terminate_children(process.pid)
 
     # Terminate child processes starting from the script's PID
     terminate_children(current_pid)

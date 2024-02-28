@@ -90,10 +90,7 @@ class Searches:
                 self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 searchbar = self.webdriver.find_element(By.ID, "sb_form_q")
                 searchbar.clear()
-                for char in word:
-                    searchbar.send_keys(char)
-                    delay = random.uniform(0.2, 1)
-                    time.sleep(delay)
+                searchbar.send_keys(word)
                 searchbar.submit()
                 time.sleep(Utils.randomSeconds(100, 180))
 

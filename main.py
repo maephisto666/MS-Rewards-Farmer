@@ -349,11 +349,11 @@ def process_account_with_retry(currentAccount, notifier, args, previous_points_d
             retries -= 1
             if retries == 0:
                 notifier.send(
-                    "?? Error occurred after 3 attempts, please check the log",
+                    "⚠️ Error occurred after 3 attempts, please check the log",
                     currentAccount,
                 )
                 logging.error(
-                    f"[CRITICAL] ?? Error occurred after 3 attempts. Closing thread! ?? | {currentAccount.get('username', '')}"
+                    f"[CRITICAL] ⚠️ Error occurred after 3 attempts. Closing script!⚠️ | {currentAccount.get('username', '')}"
                 )
             else:
                 account_name2 = currentAccount.get("username", "")

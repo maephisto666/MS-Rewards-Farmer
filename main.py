@@ -39,29 +39,14 @@ def main():
     loadedAccounts = setupAccounts()
     # Register the cleanup function to be called on script exit
     atexit.register(cleanupChromeProcesses)
-
     # Load previous day's points data
     previous_points_data = load_previous_points_data()
 
+    loadedAccounts = setupAccounts()
+
+    # Process accounts
     for currentAccount in loadedAccounts:
-        try:
-            earned_points = executeBot(currentAccount, notifier, args)
-            account_name = currentAccount.get("username", "")
-            previous_points = previous_points_data.get(account_name, 0)
-
-            # Calculate the difference in points from the prior day
-            points_difference = earned_points - previous_points
-
-            # Append the daily points and points difference to CSV and Excel
-            log_daily_points_to_csv(account_name, earned_points, points_difference)
-
-            # Update the previous day's points data
-            previous_points_data[account_name] = earned_points
-
-            logging.info(f"[POINTS] Data for '{account_name}' appended to the file.")
-        except Exception as e:
-            notifier.send("⚠️ Error occurred, please check the log", currentAccount)
-            logging.exception(f"{e.__class__.__name__}: {e}")
+        process_account_with_retry(currentAccount, notifier, args, previous_points_data)
 
     # Save the current day's points data for the next day in the "logs" folder
     save_previous_points_data(previous_points_data)
@@ -341,6 +326,39 @@ def save_previous_points_data(data):
     with open(logs_directory / "previous_points_data.json", "w") as file:
         json.dump(data, file, indent=4)
 
+def process_account_with_retry(currentAccount, notifier, args, previous_points_data):
+    retries = 3
+    while retries > 0:
+        try:
+            earned_points = executeBot(currentAccount, notifier, args)
+            account_name = currentAccount.get("username", "")
+            previous_points = previous_points_data.get(account_name, 0)
+
+            # Calculate the difference in points from the prior day
+            points_difference = earned_points - previous_points
+
+            # Append the daily points and points difference to CSV and Excel
+            log_daily_points_to_csv(account_name, earned_points, points_difference)
+
+            # Update the previous day's points data
+            previous_points_data[account_name] = earned_points
+
+            logging.info(f"[POINTS] Data for '{account_name}' appended to the file.")
+            break  # Exit the loop if execution is successful
+        except Exception as e:
+            retries -= 1
+            if retries == 0:
+                notifier.send(
+                    "⚠️ Error occurred after 3 attempts, please check the log",
+                    currentAccount,
+                )
+                logging.error(
+                    f"[CRITICAL] ⚠️ Error occurred after 3 attempts. Closing script!⚠️ | {currentAccount.get('username', '')}"
+                )
+            else:
+                account_name2 = currentAccount.get("username", "")
+                logging.warning(f"Error occurred: {e}. Retrying... | {account_name2}")
+                time.sleep(10)  # Wait a bit before retrying
 
 if __name__ == "__main__":
     main()

@@ -62,6 +62,7 @@ class Searches:
         self.webdriver.get("https://bing.com")
 
         i = 0
+        attempt = 0
         for word in search_terms:
             i += 1
             logging.info(f"[BING] {i}/{numberOfSearches}")
@@ -76,6 +77,15 @@ class Searches:
                 pointsCounter = points
             else:
                 break
+
+            if points <= pointsCounter:
+                attempt += 1
+                if attempt == 2:
+                    logging.warning(
+                        "[BING] Possible blockage. Refreshing the page."
+                    )
+                    self.webdriver.refresh()
+                    attempt = 0
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )

@@ -105,6 +105,8 @@
 > [!TIP]
 > If you are having issues first ask - did I make sure I have updated all of the files and cleared the sessions folder before running again?
 
+> [!TIP]
+> Have I tried to run it with -v so I could see what might be causing the error?
 ---
 
 ## Features

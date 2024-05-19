@@ -86,16 +86,6 @@
 
   `(ex: http://user:pass@host:port)`
 
-- -t/--telegram to add a telegram notification, requires Telegram Bot Token and Chat ID
-
-  `(ex: 123456789:ABCdefGhIjKlmNoPQRsTUVwxyZ 123456789)`
-
-- -d/--discord to add a discord notification, requires Discord Webhook URL
-
-  `(ex: https://discord.com/api/webhooks/123456789/ABCdefGhIjKlmNoPQRsTUVwxyZ)`
-
-- -vn/--verbose notifications to notification listeners (Discord, Telegram)
-
 - -cv/--chromeversion to use a specifiv version of chrome
 
   `(ex: 118)`
@@ -115,12 +105,11 @@
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
-- Complete Versus Game - _currently disabled_
 - Headless Mode - _not recommended at all_
 - Multi-Account Management
 - Session storing
 - 2FA Support
-- Notifications (Discord/Telegram)
+- Notifications via [Apprise](https://github.com/caronc/apprise) - no longer limited to Telegram or Discord
 - Proxy Support (3.0) - they need to be **high quality** proxies
 - Logs to CSV file for point tracking
 
@@ -131,8 +120,5 @@
 
 ## To Do List (When time permits or someone makes a PR)
 
-- [x] ~~Complete shopping game~~ - No longer active
-- [ ] ~~Complete Edge game tab~~ - No longer active
 - [ ] Complete "Read To Earn" (30 pts)
 - [ ] Setup flags for mobile/desktop search only
-- [ ] Pull Telegram and Discord info to json files so you don't need to input them on command line. (partial groundwork done)

@@ -21,6 +21,7 @@ from src import (
     MorePromotions,
     PunchCards,
     Searches,
+    VersusGame,
 )
 from src.loggingColoredFormatter import ColoredFormatter
 from src.utils import Utils
@@ -188,8 +189,9 @@ def setupAccounts() -> list:
 
 def executeBot(currentAccount, args: argparse.Namespace):
     logging.info(
-        f'********************{currentAccount.get("username", "")}********************'
+        f"********************{currentAccount.get('username', '')}********************"
     )
+    
     accountPointsCounter = 0
     remainingSearches = 0
     remainingSearchesM = 0
@@ -203,7 +205,7 @@ def executeBot(currentAccount, args: argparse.Namespace):
             utils.send_notification("🚫 Account is Locked", currentAccount["username"])
             return 0
         if startingPoints == "Verify":
-            utils.send_notification("❗ Account needs to be verified", currentAccount["username"])
+            utils.send_notification("❗️ Account needs to be verified", currentAccount["username"])
             return 0
         logging.info(
             f"[POINTS] You have {utils.formatNumber(accountPointsCounter)} points on your account"
@@ -211,6 +213,7 @@ def executeBot(currentAccount, args: argparse.Namespace):
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()
+        # VersusGame(desktopBrowser).completeVersusGame()
         (
             remainingSearches,
             remainingSearchesM,
@@ -268,6 +271,7 @@ def executeBot(currentAccount, args: argparse.Namespace):
         "Daily Points Update",
         "\n".join(
             [
+                f"👤 Account: {currentAccount.get('username')}",
                 f"⭐️ Points earned today: {utils.formatNumber(accountPointsCounter - startingPoints)}",
                 f"💰 Total points: {utils.formatNumber(accountPointsCounter)}",
                 goalNotifier,

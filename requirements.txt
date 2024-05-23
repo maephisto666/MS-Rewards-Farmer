@@ -3,7 +3,6 @@ selenium>=4.15.2 # not directly required, pinned by Snyk to avoid a vulnerabilit
 ipapi
 undetected-chromedriver==3.5.5
 selenium-wire
-pandas
 numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
 setuptools>=69.0.2 # not directly required, pinned by Snyk to avoid a vulnerability
 psutil

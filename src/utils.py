@@ -32,9 +32,10 @@ class Utils:
         with open(config_file, 'r') as file:
             return yaml.safe_load(file)
 
-    def send_notification(self, title, body):
+    @staticmethod
+    def send_notification(title, body, config_file='config.yaml'):
         apobj = apprise.Apprise()
-        for url in self.config['apprise']['urls']:
+        for url in Utils.load_config(config_file)['apprise']['urls']:
             apobj.add(url)
         apobj.notify(body=body, title=title)
 

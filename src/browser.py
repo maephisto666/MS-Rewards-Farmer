@@ -73,6 +73,7 @@ class Browser:
         options.add_argument("--disable-gpu")
         options.add_argument("--disable-default-apps")
         options.add_argument("--disable-features=Translate")
+        options.add_argument('--disable-features=PrivacySandboxSettings4')
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
 

@@ -53,8 +53,7 @@ class Browser:
         # Close the web browser
         with contextlib.suppress(Exception):
             self.webdriver.close()
-            self.webdriver.quit()
-            
+                       
     def browserSetup(
         self,
     ) -> WebDriver:

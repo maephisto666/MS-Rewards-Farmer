@@ -108,7 +108,7 @@ def setupLogging():
         }
     )
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format=_format,
         handlers=[
             handlers.TimedRotatingFileHandler(

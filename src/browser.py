@@ -9,6 +9,7 @@ import seleniumwire.undetected_chromedriver as webdriver
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
 
+from src import Account
 from src.userAgentGenerator import GenerateUserAgent
 from src.utils import Utils
 
@@ -16,19 +17,19 @@ from src.utils import Utils
 class Browser:
     """WebDriver wrapper class."""
 
-    def __init__(self, mobile: bool, account, args: Any) -> None:
+    def __init__(self, mobile: bool, account: Account, args: Any) -> None:
         # Initialize browser instance
         self.mobile = mobile
         self.browserType = "mobile" if mobile else "desktop"
         self.headless = not args.visible
-        self.username = account["username"]
-        self.password = account["password"]
+        self.username = account.username
+        self.password = account.password
         self.localeLang, self.localeGeo = self.getCCodeLang(args.lang, args.geo)
         self.proxy = None
         if args.proxy:
             self.proxy = args.proxy
-        elif account.get("proxy"):
-            self.proxy = account["proxy"]
+        elif account.proxy:
+            self.proxy = account.proxy
         self.userDataDir = self.setupProfiles()
         self.browserConfig = Utils.getBrowserConfig(self.userDataDir)
         (
@@ -54,7 +55,7 @@ class Browser:
         # Close the web browser
         with contextlib.suppress(Exception):
             self.webdriver.close()
-                       
+
     def browserSetup(
         self,
     ) -> WebDriver:
@@ -173,9 +174,7 @@ class Browser:
         Returns:
             Path
         """
-        currentPath = Path(__file__)
-        parent = currentPath.parent.parent
-        sessionsDir = parent / "sessions"
+        sessionsDir = Utils.getProjectRoot() / "sessions"
 
         # Concatenate username and browser type for a plain text session ID
         sessionid = f"{self.username}"
@@ -184,7 +183,8 @@ class Browser:
         sessionsDir.mkdir(parents=True, exist_ok=True)
         return sessionsDir
 
-    def getCCodeLang(self, lang: str, geo: str) -> tuple:
+    @staticmethod
+    def getCCodeLang(lang: str, geo: str) -> tuple:
         if lang is None or geo is None:
             try:
                 nfo = ipapi.location()
@@ -194,8 +194,8 @@ class Browser:
                     if geo is None:
                         geo = nfo["country"]
             except Exception:  # pylint: disable=broad-except
-                return ("en", "US")
-        return (lang, geo)
+                return "en", "US"
+        return lang, geo
 
     def getChromeVersion(self) -> str:
         chrome_options = ChromeOptions()

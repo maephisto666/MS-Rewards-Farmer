@@ -1,43 +1,52 @@
 import contextlib
 import json
 import locale as pylocale
-import random
+import sys
 import time
 import urllib.parse
 from pathlib import Path
+from typing import NamedTuple
 
 import requests
+import yaml
+from apprise import Apprise
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
-import apprise
-import yaml
-
 from .constants import BASE_URL
 
 
+class RemainingSearches(NamedTuple):
+    desktop: int
+    mobile: int
+
+
 class Utils:
-    def __init__(self, webdriver: WebDriver, config_file='config.yaml'):
+    def __init__(self, webdriver: WebDriver):
         self.webdriver = webdriver
         with contextlib.suppress(Exception):
             locale = pylocale.getdefaultlocale()[0]
             pylocale.setlocale(pylocale.LC_NUMERIC, locale)
-        
-        self.config = self.load_config(config_file)
+
+        self.config = self.loadConfig()
 
     @staticmethod
-    def load_config(config_file):
-        with open(config_file, 'r') as file:
+    def getProjectRoot() -> Path:
+        return Path(__file__).parent.parent
+
+    @staticmethod
+    def loadConfig(config_file=getProjectRoot() / "config.yaml"):
+        with open(config_file, "r") as file:
             return yaml.safe_load(file)
 
     @staticmethod
-    def send_notification(title, body, config_file='config.yaml'):
-        apobj = apprise.Apprise()
-        for url in Utils.load_config(config_file)['apprise']['urls']:
-            apobj.add(url)
-        apobj.notify(body=body, title=title)
+    def sendNotification(title, body):
+        apprise = Apprise()
+        for url in Utils.loadConfig()["apprise"]["urls"]:
+            apprise.add(url)
+        apprise.notify(body=body, title=title)
 
     def waitUntilVisible(self, by: str, selector: str, timeToWait: float = 10):
         WebDriverWait(self.webdriver, timeToWait).until(
@@ -51,7 +60,7 @@ class Utils:
 
     def waitForMSRewardElement(self, by: str, selector: str):
         loadingTimeAllowed = 5
-        refreshsAllowed = 5
+        refreshesAllowed = 5
 
         checkingInterval = 0.5
         checks = loadingTimeAllowed / checkingInterval
@@ -66,7 +75,7 @@ class Utils:
                 if tries < checks:
                     tries += 1
                     time.sleep(checkingInterval)
-                elif refreshCount < refreshsAllowed:
+                elif refreshCount < refreshesAllowed:
                     self.webdriver.refresh()
                     refreshCount += 1
                     tries = 0
@@ -82,7 +91,7 @@ class Utils:
 
     def waitUntilJS(self, jsSrc: str):
         loadingTimeAllowed = 5
-        refreshsAllowed = 5
+        refreshesAllowed = 5
 
         checkingInterval = 0.5
         checks = loadingTimeAllowed / checkingInterval
@@ -97,7 +106,7 @@ class Utils:
             if tries < checks:
                 tries += 1
                 time.sleep(checkingInterval)
-            elif refreshCount < refreshsAllowed:
+            elif refreshCount < refreshesAllowed:
                 self.webdriver.refresh()
                 refreshCount += 1
                 tries = 0
@@ -152,12 +161,14 @@ class Utils:
                 if reloads >= reloadThreshold:
                     break
 
-    def getAnswerCode(self, key: str, string: str) -> str:
+    @staticmethod
+    def getAnswerCode(key: str, string: str) -> str:
         t = sum(ord(string[i]) for i in range(len(string)))
         t += int(key[-2:], 16)
         return str(t)
 
     def getDashboardData(self) -> dict:
+        self.goHome()
         return self.webdriver.execute_script("return dashboard")
 
     def getBingInfo(self):
@@ -202,7 +213,7 @@ class Utils:
             (By.ID, "idSIButton9"),
             (By.CSS_SELECTOR, ".ms-Button.ms-Button--primary"),
             (By.ID, "bnp_btn_accept"),
-            (By.ID, "acceptButton")
+            (By.ID, "acceptButton"),
         ]
         result = False
         for button in buttons:
@@ -246,13 +257,10 @@ class Utils:
         self.switchToNewTab(timeToWait)
         self.closeCurrentTab()
 
-    def getRemainingSearches(self):
+    def getRemainingSearches(self) -> RemainingSearches:
         dashboard = self.getDashboardData()
         searchPoints = 1
         counters = dashboard["userStatus"]["counters"]
-
-        if "pcSearch" not in counters:
-            return 0, 0
 
         progressDesktop = counters["pcSearch"][0]["pointProgress"]
         targetDesktop = counters["pcSearch"][0]["pointProgressMax"]
@@ -269,16 +277,13 @@ class Utils:
             progressMobile = counters["mobileSearch"][0]["pointProgress"]
             targetMobile = counters["mobileSearch"][0]["pointProgressMax"]
             remainingMobile = int((targetMobile - progressMobile) / searchPoints)
-        return remainingDesktop, remainingMobile
+        return RemainingSearches(desktop=remainingDesktop, mobile=remainingMobile)
 
-    def formatNumber(self, number, num_decimals=2):
+    @staticmethod
+    def formatNumber(number, num_decimals=2):
         return pylocale.format_string(
             f"%10.{num_decimals}f", number, grouping=True
         ).strip()
-
-    def randomSeconds(self, max_value):
-        random_number = random.uniform(self, max_value)
-        return round(random_number, 3)
 
     @staticmethod
     def getBrowserConfig(sessionPath: Path) -> dict:
@@ -294,3 +299,7 @@ class Utils:
         configFile = sessionPath.joinpath("config.json")
         with open(configFile, "w") as f:
             json.dump(config, f)
+
+    @staticmethod
+    def isDebuggerAttached() -> bool:
+        return sys.gettrace() is not None

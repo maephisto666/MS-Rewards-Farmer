@@ -3,28 +3,27 @@ import atexit
 import csv
 import json
 import logging
+import logging.config
 import logging.handlers as handlers
 import random
 import re
 import sys
-import time
 from datetime import datetime
-from pathlib import Path
+from enum import Enum, auto
 
 import psutil
 
 from src import (
     Browser,
-    DailySet,
     Login,
     MorePromotions,
     PunchCards,
     Searches,
+    DailySet,
+    Account,
 )
 from src.loggingColoredFormatter import ColoredFormatter
-from src.utils import Utils
-
-POINTS_COUNTER = 0
+from src.utils import Utils, RemainingSearches
 
 
 def main():
@@ -40,22 +39,28 @@ def main():
     for currentAccount in loadedAccounts:
         try:
             earned_points = executeBot(currentAccount, args)
-            account_name = currentAccount.get("username", "")
-            previous_points = previous_points_data.get(account_name, 0)
+            previous_points = previous_points_data.get(currentAccount.username, 0)
 
             # Calculate the difference in points from the prior day
             points_difference = earned_points - previous_points
 
             # Append the daily points and points difference to CSV and Excel
-            log_daily_points_to_csv(account_name, earned_points, points_difference)
+            log_daily_points_to_csv(
+                currentAccount.username, earned_points, points_difference
+            )
 
             # Update the previous day's points data
-            previous_points_data[account_name] = earned_points
+            previous_points_data[currentAccount.username] = earned_points
 
-            logging.info(f"[POINTS] Data for '{account_name}' appended to the file.")
+            logging.info(
+                f"[POINTS] Data for '{currentAccount.username}' appended to the file."
+            )
         except Exception as e:
-            Utils.send_notification("⚠️ Error occurred, please check the log", str(e))
+            Utils.sendNotification(
+                "⚠️ Error occurred, please check the log", f"{e}\n{e.__traceback__}"
+            )
             logging.exception(f"{e.__class__.__name__}: {e}")
+            exit(1)
 
     # Save the current day's points data for the next day in the "logs" folder
     save_previous_points_data(previous_points_data)
@@ -63,7 +68,7 @@ def main():
 
 
 def log_daily_points_to_csv(date, earned_points, points_difference):
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     csv_filename = logs_directory / "points_data.csv"
 
     # Create a new row with the date, daily points, and points difference
@@ -87,16 +92,24 @@ def log_daily_points_to_csv(date, earned_points, points_difference):
 
 
 def setupLogging():
-    format = "%(asctime)s [%(levelname)s] %(message)s"
+    _format = "%(asctime)s [%(levelname)s] %(message)s"
     terminalHandler = logging.StreamHandler(sys.stdout)
-    terminalHandler.setFormatter(ColoredFormatter(format))
+    terminalHandler.setFormatter(ColoredFormatter(_format))
 
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     logs_directory.mkdir(parents=True, exist_ok=True)
 
+    # so only our code is logged if level=logging.DEBUG or finer
+    # if not working see https://stackoverflow.com/a/48891485/4164390
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": True,
+        }
+    )
     logging.basicConfig(
-        level=logging.INFO,
-        format=format,
+        level=logging.DEBUG,
+        format=_format,
         handlers=[
             handlers.TimedRotatingFileHandler(
                 logs_directory / "activity.log",
@@ -116,7 +129,7 @@ def cleanupChromeProcesses():
         if process.info["name"] == "chrome.exe":
             try:
                 psutil.Process(process.info["pid"]).terminate()
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
 
 
@@ -154,7 +167,7 @@ def argumentParser() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def setupAccounts() -> list:
+def setupAccounts() -> list[Account]:
     """Sets up and validates a list of accounts loaded from 'accounts.json'."""
 
     def validEmail(email: str) -> bool:
@@ -162,7 +175,7 @@ def setupAccounts() -> list:
         pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         return bool(re.match(pattern, email))
 
-    accountPath = Path(__file__).resolve().parent / "accounts.json"
+    accountPath = Utils.getProjectRoot() / "accounts.json"
     if not accountPath.exists():
         accountPath.write_text(
             json.dumps(
@@ -175,24 +188,30 @@ def setupAccounts() -> list:
     [ACCOUNT] A new file has been created, please edit with your credentials and save.
     """
         logging.warning(noAccountsNotice)
-        exit()
-    loadedAccounts = json.loads(accountPath.read_text(encoding="utf-8"))
-    for account in loadedAccounts:
-        if not validEmail(account["username"]):
-            logging.error(f"[CREDENTIALS] Wrong Email Address: '{account['username']}'")
-            exit()
+        exit(1)
+    loadedAccounts: list[Account] = []
+    for rawAccount in json.loads(accountPath.read_text(encoding="utf-8")):
+        account: Account = Account(**rawAccount)
+        if not validEmail(account.username):
+            logging.warning(
+                f"[CREDENTIALS] Invalid email: {account.username}, skipping this account"
+            )
+            continue
+        loadedAccounts.append(account)
     random.shuffle(loadedAccounts)
     return loadedAccounts
 
 
-def executeBot(currentAccount, args: argparse.Namespace):
-    logging.info(
-        f"********************{currentAccount.get('username', '')}********************"
-    )
-    
+class AppriseSummary(Enum):
+    always = auto()
+    on_error = auto()
+
+
+def executeBot(currentAccount: Account, args: argparse.Namespace):
+    logging.info(f"********************{currentAccount.username}********************")
+
     accountPointsCounter = 0
-    remainingSearches = 0
-    remainingSearchesM = 0
+    remainingSearches: RemainingSearches
     startingPoints = 0
 
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
@@ -200,88 +219,85 @@ def executeBot(currentAccount, args: argparse.Namespace):
         accountPointsCounter = Login(desktopBrowser).login()
         startingPoints = accountPointsCounter
         if startingPoints == "Locked":
-            Utils.send_notification("🚫 Account is Locked", currentAccount["username"])
+            Utils.sendNotification("🚫 Account is Locked", currentAccount.username)
             return 0
         if startingPoints == "Verify":
-            Utils.send_notification("❗️ Account needs to be verified", currentAccount["username"])
+            Utils.sendNotification(
+                "❗️ Account needs to be verified", currentAccount.username
+            )
             return 0
         logging.info(
             f"[POINTS] You have {utils.formatNumber(accountPointsCounter)} points on your account"
         )
+        # todo - make quicker if done
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()
         # VersusGame(desktopBrowser).completeVersusGame()
-        (
-            remainingSearches,
-            remainingSearchesM,
-        ) = utils.getRemainingSearches()
+        utils.goHome()
+        remainingSearches = utils.getRemainingSearches()
 
-        # Introduce random pauses before and after searches
-        pause_before_search = random.uniform(
-            11.0, 15.0
-        )  # Random pause between 11 to 15 seconds
-        time.sleep(pause_before_search)
-
-        if remainingSearches != 0:
-            accountPointsCounter = Searches(desktopBrowser).bingSearches(
-                remainingSearches
-            )
-
-        pause_after_search = random.uniform(
-            11.0, 15.0
-        )  # Random pause between 11 to 15 seconds
-        time.sleep(pause_after_search)
+        if remainingSearches.desktop != 0:
+            accountPointsCounter = Searches(
+                desktopBrowser, remainingSearches
+            ).bingSearches(remainingSearches.desktop)
 
         utils.goHome()
         goalPoints = utils.getGoalPoints()
         goalTitle = utils.getGoalTitle()
-        desktopBrowser.closeBrowser()
 
-    if remainingSearchesM != 0:
-        desktopBrowser.closeBrowser()
+    if remainingSearches.mobile != 0:
         with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
             utils = mobileBrowser.utils
-            accountPointsCounter = Login(mobileBrowser).login()
-            accountPointsCounter = Searches(mobileBrowser).bingSearches(
-                remainingSearchesM
-            )
+            Login(mobileBrowser).login()
+            accountPointsCounter = Searches(
+                mobileBrowser, remainingSearches
+            ).bingSearches(remainingSearches.mobile)
 
             utils.goHome()
             goalPoints = utils.getGoalPoints()
             goalTitle = utils.getGoalTitle()
-            mobileBrowser.closeBrowser()
+
+            remainingSearches = utils.getRemainingSearches()
 
     logging.info(
-        f"[POINTS] You have earned {utils.formatNumber(accountPointsCounter - startingPoints)} points today !"
+        f"[POINTS] You have earned {utils.formatNumber(accountPointsCounter - startingPoints)} points this run !"
     )
     logging.info(
         f"[POINTS] You are now at {utils.formatNumber(accountPointsCounter)} points !"
     )
-    goalNotifier = ""
-    if goalPoints > 0:
-        logging.info(
-            f"[POINTS] You are now at {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% of your goal ({goalTitle}) !\n"
-        )
-        goalNotifier = f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% ({goalTitle})"
+    appriseSummary = AppriseSummary[utils.config["apprise"]["summary"]]
+    if appriseSummary == AppriseSummary.always:
+        goalNotifier = ""
+        if goalPoints > 0:
+            logging.info(
+                f"[POINTS] You are now at {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% of your goal ({goalTitle}) !\n"
+            )
+            goalNotifier = f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% ({goalTitle})"
 
-    Utils.send_notification(
-        "Daily Points Update",
-        "\n".join(
-            [
-                f"👤 Account: {currentAccount.get('username')}",
-                f"⭐️ Points earned today: {utils.formatNumber(accountPointsCounter - startingPoints)}",
-                f"💰 Total points: {utils.formatNumber(accountPointsCounter)}",
-                goalNotifier,
-            ]
-        ),
-    )
+        Utils.sendNotification(
+            "Daily Points Update",
+            "\n".join(
+                [
+                    f"👤 Account: {currentAccount.username}",
+                    f"⭐️ Points earned today: {utils.formatNumber(accountPointsCounter - startingPoints)}",
+                    f"💰 Total points: {utils.formatNumber(accountPointsCounter)}",
+                    goalNotifier,
+                ]
+            ),
+        )
+    elif appriseSummary == AppriseSummary.on_error:
+        if remainingSearches.desktop > 0 or remainingSearches.mobile > 0:
+            Utils.sendNotification(
+                "Error: remaining searches",
+                f"account username: {currentAccount.username}, {remainingSearches}",
+            )
 
     return accountPointsCounter
 
 
 def export_points_to_csv(points_data):
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     csv_filename = logs_directory / "points_data.csv"
     with open(csv_filename, mode="a", newline="") as file:  # Use "a" mode for append
         fieldnames = ["Account", "Earned Points", "Points Difference"]
@@ -297,7 +313,7 @@ def export_points_to_csv(points_data):
 
 # Define a function to load the previous day's points data from a file in the "logs" folder
 def load_previous_points_data():
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     try:
         with open(logs_directory / "previous_points_data.json", "r") as file:
             return json.load(file)
@@ -307,7 +323,7 @@ def load_previous_points_data():
 
 # Define a function to save the current day's points data for the next day in the "logs" folder
 def save_previous_points_data(data):
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     with open(logs_directory / "previous_points_data.json", "w") as file:
         json.dump(data, file, indent=4)
 

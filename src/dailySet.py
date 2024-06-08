@@ -3,7 +3,6 @@ import urllib.parse
 from datetime import datetime
 
 from src.browser import Browser
-
 from .activities import Activities
 
 
@@ -82,9 +81,11 @@ class DailySet:
                                     # Try completing ABC activity
                                     self.activities.completeABC()
                                 except Exception:  # pylint: disable=broad-except
+                                    logging.exception(Exception)
                                     # Default to completing quiz
                                     self.activities.completeQuiz()
             except Exception:  # pylint: disable=broad-except
+                logging.exception(Exception)
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
         logging.info("[DAILY SET] Completed the Daily Set successfully !")

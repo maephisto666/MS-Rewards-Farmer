@@ -132,7 +132,7 @@ class Searches:
                     raise Exception("Problem sending words to searchbar")
 
                 searchbar.submit()
-                time.sleep(random.randint(5, 15))  # wait a bit for search to complete
+                time.sleep(2)  # wait a bit for search to complete
 
                 bingAccountPointsNow: int = self.browser.utils.getBingAccountPoints()
                 if bingAccountPointsNow > bingAccountPointsBefore:

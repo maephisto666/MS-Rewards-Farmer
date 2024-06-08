@@ -7,7 +7,6 @@ import urllib.parse
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
-
 from .constants import BASE_URL
 
 
@@ -73,6 +72,7 @@ class PunchCards:
                         punchCard["childPromotions"],
                     )
             except Exception:  # pylint: disable=broad-except
+                logging.exception(Exception)
                 self.browser.utils.resetTabs()
         logging.info("[PUNCH CARDS] Completed the Punch Cards successfully !")
         time.sleep(random.randint(100, 700) / 100)

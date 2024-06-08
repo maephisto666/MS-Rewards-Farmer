@@ -14,7 +14,7 @@ class Login:
         self.webdriver = browser.webdriver
         self.utils = browser.utils
 
-    def login(self):
+    def login(self) -> int:
         logging.info("[LOGIN] " + "Logging-in...")
         self.webdriver.get(
             "https://rewards.bing.com/Signin/"
@@ -28,10 +28,12 @@ class Login:
                 alreadyLoggedIn = True
                 break
             except Exception:  # pylint: disable=broad-except
+                logging.exception(Exception)
                 try:
                     self.utils.waitUntilVisible(By.ID, "i0116", 10)
                     break
                 except Exception:  # pylint: disable=broad-except
+                    logging.exception(Exception)
                     if self.utils.tryDismissAllMessages():
                         continue
 
@@ -69,12 +71,12 @@ class Login:
         try:
             self.enterPassword(self.browser.password)
         except Exception:  # pylint: disable=broad-except
-            logging.error("[LOGIN] " + "2FA Code required !")
+            logging.info("[LOGIN] " + "2FA Code required !")
             with contextlib.suppress(Exception):
                 code = self.webdriver.find_element(
                     By.ID, "idRemoteNGC_DisplaySign"
                 ).get_attribute("innerHTML")
-                logging.error(f"[LOGIN] 2FA code: {code}")
+                logging.info(f"[LOGIN] 2FA code: {code}")
             logging.info("[LOGIN] Press enter when confirmed on your device...")
             input()
 

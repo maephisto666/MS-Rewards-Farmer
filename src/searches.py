@@ -116,7 +116,7 @@ class Searches:
         for i in range(self.maxAttempts):
             try:
                 searchbar: WebElement
-                for _ in range(100):
+                for _ in range(100):  # todo make configurable
                     self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                     searchbar = self.webdriver.find_element(By.ID, "sb_form_q")
                     searchbar.clear()

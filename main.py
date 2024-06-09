@@ -8,6 +8,7 @@ import logging.handlers as handlers
 import random
 import re
 import sys
+import time
 from datetime import datetime
 from enum import Enum, auto
 
@@ -46,7 +47,7 @@ def main():
 
             # Append the daily points and points difference to CSV and Excel
             log_daily_points_to_csv(
-                currentAccount.username, earned_points, points_difference
+                earned_points, points_difference
             )
 
             # Update the previous day's points data
@@ -67,7 +68,7 @@ def main():
     logging.info("[POINTS] Data saved for the next day.")
 
 
-def log_daily_points_to_csv(date, earned_points, points_difference):
+def log_daily_points_to_csv(earned_points, points_difference):
     logs_directory = Utils.getProjectRoot() / "logs"
     csv_filename = logs_directory / "points_data.csv"
 
@@ -210,9 +211,9 @@ class AppriseSummary(Enum):
 def executeBot(currentAccount: Account, args: argparse.Namespace):
     logging.info(f"********************{currentAccount.username}********************")
 
-    accountPointsCounter = 0
+    accountPointsCounter: int
     remainingSearches: RemainingSearches
-    startingPoints = 0
+    startingPoints: int
 
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         utils = desktopBrowser.utils
@@ -246,6 +247,8 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         goalPoints = utils.getGoalPoints()
         goalTitle = utils.getGoalTitle()
 
+    time.sleep(60)  # give time for browser to close, probably can be less time
+
     if remainingSearches.mobile != 0:
         with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
             utils = mobileBrowser.utils
@@ -271,9 +274,11 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         goalNotifier = ""
         if goalPoints > 0:
             logging.info(
-                f"[POINTS] You are now at {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% of your goal ({goalTitle}) !\n"
+                f"[POINTS] You are now at {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% of your "
+                f"goal ({goalTitle}) !"
             )
-            goalNotifier = f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% ({goalTitle})"
+            goalNotifier = (f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}%"
+                            f" ({goalTitle})")
 
         Utils.sendNotification(
             "Daily Points Update",

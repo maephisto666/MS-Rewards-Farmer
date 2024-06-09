@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import random
 from pathlib import Path
@@ -19,6 +18,7 @@ class Browser:
 
     def __init__(self, mobile: bool, account: Account, args: Any) -> None:
         # Initialize browser instance
+        logging.debug("in __init__")
         self.mobile = mobile
         self.browserType = "mobile" if mobile else "desktop"
         self.headless = not args.visible
@@ -42,19 +42,18 @@ class Browser:
             Utils.saveBrowserConfig(self.userDataDir, self.browserConfig)
         self.webdriver = self.browserSetup()
         self.utils = Utils(self.webdriver)
+        logging.debug("out __init__")
 
     def __enter__(self) -> "Browser":
+        logging.debug("in __enter__")
         return self
 
     def __exit__(self, *args: Any) -> None:
         # Cleanup actions when exiting the browser context
-        self.closeBrowser()
-
-    def closeBrowser(self) -> None:
-        """Perform actions to close the browser cleanly."""
-        # Close the web browser
-        with contextlib.suppress(Exception):
-            self.webdriver.close()
+        logging.debug("in __exit__")
+        # self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
+        self.webdriver.quit()
+        # self.webdriver.__exit__(None, None, None)  # doesn't seem to work
 
     def browserSetup(
         self,
@@ -194,6 +193,7 @@ class Browser:
                     if geo is None:
                         geo = nfo["country"]
             except Exception:  # pylint: disable=broad-except
+                logging.debug(Exception)
                 return "en", "US"
         return lang, geo
 

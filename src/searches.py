@@ -5,6 +5,7 @@ import time
 from datetime import date, timedelta
 from enum import Enum, auto
 from itertools import cycle
+from typing import Optional
 
 import requests
 from selenium.common.exceptions import TimeoutException
@@ -39,15 +40,17 @@ class Searches:
             "strategy", DEFAULT_ATTEMPTS_STRATEGY
         )
     ]
-    searchTerms: list[str] = None
+    searchTerms: Optional[list[str]] = None
 
     def __init__(self, browser: Browser, searches: RemainingSearches):
         self.browser = browser
         self.webdriver = browser.webdriver
+        # Share search terms across instances to get rid of duplicates
         if Searches.searchTerms is None:
             Searches.searchTerms = self.getGoogleTrends(
                 searches.desktop + searches.mobile
             )
+            # Shuffle in case not only run of the day
             random.shuffle(Searches.searchTerms)
 
     def getGoogleTrends(self, wordsCount: int) -> list[str]:
@@ -58,7 +61,8 @@ class Searches:
             i += 1
             # Fetching daily trends from Google Trends API
             r = requests.get(
-                f'https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
+                f'https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}'
+                f'&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )
             trends = json.loads(r.text[6:])
             for topic in trends["default"]["trendingSearchesDays"][0][
@@ -70,7 +74,7 @@ class Searches:
                     for relatedTopic in topic["relatedQueries"]
                 )
             searchTerms = list(set(searchTerms))
-        del searchTerms[wordsCount : (len(searchTerms) + 1)]
+        del searchTerms[wordsCount: (len(searchTerms) + 1)]
         return searchTerms
 
     def getRelatedTerms(self, word: str) -> list[str]:

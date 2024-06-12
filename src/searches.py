@@ -5,7 +5,6 @@ import time
 from datetime import date, timedelta
 from enum import Enum, auto
 from itertools import cycle
-from typing import Optional
 
 import requests
 from selenium.common.exceptions import TimeoutException
@@ -40,7 +39,7 @@ class Searches:
             "strategy", DEFAULT_ATTEMPTS_STRATEGY
         )
     ]
-    searchTerms: Optional[list[str]] = None
+    searchTerms: list[str] | None = None
 
     def __init__(self, browser: Browser, searches: RemainingSearches):
         self.browser = browser
@@ -52,6 +51,7 @@ class Searches:
             )
             # Shuffle in case not only run of the day
             random.shuffle(Searches.searchTerms)
+            # todo could write shuffled total searches to disk and read to make even more random
 
     def getGoogleTrends(self, wordsCount: int) -> list[str]:
         # Function to retrieve Google Trends search terms
@@ -87,7 +87,7 @@ class Searches:
             return r.json()[1]
         except Exception:  # pylint: disable=broad-except
             logging.warn(Exception)
-            return []
+            return [word]
 
     def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0):
         # Function to perform Bing searches

@@ -1,7 +1,9 @@
+import contextlib
 import logging
 import random
 from pathlib import Path
-from typing import Any
+from types import TracebackType
+from typing import Any, Type
 
 import ipapi
 import seleniumwire.undetected_chromedriver as webdriver
@@ -48,12 +50,14 @@ class Browser:
         logging.debug("in __enter__")
         return self
 
-    def __exit__(self, *args: Any) -> None:
+    def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None,
+                 traceback: TracebackType | None) -> None:
         # Cleanup actions when exiting the browser context
-        logging.debug("in __exit__")
-        # self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
-        self.webdriver.quit()
-        # self.webdriver.__exit__(None, None, None)  # doesn't seem to work
+        logging.debug(f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}")
+        with contextlib.suppress(Exception):
+            # self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
+            # self.webdriver.__exit__(None, None, None)  # doesn't seem to work  # doesn't work
+            self.webdriver.quit()
 
     def browserSetup(
         self,

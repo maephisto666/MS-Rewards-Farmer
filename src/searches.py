@@ -20,24 +20,12 @@ class AttemptsStrategy(Enum):
     constant = auto()
 
 
-DEFAULT_ATTEMPTS_MAX = 3
-DEFAULT_BASE_DELAY = 900
-DEFAULT_ATTEMPTS_STRATEGY = AttemptsStrategy.exponential.name
-
-
 class Searches:
     config = Utils.loadConfig()
-    # todo get rid of duplication, if possible
-    maxAttempts: int = config.get("attempts", DEFAULT_ATTEMPTS_MAX).get(
-        "max", DEFAULT_ATTEMPTS_MAX
-    )
-    baseDelay: int = config.get("attempts", DEFAULT_BASE_DELAY).get(
-        "base_delay_in_seconds", DEFAULT_BASE_DELAY
-    )
+    maxAttempts: int = config.get("attempts", {}).get("max", 6)
+    baseDelay: int = config.get("attempts", {}).get("base_delay_in_seconds", 60)
     attemptsStrategy = AttemptsStrategy[
-        config.get("attempts", DEFAULT_ATTEMPTS_STRATEGY).get(
-            "strategy", DEFAULT_ATTEMPTS_STRATEGY
-        )
+        config.get("attempts", {}).get("strategy", AttemptsStrategy.exponential.name)
     ]
     searchTerms: list[str] | None = None
 
@@ -61,7 +49,7 @@ class Searches:
             i += 1
             # Fetching daily trends from Google Trends API
             r = requests.get(
-                f'https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}'
+                f"https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}"
                 f'&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )
             trends = json.loads(r.text[6:])
@@ -74,7 +62,7 @@ class Searches:
                     for relatedTopic in topic["relatedQueries"]
                 )
             searchTerms = list(set(searchTerms))
-        del searchTerms[wordsCount: (len(searchTerms) + 1)]
+        del searchTerms[wordsCount : (len(searchTerms) + 1)]
         return searchTerms
 
     def getRelatedTerms(self, word: str) -> list[str]:

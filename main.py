@@ -28,8 +28,6 @@ def main():
     args = argumentParser()
     setupLogging()
     loadedAccounts = setupAccounts()
-    # Register the cleanup function to be called on script exit
-    atexit.register(cleanupChromeProcesses)
 
     # Load previous day's points data
     previous_points_data = load_previous_points_data()
@@ -119,16 +117,6 @@ def setupLogging():
             terminalHandler,
         ],
     )
-
-
-def cleanupChromeProcesses():
-    # Use psutil to find and terminate Chrome processes
-    for process in psutil.process_iter(["pid", "name"]):
-        if process.info["name"] == "chrome.exe":
-            try:
-                psutil.Process(process.info["pid"]).terminate()
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
 
 
 def argumentParser() -> argparse.Namespace:

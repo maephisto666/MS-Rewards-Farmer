@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import random
 from pathlib import Path
@@ -54,10 +53,9 @@ class Browser:
                  traceback: TracebackType | None) -> None:
         # Cleanup actions when exiting the browser context
         logging.debug(f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}")
-        with contextlib.suppress(Exception):
-            # self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
-            # self.webdriver.__exit__(None, None, None)  # doesn't seem to work  # doesn't work
-            self.webdriver.quit()
+        # self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
+        # self.webdriver.__exit__(None, None, None)  # doesn't seem to work  # doesn't work
+        self.webdriver.quit()
 
     def browserSetup(
         self,

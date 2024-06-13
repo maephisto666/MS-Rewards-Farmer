@@ -244,7 +244,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         goalPoints = utils.getGoalPoints()
         goalTitle = utils.getGoalTitle()
 
-    time.sleep(15)  # give time for browser to close, probably can be less time
+    time.sleep(7.5)  # give time for browser to close, probably can be more fine-tuned
 
     if remainingSearches.mobile != 0:
         with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:

@@ -2,6 +2,9 @@ import logging
 
 
 class ColoredFormatter(logging.Formatter):
+    verbose_notifs = False
+    notifier = str()
+
     grey = "\x1b[38;21m"
     blue = "\x1b[38;5;39m"
     yellow = "\x1b[38;5;226m"
@@ -22,5 +25,10 @@ class ColoredFormatter(logging.Formatter):
 
     def format(self, record):
         logFmt = self.FORMATS.get(record.levelno)
+
+        if self.verbose_notifs and self.notifier is not None:
+            log_msg = f"[{self.formatTime(record, self.datefmt)}] [{logging.getLevelName(record.levelno)}] {record.msg}"
+            self.notifier.send(log_msg)
+
         formatter = logging.Formatter(logFmt)
         return formatter.format(record)

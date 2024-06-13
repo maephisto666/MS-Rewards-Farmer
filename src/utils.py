@@ -1,6 +1,7 @@
 import contextlib
 import json
 import locale as pylocale
+import random
 import time
 import urllib.parse
 from pathlib import Path
@@ -11,15 +12,32 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
+import apprise
+import yaml
+
 from .constants import BASE_URL
 
 
 class Utils:
-    def __init__(self, webdriver: WebDriver):
+    def __init__(self, webdriver: WebDriver, config_file='config.yaml'):
         self.webdriver = webdriver
         with contextlib.suppress(Exception):
             locale = pylocale.getdefaultlocale()[0]
             pylocale.setlocale(pylocale.LC_NUMERIC, locale)
+        
+        self.config = self.load_config(config_file)
+
+    @staticmethod
+    def load_config(config_file):
+        with open(config_file, 'r') as file:
+            return yaml.safe_load(file)
+
+    @staticmethod
+    def send_notification(title, body, config_file='config.yaml'):
+        apobj = apprise.Apprise()
+        for url in Utils.load_config(config_file)['apprise']['urls']:
+            apobj.add(url)
+        apobj.notify(body=body, title=title)
 
     def waitUntilVisible(self, by: str, selector: str, timeToWait: float = 10):
         WebDriverWait(self.webdriver, timeToWait).until(
@@ -44,7 +62,7 @@ class Utils:
             try:
                 self.webdriver.find_element(by, selector)
                 return True
-            except Exception:  # pylint: disable=broad-except
+            except Exception:
                 if tries < checks:
                     tries += 1
                     time.sleep(checkingInterval)
@@ -62,6 +80,31 @@ class Utils:
     def waitUntilQuizLoads(self):
         return self.waitForMSRewardElement(By.XPATH, '//*[@id="rqStartQuiz"]')
 
+    def waitUntilJS(self, jsSrc: str):
+        loadingTimeAllowed = 5
+        refreshsAllowed = 5
+
+        checkingInterval = 0.5
+        checks = loadingTimeAllowed / checkingInterval
+
+        tries = 0
+        refreshCount = 0
+        while True:
+            elem = self.webdriver.execute_script(jsSrc)
+            if elem:
+                return elem
+
+            if tries < checks:
+                tries += 1
+                time.sleep(checkingInterval)
+            elif refreshCount < refreshsAllowed:
+                self.webdriver.refresh()
+                refreshCount += 1
+                tries = 0
+                time.sleep(5)
+            else:
+                return elem
+
     def resetTabs(self):
         try:
             curr = self.webdriver.current_window_handle
@@ -76,7 +119,7 @@ class Utils:
             self.webdriver.switch_to.window(curr)
             time.sleep(0.5)
             self.goHome()
-        except Exception:  # pylint: disable=broad-except
+        except Exception:
             self.goHome()
 
     def goHome(self):
@@ -99,6 +142,8 @@ class Utils:
                 time.sleep(1)
                 self.webdriver.get(BASE_URL)
             time.sleep(interval)
+            if "proofs" in str(self.webdriver.current_url):
+                return "Verify"
             intervalCount += 1
             if intervalCount >= reloadInterval:
                 intervalCount = 0
@@ -118,26 +163,20 @@ class Utils:
     def getBingInfo(self):
         cookieJar = self.webdriver.get_cookies()
         cookies = {cookie["name"]: cookie["value"] for cookie in cookieJar}
-        tries = 0
         maxTries = 5
-        while tries < maxTries:
+        for _ in range(maxTries):
             with contextlib.suppress(Exception):
                 response = requests.get(
                     "https://www.bing.com/rewards/panelflyout/getuserinfo",
                     cookies=cookies,
                 )
                 if response.status_code == requests.codes.ok:
-                    data = response.json()
-                    return data
-                else:
-                    pass
-            tries += 1
+                    return response.json()
             time.sleep(1)
         return None
 
     def checkBingLogin(self):
-        data = self.getBingInfo()
-        if data:
+        if data := self.getBingInfo():
             return data["userInfo"]["isRewardsUser"]
         else:
             return False
@@ -146,11 +185,13 @@ class Utils:
         return self.getDashboardData()["userStatus"]["availablePoints"]
 
     def getBingAccountPoints(self) -> int:
-        data = self.getBingInfo()
-        if data:
-            return data["userInfo"]["balance"]
-        else:
-            return 0
+        return data["userInfo"]["balance"] if (data := self.getBingInfo()) else 0
+
+    def getGoalPoints(self) -> int:
+        return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]
+
+    def getGoalTitle(self) -> str:
+        return self.getDashboardData()["userStatus"]["redeemGoal"]["title"]
 
     def tryDismissAllMessages(self):
         buttons = [
@@ -160,13 +201,20 @@ class Utils:
             (By.ID, "iLooksGood"),
             (By.ID, "idSIButton9"),
             (By.CSS_SELECTOR, ".ms-Button.ms-Button--primary"),
+            (By.ID, "bnp_btn_accept"),
+            (By.ID, "acceptButton")
         ]
         result = False
         for button in buttons:
             try:
-                self.webdriver.find_element(button[0], button[1]).click()
+                elements = self.webdriver.find_elements(button[0], button[1])
+                try:
+                    for element in elements:
+                        element.click()
+                except Exception:
+                    continue
                 result = True
-            except Exception:  # pylint: disable=broad-except
+            except Exception:
                 continue
         return result
 
@@ -205,21 +253,15 @@ class Utils:
 
         if "pcSearch" not in counters:
             return 0, 0
-        progressDesktop = 0
 
-        for item in counters['pcSearch']:
-            progressDesktop += item.get('pointProgress', 0)
-
-        targetDesktop = 0
-
-        for item in counters['pcSearch']:
-            targetDesktop += item.get('pointProgressMax', 0)
-
-        if targetDesktop in [33, 102]:
-            # Level 1 or 2 EU/South America
+        progressDesktop = counters["pcSearch"][0]["pointProgress"]
+        targetDesktop = counters["pcSearch"][0]["pointProgressMax"]
+        if len(counters["pcSearch"]) >= 2:
+            progressDesktop = progressDesktop + counters["pcSearch"][1]["pointProgress"]
+            targetDesktop = targetDesktop + counters["pcSearch"][1]["pointProgressMax"]
+        if targetDesktop in [30, 90, 102]:
             searchPoints = 3
-        elif targetDesktop == 55 or targetDesktop >= 170:
-            # Level 1 or 2 US
+        elif targetDesktop == 50 or targetDesktop >= 170 or targetDesktop == 150:
             searchPoints = 5
         remainingDesktop = int((targetDesktop - progressDesktop) / searchPoints)
         remainingMobile = 0
@@ -234,13 +276,16 @@ class Utils:
             f"%10.{num_decimals}f", number, grouping=True
         ).strip()
 
+    def randomSeconds(self, max_value):
+        random_number = random.uniform(self, max_value)
+        return round(random_number, 3)
+
     @staticmethod
     def getBrowserConfig(sessionPath: Path) -> dict:
         configFile = sessionPath.joinpath("config.json")
         if configFile.exists():
             with open(configFile, "r") as f:
-                config = json.load(f)
-                return config
+                return json.load(f)
         else:
             return {}
 

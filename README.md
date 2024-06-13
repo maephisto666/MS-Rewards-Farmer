@@ -1,28 +1,38 @@
-![Made with Python](https://forthebadge.com/images/badges/made-with-python.svg)
-![Built by Developers](http://ForTheBadge.com/images/badges/built-by-developers.svg)
-![Uses Git](http://ForTheBadge.com/images/badges/uses-git.svg)
-![Build with Love](http://ForTheBadge.com/images/badges/built-with-love.svg)
+### A "simple" python application that uses Selenium to help with your M$ Rewards
 
-```ascii
-███╗   ███╗███████╗    ███████╗ █████╗ ██████╗ ███╗   ███╗███████╗██████╗
-████╗ ████║██╔════╝    ██╔════╝██╔══██╗██╔══██╗████╗ ████║██╔════╝██╔══██╗
-██╔████╔██║███████╗    █████╗  ███████║██████╔╝██╔████╔██║█████╗  ██████╔╝
-██║╚██╔╝██║╚════██║    ██╔══╝  ██╔══██║██╔══██╗██║╚██╔╝██║██╔══╝  ██╔══██╗
-██║ ╚═╝ ██║███████║    ██║     ██║  ██║██║  ██║██║ ╚═╝ ██║███████╗██║  ██║
-╚═╝     ╚═╝╚══════╝    ╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚═╝  ╚═╝
-       by Charles Bel (@charlesbel)          version 3.0
-```
+---
 
-![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)
+![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
 ![MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
+![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)
+![GitHub contributors](https://img.shields.io/github/contributors/klept0/MS-Rewards-Farmer?style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/klept0/MS-Rewards-Farmer?style=for-the-badge)
 
-## :wave: Welcome to the future of automation
+---
 
-### A simple bot that uses selenium to farm Microsoft Rewards written in Python
+> [!IMPORTANT]
+> If you are multi-accounting and abusing the service for which this is intended - **_DO NOT COMPLAIN ABOUT BANS!!!_**
 
-```diff
-- Use it at your own risk, Microsoft may ban your account (and I would not be responsible for it)
-```
+---
+
+> [!CAUTION]
+> Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
+>
+> Do not run more than one account at a time.
+>
+> Do not use more than one phone number per 5 accounts.
+>
+> Do not redeem more than one reward per day.
+
+---
+
+#### Group Chat - [Telegram](https://t.me/klept0_MS_Rewards_Farmer/) (pay attention to captchas - helps prevent spam)
+
+#### Original bot by [@charlesbel](https://github.com/charlesbel) - refactored/updated/maintained by [@klept0](https://github.com/klept0) and a community of volunteers.
+
+#### PULL REQUESTS ARE WELCOME AND APPRECIATED!
+
+---
 
 ## Installation
 
@@ -30,19 +40,18 @@
 
    `pip install -r requirements.txt`
 
+   Upgrade all required with the following command:
+   `pip install --upgrade -r requirements.txt`
+
 2. Make sure you have Chrome installed
 
-3. ~~Install ChromeDriver:~~
+3. (Windows Only) Make sure Visual C++ redistributable DLLs are installed
 
-   You no longer need to do this step since selenium >=4.10.0 include a webdriver manager
+   If they're not, install the current "vc_redist.exe" from this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170) and reboot your computer
 
-   To update your selenium version, run this command : `pip install selenium --upgrade`
+4. Edit the `accounts.json.sample` with your accounts credentials and rename it by removing `.sample` at the end.
 
-4. (Windows Only) Make sure Visual C++ redistributable DLLs are installed
-
-   If they're not, install the current "vc_redist.exe" from this link and reboot your computer : https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170
-
-5. Edit the `accounts.json.sample` with your accounts credentials and rename it by removing `.sample` at the end. The "proxy" field is not mandatory, you can ommit it if you don't want to use proxy (don't keep it as an empty string, remove it completely).
+   The "proxy" field is not mandatory, you can omit it if you don't want to use proxy (don't keep it as an empty string, remove the line completely).
 
    - If you want to add more than one account, the syntax is the following:
 
@@ -61,36 +70,57 @@
    ]
    ```
 
-6. Run the script:
+5. Run the script:
 
    `python main.py`
 
-   Or if you want to keep it updated (it will check on each run if a new version is available, if so, will download and run it), use :
-
-   `python autoupdate_main.py`
+---
 
 ## Launch arguments
 
 - -v/--visible to disable headless
 - -l/--lang to force a language (ex: en)
-- -g/--geo to force a geolocation (ex: US)
-- -p/--proxy to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in accounts.json) (ex: http://user:pass@host:port)
-- -t/--telegram to add a telegram notification, requires Telegram Bot Token and Chat ID (ex: 123456789:ABCdefGhIjKlmNoPQRsTUVwxyZ 123456789)
-- -d/--discord to add a discord notification, requires Discord Webhook URL (ex: https://discord.com/api/webhooks/123456789/ABCdefGhIjKlmNoPQRsTUVwxyZ)
+- -g/--geo to force a searching geolocation (ex: US)
+
+  `https://trends.google.com/trends/ for proper geolocation abbreviation for your choice. These MUST be uppercase!!!`
+
+- -p/--proxy to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in accounts.json)
+
+  `(ex: http://user:pass@host:port)`
+
+- -cv/--chromeversion to use a specifiv version of chrome
+
+  `(ex: 118)`
+
+---
+
+> [!TIP]
+> If you are having issues first ask - did I make sure I have updated all of the files and cleared the sessions folder before running again?
+
+> [!TIP]
+> Have I tried to run it with -v so I could see what might be causing the error?
+---
 
 ## Features
 
-- Bing searches (Desktop, Mobile and Edge) with User-Agents
-- Complete automatically the daily set
-- Complete automatically punch cards
-- Complete automatically the others promotions
-- Headless Mode
+- Bing searches (Desktop and Mobile) with current User-Agents
+- Complete the daily set automatically
+- Complete punch cards automatically
+- Complete the others promotions automatically
+- Headless Mode - _not recommended at all_
 - Multi-Account Management
-- Session storing (3.0)
-- 2FA Support (3.0)
-- Notifications (discord, telegram) (3.0)
-- Proxy Support (3.0)
+- Session storing
+- 2FA Support
+- Notifications via [Apprise](https://github.com/caronc/apprise) - no longer limited to Telegram or Discord
+- Proxy Support (3.0) - they need to be **high quality** proxies
+- Logs to CSV file for point tracking
 
-## Future Features
+---
 
-- GUI
+> [!NOTE]
+> You may see [WARNING] in your logs - this is currently enabled for debugging and to provide in any issues you may need to open
+
+## To Do List (When time permits or someone makes a PR)
+
+- [ ] Complete "Read To Earn" (30 pts)
+- [ ] Setup flags for mobile/desktop search only

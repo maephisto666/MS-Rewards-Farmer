@@ -1,5 +1,4 @@
 import argparse
-import atexit
 import csv
 import json
 import logging
@@ -11,8 +10,6 @@ import sys
 import time
 from datetime import datetime
 from enum import Enum, auto
-
-import psutil
 
 from src import (
     Browser,
@@ -269,7 +266,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
     logging.info(
         f"[POINTS] You are now at {utils.formatNumber(accountPointsCounter)} points !"
     )
-    appriseSummary = AppriseSummary[utils.config["apprise"]["summary"]]
+    appriseSummary = AppriseSummary[utils.config.get("apprise", {}).get("summary", AppriseSummary.on_error.name)]
     if appriseSummary == AppriseSummary.always:
         goalNotifier = ""
         if goalPoints > 0:

@@ -1,7 +1,6 @@
 import contextlib
 import json
 import locale as pylocale
-import sys
 import time
 import urllib.parse
 from pathlib import Path
@@ -37,14 +36,15 @@ class Utils:
         return Path(__file__).parent.parent
 
     @staticmethod
-    def loadConfig(config_file=getProjectRoot() / "config.yaml"):
+    def loadConfig(config_file=getProjectRoot() / "config.yaml") -> dict:
         with open(config_file, "r") as file:
             return yaml.safe_load(file)
 
     @staticmethod
     def sendNotification(title, body):
         apprise = Apprise()
-        for url in Utils.loadConfig()["apprise"]["urls"]:
+        urls: list[str] = Utils.loadConfig().get("apprise", {}).get("urls", [])
+        for url in urls:
             apprise.add(url)
         apprise.notify(body=body, title=title)
 

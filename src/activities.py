@@ -4,6 +4,7 @@ import time
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
+from src.utils import Utils
 
 
 class Activities:
@@ -12,6 +13,7 @@ class Activities:
         self.webdriver = browser.webdriver
 
     def openDailySetActivity(self, cardId: int):
+        # Open the Daily Set activity for the given cardId
         self.webdriver.find_element(
             By.XPATH,
             f'//*[@id="daily-sets"]/mee-card-group[1]/div/mee-card[{cardId}]/div/card-content/mee-rewards-daily-set-item-content/div/a',
@@ -19,6 +21,7 @@ class Activities:
         self.browser.utils.switchToNewTab(8)
 
     def openMorePromotionsActivity(self, cardId: int):
+        # Open the More Promotions activity for the given cardId
         self.webdriver.find_element(
             By.XPATH,
             f'//*[@id="more-activities"]/div/mee-card[{cardId}]/div/card-content/mee-rewards-more-activities-card-item/div/a',
@@ -26,15 +29,18 @@ class Activities:
         self.browser.utils.switchToNewTab(8)
 
     def completeSearch(self):
-        time.sleep(random.randint(5, 10))
+        # Simulate completing a search activity
+        time.sleep(Utils.randomSeconds(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def completeSurvey(self):
+        # Simulate completing a survey activity
         self.webdriver.find_element(By.ID, f"btoption{random.randint(0, 1)}").click()
-        time.sleep(random.randint(10, 15))
+        time.sleep(Utils.randomSeconds(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def completeQuiz(self):
+        # Simulate completing a quiz activity
         if not self.browser.utils.waitUntilQuizLoads():
             self.browser.utils.resetTabs()
             return
@@ -42,7 +48,7 @@ class Activities:
         self.browser.utils.waitUntilVisible(
             By.XPATH, '//*[@id="currentQuestionContainer"]/div/div[1]', 5
         )
-        time.sleep(3)
+        time.sleep(Utils.randomSeconds(10, 15))
         numberOfQuestions = self.webdriver.execute_script(
             "return _w.rewardsQuizRenderInfo.maxQuestions"
         )
@@ -60,7 +66,7 @@ class Activities:
                         answers.append(f"rqAnswerOption{i}")
                 for answer in answers:
                     self.webdriver.find_element(By.ID, answer).click()
-                    time.sleep(5)
+                    time.sleep(Utils.randomSeconds(10, 15))
                     if not self.browser.utils.waitUntilQuestionRefresh():
                         self.browser.utils.resetTabs()
                         return
@@ -76,17 +82,18 @@ class Activities:
                         == correctOption
                     ):
                         self.webdriver.find_element(By.ID, f"rqAnswerOption{i}").click()
-                        time.sleep(5)
+                        time.sleep(Utils.randomSeconds(10, 15))
                         if not self.browser.utils.waitUntilQuestionRefresh():
                             self.browser.utils.resetTabs()
                             return
                         break
             if question + 1 != numberOfQuestions:
-                time.sleep(5)
-        time.sleep(5)
+                time.sleep(Utils.randomSeconds(10, 15))
+        time.sleep(Utils.randomSeconds(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def completeABC(self):
+        # Simulate completing an ABC activity
         counter = self.webdriver.find_element(
             By.XPATH, '//*[@id="QuestionPane0"]/div[2]'
         ).text[:-1][1:]
@@ -95,13 +102,14 @@ class Activities:
             self.webdriver.find_element(
                 By.ID, f"questionOptionChoice{question}{random.randint(0, 2)}"
             ).click()
-            time.sleep(5)
+            time.sleep(Utils.randomSeconds(10, 15))
             self.webdriver.find_element(By.ID, f"nextQuestionbtn{question}").click()
-            time.sleep(3)
-        time.sleep(5)
+            time.sleep(Utils.randomSeconds(10, 15))
+        time.sleep(Utils.randomSeconds(1, 7))
         self.browser.utils.closeCurrentTab()
 
     def completeThisOrThat(self):
+        # Simulate completing a This or That activity
         if not self.browser.utils.waitUntilQuizLoads():
             self.browser.utils.resetTabs()
             return
@@ -109,7 +117,7 @@ class Activities:
         self.browser.utils.waitUntilVisible(
             By.XPATH, '//*[@id="currentQuestionContainer"]/div/div[1]', 10
         )
-        time.sleep(3)
+        time.sleep(Utils.randomSeconds(10, 15))
         for _ in range(10):
             correctAnswerCode = self.webdriver.execute_script(
                 "return _w.rewardsQuizRenderInfo.correctAnswer"
@@ -118,15 +126,16 @@ class Activities:
             answer2, answer2Code = self.getAnswerAndCode("rqAnswerOption1")
             if answer1Code == correctAnswerCode:
                 answer1.click()
-                time.sleep(8)
+                time.sleep(Utils.randomSeconds(10, 15))
             elif answer2Code == correctAnswerCode:
                 answer2.click()
-                time.sleep(8)
+                time.sleep(Utils.randomSeconds(10, 15))
 
-        time.sleep(5)
+        time.sleep(Utils.randomSeconds(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def getAnswerAndCode(self, answerId: str) -> tuple:
+        # Helper function to get answer element and its code
         answerEncodeKey = self.webdriver.execute_script("return _G.IG")
         answer = self.webdriver.find_element(By.ID, answerId)
         answerTitle = answer.get_attribute("data-option")

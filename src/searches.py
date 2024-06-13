@@ -7,8 +7,10 @@ from datetime import date, timedelta
 import requests
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 
 from src.browser import Browser
+from src.utils import Utils
 
 
 class Searches:
@@ -17,10 +19,12 @@ class Searches:
         self.webdriver = browser.webdriver
 
     def getGoogleTrends(self, wordsCount: int) -> list:
+        # Function to retrieve Google Trends search terms
         searchTerms: list[str] = []
         i = 0
         while len(searchTerms) < wordsCount:
             i += 1
+            # Fetching daily trends from Google Trends API
             r = requests.get(
                 f'https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )
@@ -38,6 +42,7 @@ class Searches:
         return searchTerms
 
     def getRelatedTerms(self, word: str) -> list:
+        # Function to retrieve related terms from Bing API
         try:
             r = requests.get(
                 f"https://api.bing.com/osjson.aspx?query={word}",
@@ -48,16 +53,19 @@ class Searches:
             return []
 
     def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0):
+        # Function to perform Bing searches
         logging.info(
-            "[BING] "
-            + f"Starting {self.browser.browserType.capitalize()} Edge Bing searches...",
+            f"[BING] Starting {self.browser.browserType.capitalize()} Edge Bing searches..."
         )
 
-        i = 0
         search_terms = self.getGoogleTrends(numberOfSearches)
+        self.webdriver.get("https://bing.com")
+
+        i = 0
+        attempt = 0
         for word in search_terms:
             i += 1
-            logging.info("[BING] " + f"{i}/{numberOfSearches}")
+            logging.info(f"[BING] {i}/{numberOfSearches}")
             points = self.bingSearch(word)
             if points <= pointsCounter:
                 relatedTerms = self.getRelatedTerms(word)[:2]
@@ -69,22 +77,55 @@ class Searches:
                 pointsCounter = points
             else:
                 break
+
+            if points <= pointsCounter:
+                attempt += 1
+                if attempt == 2:
+                    logging.warning(
+                        "[BING] Possible blockage. Refreshing the page."
+                    )
+                    self.webdriver.refresh()
+                    attempt = 0
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )
         return pointsCounter
 
     def bingSearch(self, word: str):
+        # Function to perform a single Bing search
+        i = 0
+
         while True:
             try:
-                self.webdriver.get("https://bing.com")
                 self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 searchbar = self.webdriver.find_element(By.ID, "sb_form_q")
+                searchbar.clear()
                 searchbar.send_keys(word)
                 searchbar.submit()
-                time.sleep(random.randint(10, 15))
+                time.sleep(Utils.randomSeconds(100, 180))
+
+                # Scroll down after the search (adjust the number of scrolls as needed)
+                for _ in range(3):  # Scroll down 3 times
+                    self.webdriver.execute_script(
+                        "window.scrollTo(0, document.body.scrollHeight);"
+                    )
+                    time.sleep(
+                        Utils.randomSeconds(7, 10)
+                    )  # Random wait between scrolls
+
                 return self.browser.utils.getBingAccountPoints()
             except TimeoutException:
-                logging.error("[BING] " + "Timeout, retrying in 5 seconds...")
-                time.sleep(5)
+                if i == 5:
+                    logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
+                    self.webdriver.proxy = self.browser.giveMeProxy()
+                elif i == 10:
+                    logging.error(
+                        "[BING] "
+                        + "Cancelling mobile searches due to too many retries."
+                    )
+                    return self.browser.utils.getBingAccountPoints()
+                self.browser.utils.tryDismissAllMessages()
+                logging.error("[BING] " + "Timeout, retrying in 5~ seconds...")
+                time.sleep(Utils.randomSeconds(7, 15))
+                i += 1
                 continue

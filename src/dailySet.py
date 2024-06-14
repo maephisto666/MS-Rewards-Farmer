@@ -80,12 +80,12 @@ class DailySet:
                                 try:
                                     # Try completing ABC activity
                                     self.activities.completeABC()
-                                except Exception as e:  # pylint: disable=broad-except
-                                    logging.warning(e)
+                                except Exception:  # pylint: disable=broad-except
+                                    logging.warning("", exc_info=True)
                                     # Default to completing quiz
                                     self.activities.completeQuiz()
-            except Exception as e:  # pylint: disable=broad-except
-                logging.warning(e)
+            except Exception:  # pylint: disable=broad-except
+                logging.warning("", exc_info=True)
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
         logging.info("[DAILY SET] Completed the Daily Set successfully !")

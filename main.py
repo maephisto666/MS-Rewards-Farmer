@@ -33,30 +33,23 @@ def main():
     previous_points_data = load_previous_points_data()
 
     for currentAccount in loadedAccounts:
-        try:
-            earned_points = executeBot(currentAccount, args)
-            previous_points = previous_points_data.get(currentAccount.username, 0)
+        earned_points = executeBot(currentAccount, args)
+        previous_points = previous_points_data.get(currentAccount.username, 0)
 
-            # Calculate the difference in points from the prior day
-            points_difference = earned_points - previous_points
+        # Calculate the difference in points from the prior day
+        points_difference = earned_points - previous_points
 
-            # Append the daily points and points difference to CSV and Excel
-            log_daily_points_to_csv(
-                earned_points, points_difference
-            )
+        # Append the daily points and points difference to CSV and Excel
+        log_daily_points_to_csv(
+            earned_points, points_difference
+        )
 
-            # Update the previous day's points data
-            previous_points_data[currentAccount.username] = earned_points
+        # Update the previous day's points data
+        previous_points_data[currentAccount.username] = earned_points
 
-            logging.info(
-                f"[POINTS] Data for '{currentAccount.username}' appended to the file."
-            )
-        except Exception as e:
-            Utils.sendNotification(
-                "⚠️ Error occurred, please check the log", f"{e}\n{e.__traceback__}"
-            )
-            logging.exception(f"{e.__class__.__name__}: {e}")
-            exit(1)
+        logging.info(
+            f"[POINTS] Data for '{currentAccount.username}' appended to the file."
+        )
 
     # Save the current day's points data for the next day in the "logs" folder
     save_previous_points_data(previous_points_data)
@@ -319,4 +312,10 @@ def save_previous_points_data(data):
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.exception("")
+        Utils.sendNotification(
+            "⚠️ Error occurred, please check the log", f"{e}\n{e.__traceback__}"
+        )

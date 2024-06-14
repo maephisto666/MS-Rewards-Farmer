@@ -41,8 +41,8 @@ class MorePromotions:
                     else:
                         # Default to completing search
                         self.activities.completeSearch()
-            except Exception:  # pylint: disable=broad-except
-                logging.exception(Exception)
+            except Exception as e:  # pylint: disable=broad-except
+                logging.warning(e)
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
         logging.info("[MORE PROMOS] Completed More Promotions successfully !")

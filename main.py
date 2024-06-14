@@ -40,9 +40,7 @@ def main():
         points_difference = earned_points - previous_points
 
         # Append the daily points and points difference to CSV and Excel
-        log_daily_points_to_csv(
-            earned_points, points_difference
-        )
+        log_daily_points_to_csv(earned_points, points_difference)
 
         # Update the previous day's points data
         previous_points_data[currentAccount.username] = earned_points
@@ -255,8 +253,10 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
                 f"[POINTS] You are now at {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% of your "
                 f"goal ({goalTitle}) !"
             )
-            goalNotifier = (f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}%"
-                            f" ({goalTitle})")
+            goalNotifier = (
+                f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}%"
+                f" ({goalTitle})"
+            )
 
         Utils.sendNotification(
             "Daily Points Update",

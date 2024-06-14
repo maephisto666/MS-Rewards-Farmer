@@ -10,7 +10,7 @@ import seleniumwire.undetected_chromedriver as webdriver
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
 from seleniumwire import undetected_chromedriver
-from seleniumwire.undetected_chromedriver import webdriver
+from seleniumwire.undetected_chromedriver import webdriver, Chrome
 
 from src import Account
 from src.userAgentGenerator import GenerateUserAgent
@@ -20,7 +20,11 @@ from src.utils import Utils
 class Browser:
     """WebDriver wrapper class."""
 
-    def __init__(self, mobile: bool, account: Account, args: argparse.Namespace) -> None:
+    webdriver: Chrome
+
+    def __init__(
+        self, mobile: bool, account: Account, args: argparse.Namespace
+    ) -> None:
         # Initialize browser instance
         logging.debug("in __init__")
         self.mobile = mobile
@@ -52,12 +56,18 @@ class Browser:
         logging.debug("in __enter__")
         return self
 
-    def __exit__(self, exc_type: Type[BaseException] | None, exc_value: BaseException | None,
-                 traceback: TracebackType | None) -> None:
+    def __exit__(
+        self,
+        exc_type: Type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         # Cleanup actions when exiting the browser context
-        logging.debug(f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}")
-        self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
-        # self.webdriver.__exit__(None, None, None)  # doesn't seem to work  # doesn't work
+        logging.debug(
+            f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}"
+        )
+        # turns out close is needed for undetected_chromedriver
+        self.webdriver.close()
         self.webdriver.quit()
 
     def browserSetup(
@@ -78,7 +88,7 @@ class Browser:
         options.add_argument("--disable-gpu")
         options.add_argument("--disable-default-apps")
         options.add_argument("--disable-features=Translate")
-        options.add_argument('--disable-features=PrivacySandboxSettings4')
+        options.add_argument("--disable-features=PrivacySandboxSettings4")
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
 
@@ -198,8 +208,8 @@ class Browser:
                     if geo is None:
                         geo = nfo["country"]
             except Exception:  # pylint: disable=broad-except
-                logging.debug(Exception)
-                return "en", "US"
+                logging.warning("", exc_info=True)
+            return "en", "US"
         return lang, geo
 
     def getChromeVersion(self) -> str:

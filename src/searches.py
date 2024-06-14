@@ -39,7 +39,7 @@ class Searches:
             )
             # Shuffle in case not only run of the day
             random.shuffle(Searches.searchTerms)
-            # todo could write shuffled total searches to disk and read to make even more random
+            # todo write shuffled searchTerms to disk to better emulate actual searches
 
     def getGoogleTrends(self, wordsCount: int) -> list[str]:
         # Function to retrieve Google Trends search terms
@@ -149,5 +149,6 @@ class Searches:
 
                 if Searches.attemptsStrategy == AttemptsStrategy.exponential:
                     baseDelay *= 2
+        # todo debug why we get to this point occasionally even though searches complete
         logging.error("[BING] Reached max search attempt retries")
         return bingAccountPointsBefore

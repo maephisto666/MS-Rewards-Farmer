@@ -73,8 +73,8 @@ class Searches:
                 headers={"User-agent": self.browser.userAgent},
             )
             return r.json()[1]
-        except Exception as e:  # pylint: disable=broad-except
-            logging.warning(e)
+        except Exception:  # pylint: disable=broad-except
+            logging.warning("", exc_info=True)
             return [word]
 
     def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0):

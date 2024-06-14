@@ -71,8 +71,8 @@ class PunchCards:
                         punchCard["parentPromotion"]["attributes"]["destination"],
                         punchCard["childPromotions"],
                     )
-            except Exception as e:  # pylint: disable=broad-except
-                logging.warning(e)
+            except Exception:  # pylint: disable=broad-except
+                logging.warning("", exc_info=True)
                 self.browser.utils.resetTabs()
         logging.info("[PUNCH CARDS] Completed the Punch Cards successfully !")
         time.sleep(random.randint(100, 700) / 100)

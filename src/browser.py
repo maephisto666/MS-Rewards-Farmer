@@ -1,3 +1,4 @@
+import argparse
 import logging
 import random
 from pathlib import Path
@@ -8,6 +9,8 @@ import ipapi
 import seleniumwire.undetected_chromedriver as webdriver
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
+from seleniumwire import undetected_chromedriver
+from seleniumwire.undetected_chromedriver import webdriver
 
 from src import Account
 from src.userAgentGenerator import GenerateUserAgent
@@ -17,7 +20,7 @@ from src.utils import Utils
 class Browser:
     """WebDriver wrapper class."""
 
-    def __init__(self, mobile: bool, account: Account, args: Any) -> None:
+    def __init__(self, mobile: bool, account: Account, args: argparse.Namespace) -> None:
         # Initialize browser instance
         logging.debug("in __init__")
         self.mobile = mobile
@@ -53,15 +56,15 @@ class Browser:
                  traceback: TracebackType | None) -> None:
         # Cleanup actions when exiting the browser context
         logging.debug(f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}")
-        # self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
+        self.webdriver.close()  # just closes window, doesn't lose driver, see https://stackoverflow.com/a/32447644/4164390
         # self.webdriver.__exit__(None, None, None)  # doesn't seem to work  # doesn't work
         self.webdriver.quit()
 
     def browserSetup(
         self,
-    ) -> WebDriver:
+    ) -> undetected_chromedriver.webdriver.Chrome:
         # Configure and setup the Chrome browser
-        options = webdriver.ChromeOptions()
+        options = undetected_chromedriver.ChromeOptions()
         options.headless = self.headless
         options.add_argument(f"--lang={self.localeLang}")
         options.add_argument("--log-level=3")

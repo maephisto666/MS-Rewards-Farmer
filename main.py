@@ -254,7 +254,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
     logging.info(
         f"[POINTS] You are now at {utils.formatNumber(accountPointsCounter)} points !"
     )
-    appriseSummary = AppriseSummary[utils.config.get("apprise", {}).get("summary", AppriseSummary.on_error.name)]
+    appriseSummary = AppriseSummary[utils.config.get("apprise", {}).get("summary", AppriseSummary.always.name)]
     if appriseSummary == AppriseSummary.always:
         goalNotifier = ""
         if goalPoints > 0:

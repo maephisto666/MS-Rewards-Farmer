@@ -25,7 +25,7 @@ class Searches:
     maxAttempts: int = config.get("attempts", {}).get("max", 6)
     baseDelay: int = config.get("attempts", {}).get("base_delay_in_seconds", 60)
     attemptsStrategy = AttemptsStrategy[
-        config.get("attempts", {}).get("strategy", AttemptsStrategy.exponential.name)
+        config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
     ]
     searchTerms: list[str] | None = None
 

@@ -199,7 +199,7 @@ class Browser:
 
     def getChromeVersion(self) -> str:
         chrome_options = ChromeOptions()
-        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless=new")
 
         driver = WebDriver(options=chrome_options)
         version = driver.capabilities["browserVersion"]

@@ -9,7 +9,7 @@ import re
 import sys
 import time
 from datetime import datetime
-from enum import Enum, auto
+from enum import Enum
 
 from src import (
     Browser,
@@ -141,6 +141,14 @@ def argumentParser() -> argparse.Namespace:
         default=None,
         help="Optional: Set fixed Chrome version (ex. 118)",
     )
+    parser.add_argument(
+        "-ap",
+        "--apprise-summary",
+        type=AppriseSummary,
+        choices=list(AppriseSummary),
+        default=None,
+        help="Optional: Configure Apprise summary type, overrides config.yaml",
+    )
     return parser.parse_args()
 
 
@@ -180,8 +188,12 @@ def setupAccounts() -> list[Account]:
 
 
 class AppriseSummary(Enum):
-    always = auto()
-    on_error = auto()
+    always = "always"
+    on_error = "on_error"
+    never = "never"
+
+    def __str__(self):
+        return self.value
 
 
 def executeBot(currentAccount: Account, args: argparse.Namespace):
@@ -277,6 +289,8 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
                 "Error: remaining searches",
                 f"account username: {currentAccount.username}, {remainingSearches}",
             )
+    elif appriseSummary == AppriseSummary.never:
+        pass
 
     return accountPointsCounter
 

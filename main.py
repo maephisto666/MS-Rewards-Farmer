@@ -245,7 +245,9 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
     logging.info(
         f"[POINTS] You are now at {utils.formatNumber(accountPointsCounter)} points !"
     )
-    appriseSummary = AppriseSummary[utils.config.get("apprise", {}).get("summary", AppriseSummary.always.name)]
+    appriseSummary = AppriseSummary[
+        utils.config.get("apprise", {}).get("summary", AppriseSummary.always.name)
+    ]
     if appriseSummary == AppriseSummary.always:
         goalNotifier = ""
         if goalPoints > 0:
@@ -296,9 +298,10 @@ def export_points_to_csv(points_data):
 
 # Define a function to load the previous day's points data from a file in the "logs" folder
 def load_previous_points_data():
-    logs_directory = Utils.getProjectRoot() / "logs"
     try:
-        with open(logs_directory / "previous_points_data.json", "r") as file:
+        with open(
+            Utils.getProjectRoot() / "logs" / "previous_points_data.json", "r"
+        ) as file:
             return json.load(file)
     except FileNotFoundError:
         return {}

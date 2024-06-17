@@ -1,7 +1,6 @@
 import contextlib
 import json
 import locale as pylocale
-import sys
 import time
 import urllib.parse
 from pathlib import Path
@@ -21,6 +20,9 @@ from .constants import BASE_URL
 class RemainingSearches(NamedTuple):
     desktop: int
     mobile: int
+
+    def getTotal(self) -> int:
+        return self.desktop + self.mobile
 
 
 class Utils:

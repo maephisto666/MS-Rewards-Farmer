@@ -1,6 +1,7 @@
 import json
 import logging
 import random
+import shelve
 import time
 from datetime import date, timedelta
 from enum import Enum, auto
@@ -13,6 +14,8 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from src.browser import Browser
 from src.utils import Utils, RemainingSearches
+
+LOAD_DATE = "loadDate"
 
 
 class AttemptsStrategy(Enum):
@@ -32,14 +35,19 @@ class Searches:
     def __init__(self, browser: Browser, searches: RemainingSearches):
         self.browser = browser
         self.webdriver = browser.webdriver
-        # Share search terms across instances to get rid of duplicates
-        if Searches.searchTerms is None:
-            Searches.searchTerms = self.getGoogleTrends(
-                searches.desktop + searches.mobile
-            )
-            # Shuffle in case not only run of the day
-            random.shuffle(Searches.searchTerms)
-            # todo write shuffled searchTerms to disk to better emulate actual searches
+
+        self.googleTrendsShelf: shelve.Shelf = shelve.open("google_trends")
+        loadDate: date | None = None
+        if LOAD_DATE in self.googleTrendsShelf:
+            loadDate = self.googleTrendsShelf[LOAD_DATE]
+
+        if loadDate is None or loadDate != date.today():
+            self.googleTrendsShelf.clear()
+            self.googleTrendsShelf[LOAD_DATE] = date.today()
+            trends = self.getGoogleTrends(searches.getTotal())
+            random.shuffle(trends)
+            for trend in trends:
+                self.googleTrendsShelf[trend] = None
 
     def getGoogleTrends(self, wordsCount: int) -> list[str]:
         # Function to retrieve Google Trends search terms
@@ -87,15 +95,15 @@ class Searches:
 
         for searchCount in range(1, numberOfSearches + 1):
             logging.info(f"[BING] {searchCount}/{numberOfSearches}")
-            searchTerm = Searches.searchTerms[0]
+            searchTerm = list(self.googleTrendsShelf.keys())[0]
             pointsCounter = self.bingSearch(searchTerm)
-            Searches.searchTerms.remove(searchTerm)
             if not Utils.isDebuggerAttached():
                 time.sleep(random.randint(10, 15))
 
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )
+        self.googleTrendsShelf.close()
         return pointsCounter
 
     def bingSearch(self, word: str) -> int:
@@ -104,6 +112,7 @@ class Searches:
 
         wordsCycle: cycle[str] = cycle(self.getRelatedTerms(word))
         baseDelay = Searches.baseDelay
+        originalWord = word
 
         for i in range(self.maxAttempts):
             try:
@@ -128,6 +137,7 @@ class Searches:
 
                 bingAccountPointsNow: int = self.browser.utils.getBingAccountPoints()
                 if bingAccountPointsNow > bingAccountPointsBefore:
+                    del self.googleTrendsShelf[originalWord]
                     return bingAccountPointsNow
 
                 raise TimeoutException

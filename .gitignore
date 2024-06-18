@@ -183,3 +183,6 @@ sessions
 logs
 runbot.bat
 .DS_Store
+/google_trends.dat
+/google_trends.dir
+/google_trends.bak

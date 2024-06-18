@@ -97,8 +97,7 @@ class Searches:
             logging.info(f"[BING] {searchCount}/{numberOfSearches}")
             searchTerm = list(self.googleTrendsShelf.keys())[0]
             pointsCounter = self.bingSearch(searchTerm)
-            if not Utils.isDebuggerAttached():
-                time.sleep(random.randint(10, 15))
+            time.sleep(random.randint(10, 15))
 
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
@@ -154,8 +153,7 @@ class Searches:
                     f"[BING] Search attempt failed {i + 1}/{Searches.maxAttempts}, retrying after sleeping {baseDelay}"
                     f" seconds..."
                 )
-                if not Utils.isDebuggerAttached():
-                    time.sleep(baseDelay)
+                time.sleep(baseDelay)
 
                 if Searches.attemptsStrategy == AttemptsStrategy.exponential:
                     baseDelay *= 2

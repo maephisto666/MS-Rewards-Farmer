@@ -1,6 +1,7 @@
 import contextlib
 import json
 import locale as pylocale
+import logging
 import time
 import urllib.parse
 from pathlib import Path
@@ -75,6 +76,7 @@ class Utils:
                 self.webdriver.find_element(by, selector)
                 return True
             except Exception:
+                logging.warning("", exc_info=True)
                 if tries < checks:
                     tries += 1
                     time.sleep(checkingInterval)
@@ -132,6 +134,7 @@ class Utils:
             time.sleep(0.5)
             self.goHome()
         except Exception:
+            logging.warning("", exc_info=True)
             self.goHome()
 
     def goHome(self):
@@ -226,9 +229,11 @@ class Utils:
                     for element in elements:
                         element.click()
                 except Exception:
+                    logging.warning("", exc_info=True)
                     continue
                 result = True
             except Exception:
+                logging.warning("", exc_info=True)
                 continue
         return result
 

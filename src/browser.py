@@ -71,7 +71,7 @@ class Browser:
 
     def browserSetup(
         self,
-    ) -> undetected_chromedriver.webdriver.Chrome:
+    ) -> undetected_chromedriver.Chrome:
         # Configure and setup the Chrome browser
         options = undetected_chromedriver.ChromeOptions()
         options.headless = self.headless
@@ -208,10 +208,11 @@ class Browser:
                         geo = nfo["country"]
             except Exception:  # pylint: disable=broad-except
                 logging.warning("", exc_info=True)
-            return "en", "US"
+                return "en", "US"
         return lang, geo
 
-    def getChromeVersion(self) -> str:
+    @staticmethod
+    def getChromeVersion() -> str:
         chrome_options = ChromeOptions()
         chrome_options.add_argument("--headless=new")
 

@@ -7,10 +7,9 @@ from typing import Any, Type
 
 import ipapi
 import seleniumwire.undetected_chromedriver as webdriver
+import undetected_chromedriver
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
-from seleniumwire import undetected_chromedriver
-from seleniumwire.undetected_chromedriver import webdriver, Chrome
 
 from src import Account
 from src.userAgentGenerator import GenerateUserAgent
@@ -20,7 +19,7 @@ from src.utils import Utils
 class Browser:
     """WebDriver wrapper class."""
 
-    webdriver: Chrome
+    webdriver: undetected_chromedriver.Chrome
 
     def __init__(
         self, mobile: bool, account: Account, args: argparse.Namespace

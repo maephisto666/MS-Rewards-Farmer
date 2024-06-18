@@ -288,7 +288,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
             ),
         )
     elif appriseSummary == AppriseSummary.on_error:
-        if remainingSearches.desktop > 0 or remainingSearches.mobile > 0:
+        if remainingSearches.getTotal() > 0:
             Utils.sendNotification(
                 "Error: remaining searches",
                 f"account username: {currentAccount.username}, {remainingSearches}",

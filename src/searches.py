@@ -41,7 +41,7 @@ class Searches:
         if LOAD_DATE in self.googleTrendsShelf:
             loadDate = self.googleTrendsShelf[LOAD_DATE]
 
-        if loadDate is None or loadDate != date.today():
+        if loadDate is None or loadDate < date.today():
             self.googleTrendsShelf.clear()
             self.googleTrendsShelf[LOAD_DATE] = date.today()
             trends = self.getGoogleTrends(searches.getTotal())

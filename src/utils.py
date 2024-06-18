@@ -302,7 +302,3 @@ class Utils:
         configFile = sessionPath.joinpath("config.json")
         with open(configFile, "w") as f:
             json.dump(config, f)
-
-    @staticmethod
-    def isDebuggerAttached() -> bool:
-        return sys.gettrace() is not None

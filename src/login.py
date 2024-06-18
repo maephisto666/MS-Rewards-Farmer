@@ -27,7 +27,7 @@ class Login:
                 )
                 alreadyLoggedIn = True
                 break
-            except Exception as e:  # pylint: disable=broad-except
+            except Exception:  # pylint: disable=broad-except
                 logging.warning("", exc_info=True)
                 try:
                     self.utils.waitUntilVisible(By.ID, "i0116", 10)

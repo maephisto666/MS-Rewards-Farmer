@@ -31,7 +31,7 @@ class GenerateUserAgent:
 
     def userAgent(
         self,
-        browserConfig: dict[str, Any],
+        browserConfig: dict[str, Any] | None,
         mobile: bool = False,
     ) -> tuple[str, dict[str, Any], Any]:
         """
@@ -53,9 +53,8 @@ class GenerateUserAgent:
         )
 
         newBrowserConfig = None
-        if userAgentMetadata := browserConfig.get("userAgentMetadata"):
-            platformVersion = userAgentMetadata["platformVersion"]
-
+        if browserConfig is not None:
+            platformVersion = browserConfig.get("userAgentMetadata")["platformVersion"]
         else:
             # ref : https://textslashplain.com/2021/09/21/determining-os-platform-version/
             platformVersion = (

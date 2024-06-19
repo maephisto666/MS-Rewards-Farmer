@@ -85,7 +85,8 @@ class DailySet:
                                     # Default to completing quiz
                                     self.activities.completeQuiz()
             except Exception:  # pylint: disable=broad-except
-                logging.warning("", exc_info=True)
+                logging.error("[DAILY SET] Error Daily Set", exc_info=True)
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
+                return
         logging.info("[DAILY SET] Completed the Daily Set successfully !")

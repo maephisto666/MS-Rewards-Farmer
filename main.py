@@ -211,7 +211,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
 
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         utils = desktopBrowser.utils
-        startingPoints = Login(desktopBrowser).login()
+        startingPoints = accountPointsCounter = Login(desktopBrowser).login()
         logging.info(
             f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
         )

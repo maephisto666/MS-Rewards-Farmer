@@ -166,18 +166,14 @@ class Utils:
             time.sleep(1)
         raise Exception
 
-    def checkBingLogin(self):
-        if data := self.getBingInfo():
-            return data["userInfo"]["isRewardsUser"]
-        else:
-            # todo - throw exception?
-            return False
+    def checkBingLogin(self) -> bool:
+        return self.getBingInfo()["userInfo"]["isRewardsUser"]
 
     def getAccountPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["availablePoints"]
 
     def getBingAccountPoints(self) -> int:
-        return data["userInfo"]["balance"] if (data := self.getBingInfo()) else 0
+        return self.getBingInfo()["userInfo"]["balance"]
 
     def getGoalPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]

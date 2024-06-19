@@ -4,6 +4,7 @@ import locale as pylocale
 import logging
 import time
 import urllib.parse
+from argparse import Namespace
 from pathlib import Path
 from typing import NamedTuple, Any
 
@@ -32,6 +33,8 @@ class RemainingSearches(NamedTuple):
 
 
 class Utils:
+    args: Namespace
+
     def __init__(self, webdriver: WebDriver):
         self.webdriver = webdriver
         with contextlib.suppress(Exception):
@@ -51,6 +54,8 @@ class Utils:
 
     @staticmethod
     def sendNotification(title, body) -> None:
+        if Utils.args.disable_apprise:
+            return
         apprise = Apprise()
         urls: list[str] = Utils.loadConfig().get("apprise", {}).get("urls", [])
         for url in urls:

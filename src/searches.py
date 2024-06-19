@@ -88,7 +88,7 @@ class Searches:
             logging.warning("", exc_info=True)
             return [word]
 
-    def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0):
+    def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0) -> int:
         # Function to perform Bing searches
         logging.info(
             f"[BING] Starting {self.browser.browserType.capitalize()} Edge Bing searches..."

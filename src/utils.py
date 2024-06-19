@@ -10,6 +10,7 @@ from typing import NamedTuple, Any
 import requests
 import yaml
 from apprise import Apprise
+from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -81,7 +82,7 @@ class Utils:
             try:
                 self.webdriver.find_element(by, selector)
                 return
-            except Exception:
+            except NoSuchElementException:
                 logging.warning("", exc_info=True)
                 if tries < checks:
                     tries += 1
@@ -92,7 +93,7 @@ class Utils:
                     tries = 0
                     time.sleep(5)
                 else:
-                    raise Exception
+                    raise NoSuchElementException
 
     def waitUntilQuestionRefresh(self) -> None:
         return self.waitForMSRewardElement(By.CLASS_NAME, "rqECredits")
@@ -181,7 +182,7 @@ class Utils:
     def getGoalTitle(self) -> str:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["title"]
 
-    def tryDismissAllMessages(self):
+    def tryDismissAllMessages(self) -> None:
         buttons = [
             (By.ID, "iLandingViewAction"),
             (By.ID, "iShowSkip"),
@@ -192,47 +193,39 @@ class Utils:
             (By.ID, "bnp_btn_accept"),
             (By.ID, "acceptButton"),
         ]
-        result = False
         for button in buttons:
             try:
-                elements = self.webdriver.find_elements(button[0], button[1])
-                try:
-                    for element in elements:
-                        element.click()
-                except Exception:
-                    logging.warning("", exc_info=True)
-                    continue
-                result = True
-            except Exception:
-                logging.warning("", exc_info=True)
+                elements = self.webdriver.find_elements(by=button[0], value=button[1])
+            except NoSuchElementException:  # Expected?
                 continue
-        return result
+            for element in elements:
+                element.click()
 
-    def tryDismissCookieBanner(self):
-        with contextlib.suppress(Exception):
+    def tryDismissCookieBanner(self) -> None:
+        with contextlib.suppress(NoSuchElementException):  # Expected
             self.webdriver.find_element(By.ID, "cookie-banner").find_element(
                 By.TAG_NAME, "button"
             ).click()
             time.sleep(2)
 
-    def tryDismissBingCookieBanner(self):
-        with contextlib.suppress(Exception):
+    def tryDismissBingCookieBanner(self) -> None:
+        with contextlib.suppress(NoSuchElementException):  # Expected
             self.webdriver.find_element(By.ID, "bnp_btn_accept").click()
             time.sleep(2)
 
-    def switchToNewTab(self, timeToWait: int = 0):
+    def switchToNewTab(self, timeToWait: int = 0) -> None:
         time.sleep(0.5)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[1])
         if timeToWait > 0:
             time.sleep(timeToWait)
 
-    def closeCurrentTab(self):
+    def closeCurrentTab(self) -> None:
         self.webdriver.close()
         time.sleep(0.5)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[0])
         time.sleep(0.5)
 
-    def visitNewTab(self, timeToWait: int = 0):
+    def visitNewTab(self, timeToWait: int = 0) -> None:
         self.switchToNewTab(timeToWait)
         self.closeCurrentTab()
 
@@ -259,22 +252,21 @@ class Utils:
         return RemainingSearches(desktop=remainingDesktop, mobile=remainingMobile)
 
     @staticmethod
-    def formatNumber(number, num_decimals=2):
+    def formatNumber(number, num_decimals=2) -> str:
         return pylocale.format_string(
             f"%10.{num_decimals}f", number, grouping=True
         ).strip()
 
     @staticmethod
-    def getBrowserConfig(sessionPath: Path) -> dict:
-        configFile = sessionPath.joinpath("config.json")
-        if configFile.exists():
-            with open(configFile, "r") as f:
-                return json.load(f)
-        else:
-            return {}
+    def getBrowserConfig(sessionPath: Path) -> dict | None:
+        configFile = sessionPath / "config.json"
+        if not configFile.exists():
+            return
+        with open(configFile, "r") as f:
+            return json.load(f)
 
     @staticmethod
-    def saveBrowserConfig(sessionPath: Path, config: dict):
-        configFile = sessionPath.joinpath("config.json")
+    def saveBrowserConfig(sessionPath: Path, config: dict) -> None:
+        configFile = sessionPath / "config.json"
         with open(configFile, "w") as f:
             json.dump(config, f)

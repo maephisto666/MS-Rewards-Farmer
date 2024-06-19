@@ -1,6 +1,8 @@
+import logging
 import random
 import time
 
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
@@ -41,7 +43,10 @@ class Activities:
 
     def completeQuiz(self):
         # Simulate completing a quiz activity
-        if not self.browser.utils.waitUntilQuizLoads():
+        try:
+            self.browser.utils.waitUntilQuizLoads()
+        except NoSuchElementException:
+            logging.warning("", exc_info=True)
             self.browser.utils.resetTabs()
             return
         self.webdriver.find_element(By.XPATH, '//*[@id="rqStartQuiz"]').click()
@@ -67,7 +72,10 @@ class Activities:
                 for answer in answers:
                     self.webdriver.find_element(By.ID, answer).click()
                     time.sleep(random.randint(10, 15))
-                    if not self.browser.utils.waitUntilQuestionRefresh():
+                    try:
+                        self.browser.utils.waitUntilQuestionRefresh()
+                    except NoSuchElementException:
+                        logging.warning("", exc_info=True)
                         self.browser.utils.resetTabs()
                         return
             elif numberOfOptions in [2, 3, 4]:
@@ -110,7 +118,10 @@ class Activities:
 
     def completeThisOrThat(self):
         # Simulate completing a This or That activity
-        if not self.browser.utils.waitUntilQuizLoads():
+        try:
+            self.browser.utils.waitUntilQuizLoads()
+        except NoSuchElementException:
+            logging.warning("", exc_info=True)
             self.browser.utils.resetTabs()
             return
         self.webdriver.find_element(By.XPATH, '//*[@id="rqStartQuiz"]').click()
@@ -145,4 +156,5 @@ class Activities:
                 self.browser.utils.getAnswerCode(answerEncodeKey, answerTitle),
             )
         else:
-            return (answer, None)
+            # todo - throw exception?
+            return answer, None

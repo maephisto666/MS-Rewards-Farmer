@@ -51,7 +51,8 @@ class Login:
         points = self.utils.getAccountPoints()
 
         logging.info("[LOGIN] " + "Ensuring you are logged into Bing...")
-        self.checkBingLogin()
+        if not self.utils.checkBingLogin():
+            raise Exception
         logging.info("[LOGIN] Logged-in successfully !")
         return points
 
@@ -121,18 +122,3 @@ class Login:
             password_field.clear()
             time.sleep(3)
         time.sleep(3)
-
-    def checkBingLogin(self) -> None:
-        self.webdriver.get(
-            "https://www.bing.com/fd/auth/signin?action=interactive&provider=windows_live_id&return_url=https%3A%2F"
-            "%2Fwww.bing.com%2F"
-        )
-        while True:
-            currentUrl = urllib.parse.urlparse(self.webdriver.current_url)
-            if currentUrl.hostname == "www.bing.com" and currentUrl.path == "/":
-                time.sleep(3)
-                self.utils.tryDismissBingCookieBanner()
-                with contextlib.suppress(Exception):
-                    if self.utils.checkBingLogin():
-                        return
-            time.sleep(1)

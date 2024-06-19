@@ -30,14 +30,13 @@ class Searches:
     attemptsStrategy = AttemptsStrategy[
         config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
     ]
-    searchTerms: list[str] | None = None
 
     def __init__(self, browser: Browser, searches: RemainingSearches):
         self.browser = browser
         self.webdriver = browser.webdriver
 
         self.googleTrendsShelf: shelve.Shelf = shelve.open("google_trends")
-        logging.debug(f"Before load = {list(self.googleTrendsShelf.items())}")
+        logging.debug(f"google_trends = {list(self.googleTrendsShelf.items())}")
         loadDate: date | None = None
         if LOAD_DATE_KEY in self.googleTrendsShelf:
             loadDate = self.googleTrendsShelf[LOAD_DATE_KEY]
@@ -49,7 +48,9 @@ class Searches:
             random.shuffle(trends)
             for trend in trends:
                 self.googleTrendsShelf[trend] = None
-        logging.debug(f"After load = {list(self.googleTrendsShelf.items())}")
+            logging.debug(
+                f"google_trends after load = {list(self.googleTrendsShelf.items())}"
+            )
 
     def getGoogleTrends(self, wordsCount: int) -> list[str]:
         # Function to retrieve Google Trends search terms

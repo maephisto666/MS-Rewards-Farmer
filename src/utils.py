@@ -18,6 +18,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 from .constants import BASE_URL
 
 
+class VerifyAccountException(Exception):
+    pass
+
+
 class RemainingSearches(NamedTuple):
     desktop: int
     mobile: int
@@ -137,7 +141,7 @@ class Utils:
             logging.warning("", exc_info=True)
             self.goHome()
 
-    def goHome(self):
+    def goHome(self) -> None:
         reloadThreshold = 5
         reloadInterval = 10
         targetUrl = urllib.parse.urlparse(BASE_URL)
@@ -158,7 +162,7 @@ class Utils:
                 self.webdriver.get(BASE_URL)
             time.sleep(interval)
             if "proofs" in str(self.webdriver.current_url):
-                return "Verify"
+                raise VerifyAccountException
             intervalCount += 1
             if intervalCount >= reloadInterval:
                 intervalCount = 0

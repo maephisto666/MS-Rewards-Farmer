@@ -8,6 +8,10 @@ from selenium.webdriver.common.by import By
 from src.browser import Browser
 
 
+class AccountLockedException(Exception):
+    pass
+
+
 class Login:
     def __init__(self, browser: Browser):
         self.browser = browser
@@ -38,8 +42,7 @@ class Login:
                         continue
 
         if not alreadyLoggedIn:
-            if isLocked := self.executeLogin():
-                return "Locked"
+            self.executeLogin()
         self.utils.tryDismissCookieBanner()
 
         logging.info("[LOGIN] " + "Logged-in !")
@@ -52,7 +55,7 @@ class Login:
         logging.info("[LOGIN] Logged-in successfully !")
         return points
 
-    def executeLogin(self):
+    def executeLogin(self) -> None:
         self.utils.waitUntilVisible(By.ID, "i0116", 10)
         logging.info("[LOGIN] " + "Entering email...")
         self.utils.waitUntilClickable(By.NAME, "loginfmt", 10)
@@ -85,12 +88,14 @@ class Login:
             and urllib.parse.urlparse(self.webdriver.current_url).hostname
             == "account.microsoft.com"
         ):
-            if urllib.parse.urlparse(self.webdriver.current_url).hostname == "rewards.bing.com":
+            if (
+                urllib.parse.urlparse(self.webdriver.current_url).hostname
+                == "rewards.bing.com"
+            ):
                 self.webdriver.get("https://account.microsoft.com")
-            
+
             if "Abuse" in str(self.webdriver.current_url):
-                logging.error(f"[LOGIN] {self.browser.username} is locked")
-                return True
+                raise AccountLockedException
             self.utils.tryDismissAllMessages()
             time.sleep(1)
 
@@ -98,7 +103,7 @@ class Login:
             By.CSS_SELECTOR, 'html[data-role-name="MeePortal"]', 10
         )
 
-    def enterPassword(self, password):
+    def enterPassword(self, password) -> None:
         self.utils.waitUntilClickable(By.NAME, "passwd", 10)
         self.utils.waitUntilClickable(By.ID, "idSIButton9", 10)
 
@@ -117,9 +122,10 @@ class Login:
             time.sleep(3)
         time.sleep(3)
 
-    def checkBingLogin(self):
+    def checkBingLogin(self) -> None:
         self.webdriver.get(
-            "https://www.bing.com/fd/auth/signin?action=interactive&provider=windows_live_id&return_url=https%3A%2F%2Fwww.bing.com%2F"
+            "https://www.bing.com/fd/auth/signin?action=interactive&provider=windows_live_id&return_url=https%3A%2F"
+            "%2Fwww.bing.com%2F"
         )
         while True:
             currentUrl = urllib.parse.urlparse(self.webdriver.current_url)

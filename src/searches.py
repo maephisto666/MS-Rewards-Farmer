@@ -138,6 +138,7 @@ class Searches:
                 searchbar.submit()
                 time.sleep(2)  # wait a bit for search to complete
 
+                self.browser.webdriver.refresh()  # or scroll so points update?
                 bingAccountPointsNow: int = self.browser.utils.getBingAccountPoints()
                 if bingAccountPointsNow > bingAccountPointsBefore:
                     del self.googleTrendsShelf[originalWord]
@@ -162,5 +163,6 @@ class Searches:
                 if Searches.attemptsStrategy == AttemptsStrategy.exponential:
                     baseDelay *= 2
         # todo debug why we get to this point occasionally even though searches complete
+        # update - Seems like account points aren't refreshing correctly see
         logging.error("[BING] Reached max search attempt retries")
         return bingAccountPointsBefore

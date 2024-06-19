@@ -15,7 +15,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from src.browser import Browser
 from src.utils import Utils, RemainingSearches
 
-LOAD_DATE = "loadDate"
+LOAD_DATE_KEY = "loadDate"
 
 
 class AttemptsStrategy(Enum):
@@ -37,17 +37,19 @@ class Searches:
         self.webdriver = browser.webdriver
 
         self.googleTrendsShelf: shelve.Shelf = shelve.open("google_trends")
+        logging.debug(f"Before load = {list(self.googleTrendsShelf.items())}")
         loadDate: date | None = None
-        if LOAD_DATE in self.googleTrendsShelf:
-            loadDate = self.googleTrendsShelf[LOAD_DATE]
+        if LOAD_DATE_KEY in self.googleTrendsShelf:
+            loadDate = self.googleTrendsShelf[LOAD_DATE_KEY]
 
         if loadDate is None or loadDate < date.today():
             self.googleTrendsShelf.clear()
-            self.googleTrendsShelf[LOAD_DATE] = date.today()
+            self.googleTrendsShelf[LOAD_DATE_KEY] = date.today()
             trends = self.getGoogleTrends(searches.getTotal())
             random.shuffle(trends)
             for trend in trends:
                 self.googleTrendsShelf[trend] = None
+        logging.debug(f"After load = {list(self.googleTrendsShelf.items())}")
 
     def getGoogleTrends(self, wordsCount: int) -> list[str]:
         # Function to retrieve Google Trends search terms
@@ -95,7 +97,9 @@ class Searches:
 
         for searchCount in range(1, numberOfSearches + 1):
             logging.info(f"[BING] {searchCount}/{numberOfSearches}")
-            searchTerm = list(self.googleTrendsShelf.keys())[0]
+            googleTrends: list[str] = list(self.googleTrendsShelf.keys())
+            logging.debug(f"self.googleTrendsShelf.keys() = {googleTrends}")
+            searchTerm = list(self.googleTrendsShelf.keys())[1]
             pointsCounter = self.bingSearch(searchTerm)
             time.sleep(random.randint(10, 15))
 

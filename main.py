@@ -33,7 +33,13 @@ def main():
     previous_points_data = load_previous_points_data()
 
     for currentAccount in loadedAccounts:
-        earned_points = executeBot(currentAccount, args)
+        try:
+            earned_points = executeBot(currentAccount, args)
+        except Exception as e:
+            logging.error("", exc_info=True)
+            Utils.sendNotification(f"⚠️ Error executing {currentAccount.username}, please check the log",
+                                   f"{e}\n{e.__traceback__}")
+            continue
         previous_points = previous_points_data.get(currentAccount.username, 0)
 
         # Calculate the difference in points from the prior day
@@ -205,18 +211,9 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
 
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         utils = desktopBrowser.utils
-        accountPointsCounter = Login(desktopBrowser).login()
-        startingPoints = accountPointsCounter
-        if startingPoints == "Locked":
-            Utils.sendNotification("🚫 Account is Locked", currentAccount.username)
-            return 0
-        if startingPoints == "Verify":
-            Utils.sendNotification(
-                "❗️ Account needs to be verified", currentAccount.username
-            )
-            return 0
+        startingPoints = Login(desktopBrowser).login()
         logging.info(
-            f"[POINTS] You have {utils.formatNumber(accountPointsCounter)} points on your account"
+            f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
         )
         # todo - make quicker if done
         DailySet(desktopBrowser).completeDailySet()

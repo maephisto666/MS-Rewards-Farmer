@@ -5,7 +5,7 @@ import logging
 import time
 import urllib.parse
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Any
 
 import requests
 import yaml
@@ -49,24 +49,26 @@ class Utils:
             return yaml.safe_load(file)
 
     @staticmethod
-    def sendNotification(title, body):
+    def sendNotification(title, body) -> None:
         apprise = Apprise()
         urls: list[str] = Utils.loadConfig().get("apprise", {}).get("urls", [])
         for url in urls:
             apprise.add(url)
         apprise.notify(body=body, title=title)
 
-    def waitUntilVisible(self, by: str, selector: str, timeToWait: float = 10):
+    def waitUntilVisible(self, by: str, selector: str, timeToWait: float = 10) -> None:
         WebDriverWait(self.webdriver, timeToWait).until(
             ec.visibility_of_element_located((by, selector))
         )
 
-    def waitUntilClickable(self, by: str, selector: str, timeToWait: float = 10):
+    def waitUntilClickable(
+        self, by: str, selector: str, timeToWait: float = 10
+    ) -> None:
         WebDriverWait(self.webdriver, timeToWait).until(
             ec.element_to_be_clickable((by, selector))
         )
 
-    def waitForMSRewardElement(self, by: str, selector: str):
+    def waitForMSRewardElement(self, by: str, selector: str) -> None:
         loadingTimeAllowed = 5
         refreshesAllowed = 5
 
@@ -78,7 +80,7 @@ class Utils:
         while True:
             try:
                 self.webdriver.find_element(by, selector)
-                return True
+                return
             except Exception:
                 logging.warning("", exc_info=True)
                 if tries < checks:
@@ -90,56 +92,27 @@ class Utils:
                     tries = 0
                     time.sleep(5)
                 else:
-                    return False
+                    raise Exception
 
-    def waitUntilQuestionRefresh(self):
+    def waitUntilQuestionRefresh(self) -> None:
         return self.waitForMSRewardElement(By.CLASS_NAME, "rqECredits")
 
-    def waitUntilQuizLoads(self):
+    def waitUntilQuizLoads(self) -> None:
         return self.waitForMSRewardElement(By.XPATH, '//*[@id="rqStartQuiz"]')
 
-    def waitUntilJS(self, jsSrc: str):
-        loadingTimeAllowed = 5
-        refreshesAllowed = 5
+    def resetTabs(self) -> None:
+        curr = self.webdriver.current_window_handle
 
-        checkingInterval = 0.5
-        checks = loadingTimeAllowed / checkingInterval
+        for handle in self.webdriver.window_handles:
+            if handle != curr:
+                self.webdriver.switch_to.window(handle)
+                time.sleep(0.5)
+                self.webdriver.close()
+                time.sleep(0.5)
 
-        tries = 0
-        refreshCount = 0
-        while True:
-            elem = self.webdriver.execute_script(jsSrc)
-            if elem:
-                return elem
-
-            if tries < checks:
-                tries += 1
-                time.sleep(checkingInterval)
-            elif refreshCount < refreshesAllowed:
-                self.webdriver.refresh()
-                refreshCount += 1
-                tries = 0
-                time.sleep(5)
-            else:
-                return elem
-
-    def resetTabs(self):
-        try:
-            curr = self.webdriver.current_window_handle
-
-            for handle in self.webdriver.window_handles:
-                if handle != curr:
-                    self.webdriver.switch_to.window(handle)
-                    time.sleep(0.5)
-                    self.webdriver.close()
-                    time.sleep(0.5)
-
-            self.webdriver.switch_to.window(curr)
-            time.sleep(0.5)
-            self.goHome()
-        except Exception:
-            logging.warning("", exc_info=True)
-            self.goHome()
+        self.webdriver.switch_to.window(curr)
+        time.sleep(0.5)
+        self.goHome()
 
     def goHome(self) -> None:
         reloadThreshold = 5
@@ -151,9 +124,7 @@ class Utils:
         intervalCount = 0
         while True:
             self.tryDismissCookieBanner()
-            with contextlib.suppress(Exception):
-                self.webdriver.find_element(By.ID, "more-activities")
-                break
+            self.webdriver.find_element(By.ID, "more-activities")
             currentUrl = urllib.parse.urlparse(self.webdriver.current_url)
             if (
                 currentUrl.hostname != targetUrl.hostname
@@ -181,25 +152,25 @@ class Utils:
         self.goHome()
         return self.webdriver.execute_script("return dashboard")
 
-    def getBingInfo(self):
+    def getBingInfo(self) -> Any:
         cookieJar = self.webdriver.get_cookies()
         cookies = {cookie["name"]: cookie["value"] for cookie in cookieJar}
         maxTries = 5
         for _ in range(maxTries):
-            with contextlib.suppress(Exception):
-                response = requests.get(
-                    "https://www.bing.com/rewards/panelflyout/getuserinfo",
-                    cookies=cookies,
-                )
-                if response.status_code == requests.codes.ok:
-                    return response.json()
+            response = requests.get(
+                "https://www.bing.com/rewards/panelflyout/getuserinfo",
+                cookies=cookies,
+            )
+            if response.status_code == requests.codes.ok:
+                return response.json()
             time.sleep(1)
-        return None
+        raise Exception
 
     def checkBingLogin(self):
         if data := self.getBingInfo():
             return data["userInfo"]["isRewardsUser"]
         else:
+            # todo - throw exception?
             return False
 
     def getAccountPoints(self) -> int:

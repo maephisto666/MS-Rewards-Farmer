@@ -78,6 +78,16 @@ class Login:
             logging.info("[LOGIN] Press enter when confirmed on your device...")
             input()
 
+        try:
+            self.utils.waitUntilVisible(
+                By.NAME, 'iProofEmail', 0.5
+            )
+            logging.error('[LOGIN] Needs you to prove email')
+            logging.info('[LOGIN] Press enter when confirmed...')
+            input()
+        except:
+            logging.info('[LOGIN] No email proof, all clear')
+        
         while not (
             urllib.parse.urlparse(self.webdriver.current_url).path == "/"
             and urllib.parse.urlparse(self.webdriver.current_url).hostname

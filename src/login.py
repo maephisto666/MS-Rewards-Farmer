@@ -85,7 +85,7 @@ class Login:
             logging.error('[LOGIN] Needs you to prove email')
             logging.info('[LOGIN] Press enter when confirmed...')
             input()
-        except:
+        except Exception:
             logging.info('[LOGIN] No email proof, all clear')
         
         while not (

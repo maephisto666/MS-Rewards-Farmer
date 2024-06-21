@@ -199,16 +199,12 @@ class Browser:
     @staticmethod
     def getCCodeLang(lang: str, geo: str) -> tuple:
         if lang is None or geo is None:
-            try:
-                nfo = ipapi.location()
-                if isinstance(nfo, dict):
-                    if lang is None:
-                        lang = nfo["languages"].split(",")[0].split("-")[0]
-                    if geo is None:
-                        geo = nfo["country"]
-            except Exception:  # pylint: disable=broad-except
-                logging.warning("", exc_info=True)
-                return "en", "US"
+            nfo = ipapi.location()
+            if isinstance(nfo, dict):
+                if lang is None:
+                    lang = nfo["languages"].split(",")[0].split("-")[0]
+                if geo is None:
+                    geo = nfo["country"]
         return lang, geo
 
     @staticmethod

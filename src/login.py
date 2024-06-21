@@ -1,124 +1,83 @@
+import argparse
 import contextlib
 import logging
 import time
-import urllib.parse
+from argparse import Namespace
 
+from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
+from undetected_chromedriver import Chrome
 
 from src.browser import Browser
 
 
-class AccountLockedException(Exception):
-    pass
-
-
 class Login:
-    def __init__(self, browser: Browser):
+    browser: Browser
+    args: Namespace
+    webdriver: Chrome
+
+    def __init__(self, browser: Browser, args: argparse.Namespace):
         self.browser = browser
         self.webdriver = browser.webdriver
         self.utils = browser.utils
+        self.args = args
 
     def login(self) -> int:
-        logging.info("[LOGIN] " + "Logging-in...")
-        self.webdriver.get(
-            "https://rewards.bing.com/Signin/"
-        )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
-        alreadyLoggedIn = False
-        while True:
-            try:
-                self.utils.waitUntilVisible(
-                    By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 0.1
-                )
-                alreadyLoggedIn = True
-                break
-            except Exception:  # pylint: disable=broad-except
-                logging.warning("", exc_info=True)
-                try:
-                    self.utils.waitUntilVisible(By.ID, "i0116", 10)
-                    break
-                except Exception:  # pylint: disable=broad-except
-                    logging.warning("", exc_info=True)
-                    if self.utils.tryDismissAllMessages():
-                        continue
-
-        if not alreadyLoggedIn:
+        if self.utils.isLoggedIn():
+            logging.info("[LOGIN] Already logged-in")
+        else:
+            logging.info("[LOGIN] Logging-in...")
             self.executeLogin()
-        self.utils.tryDismissCookieBanner()
+            logging.info("[LOGIN] Logged-in successfully !")
 
-        logging.info("[LOGIN] " + "Logged-in !")
+        assert self.utils.isLoggedIn()
 
-        self.utils.goHome()
-        points = self.utils.getAccountPoints()
-
-        logging.info("[LOGIN] " + "Ensuring you are logged into Bing...")
-        if not self.utils.checkBingLogin():
-            raise Exception
-        logging.info("[LOGIN] Logged-in successfully !")
-        return points
+        return self.utils.getAccountPoints()
 
     def executeLogin(self) -> None:
         self.utils.waitUntilVisible(By.ID, "i0116", 10)
-        logging.info("[LOGIN] " + "Entering email...")
-        self.utils.waitUntilClickable(By.NAME, "loginfmt", 10)
-        email_field = self.webdriver.find_element(By.NAME, "loginfmt")
 
-        while True:
-            email_field.send_keys(self.browser.username)
-            time.sleep(3)
-            if email_field.get_attribute("value") == self.browser.username:
-                self.webdriver.find_element(By.ID, "idSIButton9").click()
-                break
+        emailField = self.utils.waitUntilClickable(By.NAME, "loginfmt", 10)
+        logging.info("[LOGIN] Entering email...")
+        emailField.send_keys(self.browser.username)
+        time.sleep(3)
+        assert emailField.get_attribute("value") == self.browser.username
+        self.webdriver.find_element(By.ID, "idSIButton9").click()
 
-            email_field.clear()
-            time.sleep(3)
-
+        isTwoFactorEnabled = False
         try:
-            self.enterPassword(self.browser.password)
-        except Exception:  # pylint: disable=broad-except
-            print("[LOGIN] 2FA Code required !")
-            with contextlib.suppress(Exception):
-                code = self.webdriver.find_element(
-                    By.ID, "idRemoteNGC_DisplaySign"
-                ).get_attribute("innerHTML")
-                logging.info(f"[LOGIN] 2FA code: {code}")
-            print("[LOGIN] Press enter when confirmed on your device...")
-            input()
+            self.utils.waitUntilVisible(By.ID, "pushNotificationsTitle", 10)
+            isTwoFactorEnabled = True
+        except NoSuchElementException:
+            logging.info("2FA not enabled")
 
-        while not (
-            urllib.parse.urlparse(self.webdriver.current_url).path == "/"
-            and urllib.parse.urlparse(self.webdriver.current_url).hostname
-            == "account.microsoft.com"
-        ):
-            if (
-                urllib.parse.urlparse(self.webdriver.current_url).hostname
-                == "rewards.bing.com"
-            ):
-                self.webdriver.get("https://account.microsoft.com")
-
-            if "Abuse" in str(self.webdriver.current_url):
-                raise AccountLockedException
-            self.utils.tryDismissAllMessages()
-            time.sleep(1)
+        if isTwoFactorEnabled:
+            # todo - Handle 2FA when running headless
+            assert (
+                self.args.visible
+            ), "2FA detected, run in visible mode to handle login"
+            while True:
+                print(
+                    "2FA detected, handle prompts and press enter when on rewards portal to continue"
+                )
+                input()
+                with contextlib.suppress(TimeoutException):
+                    self.utils.waitUntilVisible(
+                        By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
+                    )
+                    break
+                print("Rewards portal not accessible, waiting until next attempt")
+        else:
+            passwordField = self.utils.waitUntilClickable(By.NAME, "passwd", 10)
+            enterPasswordButton = self.utils.waitUntilClickable(
+                By.ID, "idSIButton9", 10
+            )
+            logging.info("[LOGIN] Entering password...")
+            passwordField.send_keys(self.browser.password)
+            time.sleep(3)
+            assert passwordField.get_attribute("value") == self.browser.password
+            enterPasswordButton.click()
 
         self.utils.waitUntilVisible(
-            By.CSS_SELECTOR, 'html[data-role-name="MeePortal"]', 10
+            By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
         )
-
-    def enterPassword(self, password) -> None:
-        self.utils.waitUntilClickable(By.NAME, "passwd", 10)
-        self.utils.waitUntilClickable(By.ID, "idSIButton9", 10)
-
-        logging.info("[LOGIN] " + "Writing password...")
-
-        password_field = self.webdriver.find_element(By.NAME, "passwd")
-
-        while True:
-            password_field.send_keys(password)
-            time.sleep(3)
-            if password_field.get_attribute("value") == password:
-                self.webdriver.find_element(By.ID, "idSIButton9").click()
-                break
-
-            password_field.clear()
-            time.sleep(3)
-        time.sleep(3)

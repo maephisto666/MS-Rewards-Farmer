@@ -52,6 +52,7 @@ class GenerateUserAgent:
             else self.USER_AGENT_TEMPLATES.get("edge_pc", "")
         )
 
+        # todo - Refactor, kinda spaghetti code-y
         newBrowserConfig = None
         if browserConfig is not None:
             platformVersion = browserConfig.get("userAgentMetadata")["platformVersion"]
@@ -60,7 +61,7 @@ class GenerateUserAgent:
             platformVersion = (
                 f"{random.randint(9,13) if mobile else random.randint(1,15)}.0.0"
             )
-            newBrowserConfig = browserConfig
+            newBrowserConfig = {}
             newBrowserConfig["userAgentMetadata"] = {
                 "platformVersion": platformVersion,
             }

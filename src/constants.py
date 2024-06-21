@@ -1,2 +1,2 @@
-BASE_URL = "https://rewards.bing.com"
+BASE_URL = "https://rewards.bing.com/"
 VERSION = 3

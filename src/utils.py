@@ -1,9 +1,7 @@
 import contextlib
 import json
 import locale as pylocale
-import logging
 import time
-import urllib.parse
 from argparse import Namespace
 from pathlib import Path
 from typing import NamedTuple, Any
@@ -11,17 +9,15 @@ from typing import NamedTuple, Any
 import requests
 import yaml
 from apprise import Apprise
-from selenium.common import NoSuchElementException
+from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
+from typing_extensions import deprecated
 
 from .constants import BASE_URL
-
-
-class VerifyAccountException(Exception):
-    pass
 
 
 class RemainingSearches(NamedTuple):
@@ -62,49 +58,25 @@ class Utils:
             apprise.add(url)
         apprise.notify(body=body, title=title)
 
-    def waitUntilVisible(self, by: str, selector: str, timeToWait: float = 10) -> None:
-        WebDriverWait(self.webdriver, timeToWait).until(
+    def waitUntilVisible(
+        self, by: str, selector: str, timeToWait: float = 10
+    ) -> WebElement:
+        return WebDriverWait(self.webdriver, timeToWait).until(
             ec.visibility_of_element_located((by, selector))
         )
 
     def waitUntilClickable(
         self, by: str, selector: str, timeToWait: float = 10
-    ) -> None:
-        WebDriverWait(self.webdriver, timeToWait).until(
+    ) -> WebElement:
+        return WebDriverWait(self.webdriver, timeToWait).until(
             ec.element_to_be_clickable((by, selector))
         )
 
-    def waitForMSRewardElement(self, by: str, selector: str) -> None:
-        loadingTimeAllowed = 5
-        refreshesAllowed = 5
+    def waitUntilQuestionRefresh(self) -> WebElement:
+        return self.waitUntilVisible(By.CLASS_NAME, "rqECredits")
 
-        checkingInterval = 0.5
-        checks = loadingTimeAllowed / checkingInterval
-
-        tries = 0
-        refreshCount = 0
-        while True:
-            try:
-                self.webdriver.find_element(by, selector)
-                return
-            except NoSuchElementException:
-                logging.warning("", exc_info=True)
-                if tries < checks:
-                    tries += 1
-                    time.sleep(checkingInterval)
-                elif refreshCount < refreshesAllowed:
-                    self.webdriver.refresh()
-                    refreshCount += 1
-                    tries = 0
-                    time.sleep(5)
-                else:
-                    raise NoSuchElementException
-
-    def waitUntilQuestionRefresh(self) -> None:
-        return self.waitForMSRewardElement(By.CLASS_NAME, "rqECredits")
-
-    def waitUntilQuizLoads(self) -> None:
-        return self.waitForMSRewardElement(By.XPATH, '//*[@id="rqStartQuiz"]')
+    def waitUntilQuizLoads(self) -> WebElement:
+        return self.waitUntilVisible(By.XPATH, '//*[@id="rqStartQuiz"]')
 
     def resetTabs(self) -> None:
         curr = self.webdriver.current_window_handle
@@ -121,32 +93,8 @@ class Utils:
         self.goHome()
 
     def goHome(self) -> None:
-        reloadThreshold = 5
-        reloadInterval = 10
-        targetUrl = urllib.parse.urlparse(BASE_URL)
         self.webdriver.get(BASE_URL)
-        reloads = 0
-        interval = 1
-        intervalCount = 0
-        while True:
-            self.tryDismissCookieBanner()
-            self.webdriver.find_element(By.ID, "more-activities")
-            currentUrl = urllib.parse.urlparse(self.webdriver.current_url)
-            if (
-                currentUrl.hostname != targetUrl.hostname
-            ) and self.tryDismissAllMessages():
-                time.sleep(1)
-                self.webdriver.get(BASE_URL)
-            time.sleep(interval)
-            if "proofs" in str(self.webdriver.current_url):
-                raise VerifyAccountException
-            intervalCount += 1
-            if intervalCount >= reloadInterval:
-                intervalCount = 0
-                reloads += 1
-                self.webdriver.refresh()
-                if reloads >= reloadThreshold:
-                    break
+        assert self.webdriver.current_url == BASE_URL
 
     @staticmethod
     def getAnswerCode(key: str, string: str) -> str:
@@ -158,6 +106,7 @@ class Utils:
         self.goHome()
         return self.webdriver.execute_script("return dashboard")
 
+    @deprecated("This seems buggy")
     def getBingInfo(self) -> Any:
         cookieJar = self.webdriver.get_cookies()
         cookies = {cookie["name"]: cookie["value"] for cookie in cookieJar}
@@ -165,18 +114,23 @@ class Utils:
             "https://www.bing.com/rewards/panelflyout/getuserinfo",
             cookies=cookies,
         )
-        if response.status_code != requests.codes.ok:
-            raise Exception
+        assert response.status_code == requests.codes.ok
         return response.json()
 
-    def checkBingLogin(self) -> bool:
-        return self.getBingInfo()["userInfo"]["isRewardsUser"]
+    def isLoggedIn(self) -> bool:
+        self.webdriver.get(
+            "https://rewards.bing.com/Signin/"
+        )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
+        with contextlib.suppress(TimeoutException):
+            self.waitUntilVisible(
+                By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
+            )
+            return True
+        return False
 
+    # todo - See if faster, but reliable, way to get this information that doesn't change page
     def getAccountPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["availablePoints"]
-
-    def getBingAccountPoints(self) -> int:
-        return self.getBingInfo()["userInfo"]["balance"]
 
     def getGoalPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]

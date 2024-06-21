@@ -1,8 +1,6 @@
-import logging
 import random
 import time
 
-from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
@@ -43,13 +41,8 @@ class Activities:
 
     def completeQuiz(self):
         # Simulate completing a quiz activity
-        try:
-            self.browser.utils.waitUntilQuizLoads()
-        except NoSuchElementException:
-            logging.warning("", exc_info=True)
-            self.browser.utils.resetTabs()
-            return
-        self.webdriver.find_element(By.XPATH, '//*[@id="rqStartQuiz"]').click()
+        startQuiz = self.browser.utils.waitUntilQuizLoads()
+        startQuiz.click()
         self.browser.utils.waitUntilVisible(
             By.XPATH, '//*[@id="currentQuestionContainer"]/div/div[1]', 5
         )
@@ -72,12 +65,7 @@ class Activities:
                 for answer in answers:
                     self.webdriver.find_element(By.ID, answer).click()
                     time.sleep(random.randint(10, 15))
-                    try:
-                        self.browser.utils.waitUntilQuestionRefresh()
-                    except NoSuchElementException:
-                        logging.warning("", exc_info=True)
-                        self.browser.utils.resetTabs()
-                        return
+                    self.browser.utils.waitUntilQuestionRefresh()
             elif numberOfOptions in [2, 3, 4]:
                 correctOption = self.webdriver.execute_script(
                     "return _w.rewardsQuizRenderInfo.correctAnswer"
@@ -91,9 +79,8 @@ class Activities:
                     ):
                         self.webdriver.find_element(By.ID, f"rqAnswerOption{i}").click()
                         time.sleep(random.randint(10, 15))
-                        if not self.browser.utils.waitUntilQuestionRefresh():
-                            self.browser.utils.resetTabs()
-                            return
+
+                        self.browser.utils.waitUntilQuestionRefresh()
                         break
             if question + 1 != numberOfQuestions:
                 time.sleep(random.randint(10, 15))
@@ -118,13 +105,8 @@ class Activities:
 
     def completeThisOrThat(self):
         # Simulate completing a This or That activity
-        try:
-            self.browser.utils.waitUntilQuizLoads()
-        except NoSuchElementException:
-            logging.warning("", exc_info=True)
-            self.browser.utils.resetTabs()
-            return
-        self.webdriver.find_element(By.XPATH, '//*[@id="rqStartQuiz"]').click()
+        startQuiz = self.browser.utils.waitUntilQuizLoads()
+        startQuiz.click()
         self.browser.utils.waitUntilVisible(
             By.XPATH, '//*[@id="currentQuestionContainer"]/div/div[1]', 10
         )

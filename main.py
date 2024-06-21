@@ -9,7 +9,7 @@ import re
 import sys
 import time
 from datetime import datetime
-from enum import Enum
+from enum import Enum, auto
 
 from src import (
     Browser,
@@ -38,8 +38,10 @@ def main():
             earned_points = executeBot(currentAccount, args)
         except Exception as e:
             logging.error("", exc_info=True)
-            Utils.sendNotification(f"⚠️ Error executing {currentAccount.username}, please check the log",
-                                   f"{e}\n{e.__traceback__}")
+            Utils.sendNotification(
+                f"⚠️ Error executing {currentAccount.username}, please check the log",
+                f"{e}\n{e.__traceback__}",
+            )
             continue
         previous_points = previous_points_data.get(currentAccount.username, 0)
 
@@ -102,7 +104,7 @@ def setupLogging():
         }
     )
     logging.basicConfig(
-        level=logging.INFO,
+        level=logging.DEBUG,
         format=_format,
         handlers=[
             handlers.TimedRotatingFileHandler(
@@ -151,7 +153,7 @@ def argumentParser() -> argparse.Namespace:
     parser.add_argument(
         "-da",
         "--disable-apprise",
-        action='store_true',
+        action="store_true",
         help="Optional: Disable Apprise, overrides config.yaml, useful when developing",
     )
     return parser.parse_args()
@@ -193,12 +195,9 @@ def setupAccounts() -> list[Account]:
 
 
 class AppriseSummary(Enum):
-    always = "always"
-    on_error = "on_error"
-    never = "never"
-
-    def __str__(self):
-        return self.value
+    always = auto()
+    on_error = auto()
+    never = auto()
 
 
 def executeBot(currentAccount: Account, args: argparse.Namespace):
@@ -210,7 +209,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
 
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         utils = desktopBrowser.utils
-        startingPoints = accountPointsCounter = Login(desktopBrowser).login()
+        startingPoints = accountPointsCounter = Login(desktopBrowser, args).login()
         logging.info(
             f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
         )
@@ -236,7 +235,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
     if remainingSearches.mobile != 0:
         with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
             utils = mobileBrowser.utils
-            Login(mobileBrowser).login()
+            Login(mobileBrowser, args).login()
             accountPointsCounter = Searches(
                 mobileBrowser, remainingSearches
             ).bingSearches(remainingSearches.mobile)

@@ -6,11 +6,10 @@ import time
 from datetime import date, timedelta
 from enum import Enum, auto
 from itertools import cycle
+from typing import Final
 
 import requests
-from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 
 from src.browser import Browser
 from src.utils import Utils, RemainingSearches
@@ -25,10 +24,12 @@ class AttemptsStrategy(Enum):
 
 class Searches:
     config = Utils.loadConfig()
-    maxAttempts: int = config.get("attempts", {}).get("max", 6)
-    baseDelay: int = config.get("attempts", {}).get("base_delay_in_seconds", 60)
-    attemptsStrategy = AttemptsStrategy[
-        config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
+    maxAttempts: Final[int] = config.get("attempts", {}).get("max", 6)
+    baseDelay: Final[int] = config.get("attempts", {}).get("base_delay_in_seconds", 60)
+    attemptsStrategy = Final[
+        AttemptsStrategy[
+            config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
+        ]
     ]
 
     def __init__(self, browser: Browser, searches: RemainingSearches):
@@ -73,20 +74,15 @@ class Searches:
                     for relatedTopic in topic["relatedQueries"]
                 )
             searchTerms = list(set(searchTerms))
-        del searchTerms[wordsCount : (len(searchTerms) + 1)]
+        del searchTerms[wordsCount: (len(searchTerms) + 1)]
         return searchTerms
 
     def getRelatedTerms(self, word: str) -> list[str]:
         # Function to retrieve related terms from Bing API
-        try:
-            r = requests.get(
-                f"https://api.bing.com/osjson.aspx?query={word}",
-                headers={"User-agent": self.browser.userAgent},
-            )
-            return r.json()[1]
-        except Exception:  # pylint: disable=broad-except
-            logging.warning("", exc_info=True)
-            return [word]
+        return requests.get(
+            f"https://api.bing.com/osjson.aspx?query={word}",
+            headers={"User-agent": self.browser.userAgent},
+        ).json()[1]
 
     def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0) -> int:
         # Function to perform Bing searches
@@ -97,11 +93,13 @@ class Searches:
         self.webdriver.get("https://bing.com")
 
         for searchCount in range(1, numberOfSearches + 1):
+            # todo - Disable cooldown for first 3 searches (Earning starts with your third search)
             logging.info(f"[BING] {searchCount}/{numberOfSearches}")
             googleTrends: list[str] = list(self.googleTrendsShelf.keys())
             logging.debug(f"self.googleTrendsShelf.keys() = {googleTrends}")
             searchTerm = list(self.googleTrendsShelf.keys())[1]
             pointsCounter = self.bingSearch(searchTerm)
+            logging.debug(f"pointsCounter = {pointsCounter}")
             time.sleep(random.randint(10, 15))
 
         logging.info(
@@ -112,58 +110,55 @@ class Searches:
 
     def bingSearch(self, word: str) -> int:
         # Function to perform a single Bing search
-        bingAccountPointsBefore: int = self.browser.utils.getBingAccountPoints()
+        pointsBefore = self.getAccountPoints()
 
         wordsCycle: cycle[str] = cycle(self.getRelatedTerms(word))
         baseDelay = Searches.baseDelay
         originalWord = word
 
         for i in range(self.maxAttempts):
-            try:
-                searchbar: WebElement
-                for _ in range(100):  # todo make configurable
-                    self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
-                    searchbar = self.webdriver.find_element(By.ID, "sb_form_q")
-                    searchbar.clear()
-                    word = next(wordsCycle)
-                    logging.debug(f"word={word}")
-                    searchbar.send_keys(word)
-                    typed_word = searchbar.get_attribute("value")
-                    if typed_word == word:
-                        break
-                    logging.debug(f"typed_word != word, {typed_word} != {word}")
-                    self.browser.webdriver.refresh()
-                else:
-                    raise Exception("Problem sending words to searchbar")
+            # self.webdriver.get("https://bing.com")
+            searchbar = self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
+            searchbar.clear()
+            word = next(wordsCycle)
+            logging.debug(f"word={word}")
+            for _ in range(100):
+                searchbar.send_keys(word)
+                if searchbar.get_attribute("value") != word:
+                    logging.debug("searchbar != word")
+                    continue
+                break
 
-                searchbar.submit()
-                time.sleep(2)  # wait a bit for search to complete
+            assert searchbar.get_attribute("value") == word
 
-                self.browser.webdriver.refresh()  # or scroll so points update?
-                bingAccountPointsNow: int = self.browser.utils.getBingAccountPoints()
-                if bingAccountPointsNow > bingAccountPointsBefore:
-                    del self.googleTrendsShelf[originalWord]
-                    return bingAccountPointsNow
+            searchbar.submit()
 
-                raise TimeoutException
+            pointsAfter = self.getAccountPoints()
+            if pointsBefore < pointsAfter:
+                del self.googleTrendsShelf[originalWord]
+                return pointsAfter
 
-            except TimeoutException:
-                # todo
-                # if i == (maxAttempts / 2):
-                #     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
-                #     self.webdriver.proxy = self.browser.giveMeProxy()
-                self.browser.utils.tryDismissAllMessages()
+            # todo
+            # if i == (maxAttempts / 2):
+            #     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
+            #     self.webdriver.proxy = self.browser.giveMeProxy()
 
-                baseDelay += random.randint(1, 10)  # add some jitter
-                logging.debug(
-                    f"[BING] Search attempt failed {i + 1}/{Searches.maxAttempts}, retrying after sleeping {baseDelay}"
-                    f" seconds..."
-                )
-                time.sleep(baseDelay)
+            baseDelay += random.randint(1, 10)  # add some jitter
+            logging.debug(
+                f"[BING] Search attempt failed {i + 1}/{Searches.maxAttempts}, retrying after sleeping {baseDelay}"
+                f" seconds..."
+            )
+            time.sleep(baseDelay)
 
-                if Searches.attemptsStrategy == AttemptsStrategy.exponential:
-                    baseDelay *= 2
+            if Searches.attemptsStrategy == AttemptsStrategy.exponential:
+                baseDelay *= 2
         # todo debug why we get to this point occasionally even though searches complete
         # update - Seems like account points aren't refreshing correctly see
         logging.error("[BING] Reached max search attempt retries")
-        return bingAccountPointsBefore
+        return pointsBefore
+
+    def getAccountPoints(self) -> int:
+        if self.browser.mobile:
+            return self.browser.utils.getBingInfo()["userInfo"]["balance"]
+        microsoftRewardsCounter = self.browser.utils.waitUntilVisible(By.ID, "id_rc")
+        return int(microsoftRewardsCounter.text)

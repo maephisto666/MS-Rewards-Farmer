@@ -25,11 +25,10 @@ class AttemptsStrategy(Enum):
 class Searches:
     config = Utils.loadConfig()
     maxAttempts: Final[int] = config.get("attempts", {}).get("max", 6)
-    baseDelay: Final[int] = config.get("attempts", {}).get("base_delay_in_seconds", 60)
-    attemptsStrategy = Final[
-        AttemptsStrategy[
-            config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
-        ]
+    baseDelay: Final[float] = config.get("attempts", {}).get("base_delay_in_seconds", 60)
+    # attemptsStrategy = Final[  # todo Figure why doesn't work with equality below
+    attemptsStrategy = AttemptsStrategy[
+        config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
     ]
 
     def __init__(self, browser: Browser, searches: RemainingSearches):
@@ -92,8 +91,10 @@ class Searches:
 
         self.webdriver.get("https://bing.com")
 
+        # todo Make sure rewards quiz is done
+
         for searchCount in range(1, numberOfSearches + 1):
-            # todo - Disable cooldown for first 3 searches (Earning starts with your third search)
+            # todo Disable cooldown for first 3 searches (Earning starts with your third search)
             logging.info(f"[BING] {searchCount}/{numberOfSearches}")
             googleTrends: list[str] = list(self.googleTrendsShelf.keys())
             logging.debug(f"self.googleTrendsShelf.keys() = {googleTrends}")
@@ -117,8 +118,7 @@ class Searches:
         originalWord = word
 
         for i in range(self.maxAttempts):
-            # self.webdriver.get("https://bing.com")
-            searchbar = self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
+            searchbar = self.browser.utils.waitUntilVisible(By.ID, "sb_form_q")
             searchbar.clear()
             word = next(wordsCycle)
             logging.debug(f"word={word}")
@@ -126,6 +126,10 @@ class Searches:
                 searchbar.send_keys(word)
                 if searchbar.get_attribute("value") != word:
                     logging.debug("searchbar != word")
+                    self.browser.webdriver.refresh()
+                    searchbar = self.browser.utils.waitUntilVisible(By.ID, "sb_form_q")
+                    searchbar.clear()
+                    time.sleep(2)
                     continue
                 break
 
@@ -155,10 +159,13 @@ class Searches:
         # todo debug why we get to this point occasionally even though searches complete
         # update - Seems like account points aren't refreshing correctly see
         logging.error("[BING] Reached max search attempt retries")
+
+        # move failing term to end of list
+        logging.debug("Moving term to end of list")
+        del self.googleTrendsShelf[originalWord]
+        self.googleTrendsShelf[originalWord] = None
+
         return pointsBefore
 
     def getAccountPoints(self) -> int:
-        if self.browser.mobile:
-            return self.browser.utils.getBingInfo()["userInfo"]["balance"]
-        microsoftRewardsCounter = self.browser.utils.waitUntilVisible(By.ID, "id_rc")
-        return int(microsoftRewardsCounter.text)
+        return self.browser.utils.getBingInfo()["userInfo"]["balance"]

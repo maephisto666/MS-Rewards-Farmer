@@ -25,7 +25,9 @@ class AttemptsStrategy(Enum):
 class Searches:
     config = Utils.loadConfig()
     maxAttempts: Final[int] = config.get("attempts", {}).get("max", 6)
-    baseDelay: Final[float] = config.get("attempts", {}).get("base_delay_in_seconds", 60)
+    baseDelay: Final[float] = config.get("attempts", {}).get(
+        "base_delay_in_seconds", 60
+    )
     # attemptsStrategy = Final[  # todo Figure why doesn't work with equality below
     attemptsStrategy = AttemptsStrategy[
         config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
@@ -73,7 +75,7 @@ class Searches:
                     for relatedTopic in topic["relatedQueries"]
                 )
             searchTerms = list(set(searchTerms))
-        del searchTerms[wordsCount: (len(searchTerms) + 1)]
+        del searchTerms[wordsCount : (len(searchTerms) + 1)]
         return searchTerms
 
     def getRelatedTerms(self, word: str) -> list[str]:
@@ -98,8 +100,8 @@ class Searches:
             logging.info(f"[BING] {searchCount}/{numberOfSearches}")
             googleTrends: list[str] = list(self.googleTrendsShelf.keys())
             logging.debug(f"self.googleTrendsShelf.keys() = {googleTrends}")
-            searchTerm = list(self.googleTrendsShelf.keys())[1]
-            pointsCounter = self.bingSearch(searchTerm)
+            googleTrend = list(self.googleTrendsShelf.keys())[1]
+            pointsCounter = self.bingSearch(googleTrend)
             logging.debug(f"pointsCounter = {pointsCounter}")
             time.sleep(random.randint(10, 15))
 
@@ -109,22 +111,22 @@ class Searches:
         self.googleTrendsShelf.close()
         return pointsCounter
 
-    def bingSearch(self, word: str) -> int:
+    def bingSearch(self, searchTerm: str) -> int:
         # Function to perform a single Bing search
         pointsBefore = self.getAccountPoints()
 
-        wordsCycle: cycle[str] = cycle(self.getRelatedTerms(word))
+        relatedSearchTerms: cycle[str] = cycle(self.getRelatedTerms(searchTerm))
         baseDelay = Searches.baseDelay
-        originalWord = word
+        passedInSearchTerm = searchTerm
 
         for i in range(self.maxAttempts):
             searchbar = self.browser.utils.waitUntilVisible(By.ID, "sb_form_q")
             searchbar.clear()
-            word = next(wordsCycle)
-            logging.debug(f"word={word}")
+            searchTerm = next(relatedSearchTerms)
+            logging.debug(f"word={searchTerm}")
             for _ in range(100):
-                searchbar.send_keys(word)
-                if searchbar.get_attribute("value") != word:
+                searchbar.send_keys(searchTerm)
+                if searchbar.get_attribute("value") != searchTerm:
                     logging.debug("searchbar != word")
                     self.browser.webdriver.refresh()
                     searchbar = self.browser.utils.waitUntilVisible(By.ID, "sb_form_q")
@@ -133,13 +135,13 @@ class Searches:
                     continue
                 break
 
-            assert searchbar.get_attribute("value") == word
+            assert searchbar.get_attribute("value") == searchTerm
 
             searchbar.submit()
 
             pointsAfter = self.getAccountPoints()
             if pointsBefore < pointsAfter:
-                del self.googleTrendsShelf[originalWord]
+                del self.googleTrendsShelf[passedInSearchTerm]
                 return pointsAfter
 
             # todo
@@ -162,8 +164,8 @@ class Searches:
 
         # move failing term to end of list
         logging.debug("Moving term to end of list")
-        del self.googleTrendsShelf[originalWord]
-        self.googleTrendsShelf[originalWord] = None
+        del self.googleTrendsShelf[passedInSearchTerm]
+        self.googleTrendsShelf[passedInSearchTerm] = None
 
         return pointsBefore
 

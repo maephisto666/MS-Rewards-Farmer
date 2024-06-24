@@ -73,7 +73,7 @@ class Utils:
         )
 
     def waitUntilQuestionRefresh(self) -> WebElement:
-        return self.waitUntilVisible(By.CLASS_NAME, "rqECredits")
+        return self.waitUntilVisible(By.CLASS_NAME, "rqECredits", timeToWait=20)
 
     def waitUntilQuizLoads(self) -> WebElement:
         return self.waitUntilVisible(By.XPATH, '//*[@id="rqStartQuiz"]')

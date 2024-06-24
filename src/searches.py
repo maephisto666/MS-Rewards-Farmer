@@ -112,37 +112,29 @@ class Searches:
         self.googleTrendsShelf.close()
         return pointsCounter
 
-    def bingSearch(self, searchTerm: str) -> int:
+    def bingSearch(self, term: str) -> int:
         # Function to perform a single Bing search
         pointsBefore = self.getAccountPoints()
 
-        relatedSearchTerms: cycle[str] = cycle(self.getRelatedTerms(searchTerm))
+        terms = self.getRelatedTerms(term)
+        logging.debug(f"terms={terms}")
+        termsCycle: cycle[str] = cycle(terms)
         baseDelay = Searches.baseDelay
-        passedInSearchTerm = searchTerm
+        passedInTerm = term
+        logging.debug(f"passedInTerm={passedInTerm}")
 
         for i in range(self.maxAttempts):
             searchbar = self.browser.utils.waitUntilVisible(By.ID, "sb_form_q")
             searchbar.clear()
-            searchTerm = next(relatedSearchTerms)
-            logging.debug(f"word={searchTerm}")
-            for _ in range(100):
-                searchbar.send_keys(searchTerm)
-                if searchbar.get_attribute("value") != searchTerm:
-                    logging.debug("searchbar != word")
-                    self.browser.webdriver.refresh()
-                    searchbar = self.browser.utils.waitUntilVisible(By.ID, "sb_form_q")
-                    searchbar.clear()
-                    time.sleep(2)
-                    continue
-                break
-
-            assert searchbar.get_attribute("value") == searchTerm
-
+            term = next(termsCycle)
+            logging.debug(f"term={term}")
+            searchbar.send_keys(term)
+            assert searchbar.get_attribute("value") == term
             searchbar.submit()
 
             pointsAfter = self.getAccountPoints()
             if pointsBefore < pointsAfter:
-                del self.googleTrendsShelf[passedInSearchTerm]
+                del self.googleTrendsShelf[passedInTerm]
                 return pointsAfter
 
             # todo
@@ -165,8 +157,8 @@ class Searches:
 
         # move failing term to end of list
         logging.debug("Moving term to end of list")
-        del self.googleTrendsShelf[passedInSearchTerm]
-        self.googleTrendsShelf[passedInSearchTerm] = None
+        del self.googleTrendsShelf[passedInTerm]
+        self.googleTrendsShelf[passedInTerm] = None
 
         return pointsBefore
 

@@ -19,9 +19,9 @@ class DailySet:
         data = self.browser.utils.getDashboardData()["dailySetPromotions"]
         todayDate = datetime.now().strftime("%m/%d/%Y")
         for activity in data.get(todayDate, []):
+            cardId = int(activity["offerId"][-1:])
             try:
                 if activity["complete"] is False:
-                    cardId = int(activity["offerId"][-1:])
                     # Open the Daily Set activity
                     self.activities.openDailySetActivity(cardId)
                     if activity["promotionType"] == "urlreward":
@@ -85,8 +85,8 @@ class DailySet:
                                     # Default to completing quiz
                                     self.activities.completeQuiz()
             except Exception:  # pylint: disable=broad-except
-                logging.error("[DAILY SET] Error Daily Set", exc_info=True)
+                logging.error(f"[DAILY SET] Error Daily Set of card {cardId}", exc_info=True)
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
-                return
+                continue
         logging.info("[DAILY SET] Completed the Daily Set successfully !")

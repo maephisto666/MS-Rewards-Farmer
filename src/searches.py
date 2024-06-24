@@ -78,12 +78,13 @@ class Searches:
         del searchTerms[wordsCount : (len(searchTerms) + 1)]
         return searchTerms
 
-    def getRelatedTerms(self, word: str) -> list[str]:
+    def getRelatedTerms(self, term: str) -> list[str]:
         # Function to retrieve related terms from Bing API
-        return requests.get(
-            f"https://api.bing.com/osjson.aspx?query={word}",
-            headers={"User-agent": self.browser.userAgent},
-        ).json()[1]
+        relatedTerms: list[str] = requests.get(f"https://api.bing.com/osjson.aspx?query={term}",
+                             headers={"User-agent": self.browser.userAgent}, ).json()[1]
+        if not relatedTerms:
+            return [term]
+        return relatedTerms
 
     def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0) -> int:
         # Function to perform Bing searches

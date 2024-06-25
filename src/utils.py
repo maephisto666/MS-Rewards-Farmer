@@ -169,7 +169,7 @@ class Utils:
             self.webdriver.find_element(By.ID, "bnp_btn_accept").click()
             time.sleep(2)
 
-    def switchToNewTab(self, timeToWait: int = 0) -> None:
+    def switchToNewTab(self, timeToWait: float = 0) -> None:
         time.sleep(0.5)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[1])
         if timeToWait > 0:
@@ -181,7 +181,7 @@ class Utils:
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[0])
         time.sleep(0.5)
 
-    def visitNewTab(self, timeToWait: int = 0) -> None:
+    def visitNewTab(self, timeToWait: float = 0) -> None:
         self.switchToNewTab(timeToWait)
         self.closeCurrentTab()
 

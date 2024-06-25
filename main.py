@@ -213,7 +213,6 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         logging.info(
             f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
         )
-        # todo - make quicker if done
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()

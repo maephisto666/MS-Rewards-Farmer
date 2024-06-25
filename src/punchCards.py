@@ -76,7 +76,6 @@ class PunchCards:
                 self.browser.utils.resetTabs()
                 return
         logging.info("[PUNCH CARDS] Completed the Punch Cards successfully !")
-        self.webdriver.get(BASE_URL)
 
     def completePromotionalItems(self):
         # Function to complete promotional items

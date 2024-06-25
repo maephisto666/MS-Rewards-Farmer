@@ -79,7 +79,7 @@ class ReadToEarn:
             newbalance = r.json().get("response").get("balance")
             if newbalance == balance:
                 logging.info("[READ TO EARN] Read All Available Articles !")
-                break;
+                break
             else:
                 logging.info("[READ TO EARN] Read Article " + str(i+1))
                 balance = newbalance

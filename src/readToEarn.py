@@ -49,7 +49,7 @@ class ReadToEarn:
         # Get Referer URL from webdriver
         self.webdriver.get(authorization_url)
         while True:
-            logging.info("[Read to Earn] - Waiting for Login")
+            logging.info("[READ TO EARN] - Waiting for Login")
             if self.webdriver.current_url[:48] == "https://login.live.com/oauth20_desktop.srf?code=":
                 redirect_response = self.webdriver.current_url
                 break
@@ -58,7 +58,7 @@ class ReadToEarn:
         time.sleep(Utils.randomSeconds(10, 15))
         self.browser.utils.closeCurrentTab()
         
-        logging.info("[READ TO EARN] - Logged-in successfully !")
+        logging.info("[READ TO EARN] Logged-in successfully !")
         # Use returned URL to create a token
         token = mobileApp.fetch_token(token_url, authorization_response=redirect_response,include_client_id=True)
         
@@ -81,10 +81,10 @@ class ReadToEarn:
             r = mobileApp.post("https://prod.rewardsplatform.microsoft.com/dapi/me/activities",json=json_data)
             newbalance = r.json().get("response").get("balance")
             if newbalance == balance:
-                logging.info("[READ TO EARN] - Read All Available Articles !")
+                logging.info("[READ TO EARN] Read All Available Articles !")
                 break;
             else:
-                logging.info("[READ TO EARN] - Read Article " + str(i+1))
+                logging.info("[READ TO EARN] Read Article " + str(i+1))
                 balance = newbalance
                 time.sleep(random.randint(10, 20))
         

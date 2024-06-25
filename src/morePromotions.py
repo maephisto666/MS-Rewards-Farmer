@@ -4,6 +4,7 @@ from src.browser import Browser
 from .activities import Activities
 
 
+# todo Rename MoreActivities?
 class MorePromotions:
     def __init__(self, browser: Browser):
         self.browser = browser

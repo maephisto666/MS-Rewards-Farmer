@@ -86,4 +86,4 @@ class DailySet:
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
                 continue
-        logging.info("[DAILY SET] Completed the Daily Set successfully !")
+        logging.info("[DAILY SET] Exiting")

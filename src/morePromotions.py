@@ -57,4 +57,4 @@ class MorePromotions:
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
                 continue
-        logging.info("[MORE PROMOS] Completed More Promotions successfully !")
+        logging.info("[MORE PROMOS] Exiting")

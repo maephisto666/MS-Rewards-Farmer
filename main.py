@@ -218,7 +218,6 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()
         # VersusGame(desktopBrowser).completeVersusGame()
-        utils.goHome()
         remainingSearches = utils.getRemainingSearches()
 
         if remainingSearches.desktop != 0:
@@ -226,7 +225,6 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
                 desktopBrowser, remainingSearches
             ).bingSearches(remainingSearches.desktop)
 
-        utils.goHome()
         goalPoints = utils.getGoalPoints()
         goalTitle = utils.getGoalTitle()
 
@@ -240,7 +238,6 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
                 mobileBrowser, remainingSearches
             ).bingSearches(remainingSearches.mobile)
 
-            utils.goHome()
             goalPoints = utils.getGoalPoints()
             goalTitle = utils.getGoalTitle()
 

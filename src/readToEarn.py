@@ -76,7 +76,6 @@ class ReadToEarn:
         balance = 0
         # 10 is the most points you can get
         for i in range(10):
-            logging.info("[READ TO EARN] - Reading Article " + str(i+1))
             # Replace ID with a random value so get credit for a new article
             json_data['id'] = secrets.token_hex(64)
             r = mobileApp.post("https://prod.rewardsplatform.microsoft.com/dapi/me/activities",json=json_data)
@@ -85,6 +84,7 @@ class ReadToEarn:
                 logging.info("[READ TO EARN] - Read All Available Articles !")
                 break;
             else:
+                logging.info("[READ TO EARN] - Read Article " + str(i+1))
                 balance = newbalance
                 time.sleep(random.randint(10, 20))
         

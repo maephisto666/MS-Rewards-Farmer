@@ -20,6 +20,7 @@ from src import (
     MorePromotions,
     PunchCards,
     Searches,
+    ReadToEarn,
 )
 from src.loggingColoredFormatter import ColoredFormatter
 from src.utils import Utils
@@ -208,6 +209,7 @@ def executeBot(currentAccount, args: argparse.Namespace):
         logging.info(
             f"[POINTS] You have {utils.formatNumber(accountPointsCounter)} points on your account"
         )
+        ReadToEarn(desktopBrowser).completeReadToEarn(startingPoints)
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()

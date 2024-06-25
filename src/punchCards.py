@@ -74,8 +74,8 @@ class PunchCards:
             except Exception:  # pylint: disable=broad-except
                 logging.error("[PUNCH CARDS] Error Punch Cards", exc_info=True)
                 self.browser.utils.resetTabs()
-                return
-        logging.info("[PUNCH CARDS] Completed the Punch Cards successfully !")
+                continue
+        logging.info("[PUNCH CARDS] Exiting")
 
     def completePromotionalItems(self):
         # Function to complete promotional items

@@ -53,7 +53,7 @@ class ReadToEarn:
                 redirect_response = self.webdriver.current_url
                 break
             time.sleep(1)
-        
+        self.browser.utils.closeCurrentTab()
         logging.info("[READ TO EARN] - Logged-in successfully !")
         # Use returned URL to create a token
         token = mobileApp.fetch_token(token_url, authorization_response=redirect_response,include_client_id=True)

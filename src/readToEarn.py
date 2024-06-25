@@ -25,7 +25,7 @@ class ReadToEarn:
         self.webdriver = browser.webdriver
         self.activities = Activities(browser)
     
-    def completeReadToEarn(self):
+    def completeReadToEarn(self,startingPoints):
         
         logging.info("[READ TO EARN] " + "Trying to complete Read to Earn...")
            
@@ -70,7 +70,7 @@ class ReadToEarn:
                 },
             }
 
-        balance = 0
+        balance = startingPoints
         # 10 is the most points you can get
         for i in range(10):
             # Replace ID with a random value so get credit for a new article

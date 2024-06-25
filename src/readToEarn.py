@@ -59,7 +59,7 @@ class ReadToEarn:
         # Use returned URL to create a token
         token = mobileApp.fetch_token(token_url, authorization_response=redirect_response,include_client_id=True)
         
-        # json data to confirm an article is run
+        # json data to confirm an article is read
         json_data = {
             'amount': 1,
             'country': 'us',
@@ -71,7 +71,7 @@ class ReadToEarn:
             }
 
         balance = startingPoints
-        # 10 is the most points you can get
+        # 10 is the most articles you can read. Sleep time is a guess, not tuned
         for i in range(10):
             # Replace ID with a random value so get credit for a new article
             json_data['id'] = secrets.token_hex(64)

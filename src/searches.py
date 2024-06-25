@@ -92,7 +92,7 @@ class Searches:
             f"[BING] Starting {self.browser.browserType.capitalize()} Edge Bing searches..."
         )
 
-        self.webdriver.get("https://bing.com")
+        self.browser.utils.goHome()
 
         # todo Make sure rewards quiz is done
 

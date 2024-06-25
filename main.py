@@ -209,10 +209,10 @@ def executeBot(currentAccount, args: argparse.Namespace):
         logging.info(
             f"[POINTS] You have {utils.formatNumber(accountPointsCounter)} points on your account"
         )
+        ReadToEarn(desktopBrowser).completeReadToEarn()
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()
-        ReadToEarn(desktopBrowser).completeReadToEarn()
         # VersusGame(desktopBrowser).completeVersusGame()
         (
             remainingSearches,

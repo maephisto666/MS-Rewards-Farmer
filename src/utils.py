@@ -17,7 +17,8 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 from typing_extensions import deprecated
 
-from .constants import BASE_URL
+from .constants import REWARDS_URL
+from .constants import SEARCH_URL
 
 
 class RemainingSearches(NamedTuple):
@@ -90,11 +91,15 @@ class Utils:
 
         self.webdriver.switch_to.window(curr)
         time.sleep(0.5)
-        self.goHome()
+        self.goToRewards()
 
-    def goHome(self) -> None:
-        self.webdriver.get(BASE_URL)
-        assert self.webdriver.current_url == BASE_URL
+    def goToRewards(self) -> None:
+        self.webdriver.get(REWARDS_URL)
+        assert self.webdriver.current_url == REWARDS_URL
+
+    def goToSearch(self) -> None:
+        self.webdriver.get(SEARCH_URL)
+        # assert self.webdriver.current_url == SEARCH_URL, f"{self.webdriver.current_url} {SEARCH_URL}"
 
     @staticmethod
     def getAnswerCode(key: str, string: str) -> str:
@@ -103,7 +108,7 @@ class Utils:
         return str(t)
 
     def getDashboardData(self) -> dict:
-        self.goHome()
+        self.goToRewards()
         return self.webdriver.execute_script("return dashboard")
 
     @deprecated("This seems buggy")

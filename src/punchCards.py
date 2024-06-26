@@ -7,7 +7,7 @@ import urllib.parse
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
-from .constants import BASE_URL
+from .constants import REWARDS_URL
 
 
 class PunchCards:
@@ -82,7 +82,7 @@ class PunchCards:
         with contextlib.suppress(Exception):
             item = self.browser.utils.getDashboardData()["promotionalItem"]
             destUrl = urllib.parse.urlparse(item["destinationUrl"])
-            baseUrl = urllib.parse.urlparse(BASE_URL)
+            baseUrl = urllib.parse.urlparse(REWARDS_URL)
             if (
                 (item["pointProgressMax"] in [100, 200, 500])
                 and not item["complete"]

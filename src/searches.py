@@ -92,7 +92,7 @@ class Searches:
             f"[BING] Starting {self.browser.browserType.capitalize()} Edge Bing searches..."
         )
 
-        self.browser.utils.goHome()
+        self.browser.utils.goToSearch()
 
         # todo Make sure rewards quiz is done
 

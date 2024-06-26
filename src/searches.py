@@ -80,8 +80,10 @@ class Searches:
 
     def getRelatedTerms(self, term: str) -> list[str]:
         # Function to retrieve related terms from Bing API
-        relatedTerms: list[str] = requests.get(f"https://api.bing.com/osjson.aspx?query={term}",
-                             headers={"User-agent": self.browser.userAgent}, ).json()[1]
+        relatedTerms: list[str] = requests.get(
+            f"https://api.bing.com/osjson.aspx?query={term}",
+            headers={"User-agent": self.browser.userAgent},
+        ).json()[1]
         if not relatedTerms:
             return [term]
         return relatedTerms

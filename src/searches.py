@@ -126,12 +126,23 @@ class Searches:
         logging.debug(f"passedInTerm={passedInTerm}")
 
         for i in range(self.maxAttempts):
-            searchbar = self.browser.utils.waitUntilVisible(By.ID, "sb_form_q")
-            searchbar.clear()
-            term = next(termsCycle)
-            logging.debug(f"term={term}")
-            searchbar.send_keys(term)
-            assert searchbar.get_attribute("value") == term
+            searchbar = self.browser.utils.waitUntilVisible(
+                By.ID, "sb_form_q", timeToWait=20
+            )
+
+            for _ in range(100):
+                searchbar.clear()
+                term = next(termsCycle)
+                logging.debug(f"term={term}")
+                searchbar.send_keys(term)
+                try:
+                    assert searchbar.get_attribute("value") == term
+                except AssertionError:
+                    logging.debug('searchbar.get_attribute("value") != term')
+                    time.sleep(2)
+                    continue
+                break
+
             searchbar.submit()
 
             pointsAfter = self.getAccountPoints()

@@ -18,11 +18,15 @@ class MorePromotions:
         ]
         for promotion in morePromotions:
             try:
+                promotionTitle = promotion["title"]
+                logging.debug(f"promotionTitle={promotionTitle}")
                 # Open the activity for the promotion
                 if (
                     promotion["complete"] is not False
                     or promotion["pointProgressMax"] == 0
                 ):
+                    logging.debug("Already done, continuing")
+                    # todo Handle special "Quote of the day" which is falsely complete
                     continue
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)

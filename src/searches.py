@@ -135,11 +135,11 @@ class Searches:
                 term = next(termsCycle)
                 logging.debug(f"term={term}")
                 searchbar.send_keys(term)
+                time.sleep(2)
                 try:
                     assert searchbar.get_attribute("value") == term
                 except AssertionError:
                     logging.debug('searchbar.get_attribute("value") != term')
-                    time.sleep(2)
                     continue
                 break
 

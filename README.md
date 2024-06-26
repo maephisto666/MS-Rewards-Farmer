@@ -124,3 +124,4 @@
 
 - [ ] Complete "Read To Earn" (30 pts)
 - [ ] Setup flags for mobile/desktop search only
+- [ ] Provide Windows Task Scheduler config

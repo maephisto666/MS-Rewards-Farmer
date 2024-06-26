@@ -8,6 +8,7 @@ from typing import Any, Type
 import ipapi
 import seleniumwire.undetected_chromedriver as webdriver
 import undetected_chromedriver
+from ipapi.exceptions import RateLimited
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
 
@@ -199,7 +200,11 @@ class Browser:
     @staticmethod
     def getCCodeLang(lang: str, geo: str) -> tuple:
         if lang is None or geo is None:
-            nfo = ipapi.location()
+            try:
+                nfo = ipapi.location()
+            except RateLimited:
+                logging.warning("", exc_info=True)
+                return "en", "US"
             if isinstance(nfo, dict):
                 if lang is None:
                     lang = nfo["languages"].split(",")[0].split("-")[0]

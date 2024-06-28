@@ -4,7 +4,7 @@ import logging
 import time
 from argparse import Namespace
 
-from selenium.common import NoSuchElementException, TimeoutException
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome
 
@@ -44,12 +44,12 @@ class Login:
         assert emailField.get_attribute("value") == self.browser.username
         self.webdriver.find_element(By.ID, "idSIButton9").click()
 
-        isTwoFactorEnabled = False
-        try:
+        # noinspection PyUnusedLocal
+        isTwoFactorEnabled: bool = False
+        with contextlib.suppress(TimeoutException):
             self.utils.waitUntilVisible(By.ID, "pushNotificationsTitle", 10)
             isTwoFactorEnabled = True
-        except NoSuchElementException:
-            logging.info("2FA not enabled")
+        logging.debug(f"isTwoFactorEnabled = {isTwoFactorEnabled}")
 
         if isTwoFactorEnabled:
             # todo - Handle 2FA when running headless

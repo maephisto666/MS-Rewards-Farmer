@@ -122,6 +122,7 @@
 
 ## To Do List (When time permits or someone makes a PR)
 
-- [ ] Complete "Read To Earn" (30 pts)
+- [x] Complete "Read To Earn" (30 pts)
 - [ ] Setup flags for mobile/desktop search only
+- [ ] Setup flags to load config / save data in working directory 
 - [ ] Provide Windows Task Scheduler config

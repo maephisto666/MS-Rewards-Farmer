@@ -203,7 +203,7 @@ class Browser:
             try:
                 nfo = ipapi.location()
             except RateLimited:
-                logging.warning("", exc_info=True)
+                logging.warning("Returning default", exc_info=True)
                 return "en", "US"
             if isinstance(nfo, dict):
                 if lang is None:

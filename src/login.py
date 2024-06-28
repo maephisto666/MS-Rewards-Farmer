@@ -1,7 +1,6 @@
 import argparse
 import contextlib
 import logging
-import time
 from argparse import Namespace
 
 from selenium.common import TimeoutException
@@ -35,19 +34,18 @@ class Login:
         return self.utils.getAccountPoints()
 
     def executeLogin(self) -> None:
-        self.utils.waitUntilVisible(By.ID, "i0116", 10)
+        self.utils.waitUntilVisible(By.ID, "i0116")
 
-        emailField = self.utils.waitUntilClickable(By.NAME, "loginfmt", 10)
+        emailField = self.utils.waitUntilClickable(By.NAME, "loginfmt")
         logging.info("[LOGIN] Entering email...")
         emailField.send_keys(self.browser.username)
-        time.sleep(3)
         assert emailField.get_attribute("value") == self.browser.username
-        self.webdriver.find_element(By.ID, "idSIButton9").click()
+        self.utils.waitUntilClickable(By.ID, "idSIButton9").click()
 
         # noinspection PyUnusedLocal
         isTwoFactorEnabled: bool = False
         with contextlib.suppress(TimeoutException):
-            self.utils.waitUntilVisible(By.ID, "pushNotificationsTitle", 10)
+            self.utils.waitUntilVisible(By.ID, "pushNotificationsTitle")
             isTwoFactorEnabled = True
         logging.debug(f"isTwoFactorEnabled = {isTwoFactorEnabled}")
 
@@ -56,28 +54,28 @@ class Login:
             assert (
                 self.args.visible
             ), "2FA detected, run in visible mode to handle login"
-            while True:
-                print(
-                    "2FA detected, handle prompts and press enter when on rewards portal to continue"
-                )
-                input()
-                with contextlib.suppress(TimeoutException):
-                    self.utils.waitUntilVisible(
-                        By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
-                    )
-                    break
-                print("Rewards portal not accessible, waiting until next attempt")
-        else:
-            passwordField = self.utils.waitUntilClickable(By.NAME, "passwd", 10)
-            enterPasswordButton = self.utils.waitUntilClickable(
-                By.ID, "idSIButton9", 10
+            print(
+                "2FA detected, handle prompts and press enter when on keep me signed in page"
             )
+            input()
+
+            with contextlib.suppress(TimeoutException):  # In case user clicked stay signed in
+                self.utils.waitUntilVisible(
+                    By.NAME, "kmsiForm"
+                )  # kmsi = keep me signed form
+                self.utils.waitUntilClickable(By.ID, "acceptButton").click()
+        else:
+            passwordField = self.utils.waitUntilClickable(By.NAME, "passwd")
             logging.info("[LOGIN] Entering password...")
             passwordField.send_keys(self.browser.password)
-            time.sleep(3)
             assert passwordField.get_attribute("value") == self.browser.password
-            enterPasswordButton.click()
+            self.utils.waitUntilClickable(By.ID, "idSIButton9").click()
+
+            self.utils.waitUntilVisible(
+                By.NAME, "kmsiForm"
+            )  # kmsi = keep me signed form
+            self.utils.waitUntilClickable(By.ID, "acceptButton").click()
 
         self.utils.waitUntilVisible(
-            By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
+            By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]'
         )

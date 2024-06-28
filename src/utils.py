@@ -15,7 +15,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
-from typing_extensions import deprecated
 
 from .constants import REWARDS_URL
 from .constants import SEARCH_URL
@@ -111,9 +110,8 @@ class Utils:
         self.goToRewards()
         return self.webdriver.execute_script("return dashboard")
 
-    @deprecated("This seems buggy")
     def getBingInfo(self) -> Any:
-        cookieJar = self.webdriver.get_cookies()
+        cookieJar = WebDriverWait(self.webdriver, timeout=20).until(lambda d: d.get_cookies())
         cookies = {cookie["name"]: cookie["value"] for cookie in cookieJar}
         response = requests.get(
             "https://www.bing.com/rewards/panelflyout/getuserinfo",

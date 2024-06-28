@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import random
 import time
@@ -79,7 +78,7 @@ class PunchCards:
 
     def completePromotionalItems(self):
         # Function to complete promotional items
-        with contextlib.suppress(Exception):
+        try:
             item = self.browser.utils.getDashboardData()["promotionalItem"]
             destUrl = urllib.parse.urlparse(item["destinationUrl"])
             baseUrl = urllib.parse.urlparse(REWARDS_URL)
@@ -99,3 +98,5 @@ class PunchCards:
                     By.XPATH, '//*[@id="promo-item"]/section/div/div/div/span'
                 ).click()
                 self.browser.utils.visitNewTab(8)
+        except Exception:
+            logging.debug("", exc_info=True)

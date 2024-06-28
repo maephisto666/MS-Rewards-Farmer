@@ -1,6 +1,7 @@
 import contextlib
 import json
 import locale as pylocale
+import logging
 import time
 from argparse import Namespace
 from pathlib import Path
@@ -156,6 +157,7 @@ class Utils:
             try:
                 elements = self.webdriver.find_elements(by=button[0], value=button[1])
             except NoSuchElementException:  # Expected?
+                logging.debug("", exc_info=True)
                 continue
             for element in elements:
                 element.click()

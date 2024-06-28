@@ -88,7 +88,7 @@
 
   `(ex: http://user:pass@host:port)`
 
-- -cv/--chromeversion to use a specifiv version of chrome
+- -cv/--chromeversion to use a specific version of chrome
 
   `(ex: 118)`
 
@@ -124,4 +124,4 @@
 
 - [x] Complete "Read To Earn" (30 pts)
 - [ ] Setup flags for mobile/desktop search only
-- [ ] Setup flags to load config / save data in working directory 
+- [ ] Setup flags to load config / save data in working directory

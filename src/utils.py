@@ -128,9 +128,10 @@ class Utils:
             "https://www.bing.com/rewards/panelflyout/getuserinfo"
         )
         assert response.status_code == requests.codes.ok
-        return response.json()
+        return response.json()["userInfo"]
 
     def isLoggedIn(self) -> bool:
+        # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred
         self.webdriver.get(
             "https://rewards.bing.com/Signin/"
         )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
@@ -141,9 +142,8 @@ class Utils:
             return True
         return False
 
-    # todo - See if faster, but reliable, way to get this information that doesn't change page
     def getAccountPoints(self) -> int:
-        return self.getDashboardData()["userStatus"]["availablePoints"]
+        return self.getBingInfo()["balance"]
 
     def getGoalPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]

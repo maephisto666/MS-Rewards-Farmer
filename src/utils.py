@@ -95,7 +95,9 @@ class Utils:
 
     def goToRewards(self) -> None:
         self.webdriver.get(REWARDS_URL)
-        assert self.webdriver.current_url == REWARDS_URL
+        assert (
+            self.webdriver.current_url == REWARDS_URL
+        ), f"{self.webdriver.current_url} {REWARDS_URL}"
 
     def goToSearch(self) -> None:
         self.webdriver.get(SEARCH_URL)

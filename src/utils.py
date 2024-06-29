@@ -101,7 +101,9 @@ class Utils:
 
     def goToSearch(self) -> None:
         self.webdriver.get(SEARCH_URL)
-        # assert self.webdriver.current_url == SEARCH_URL, f"{self.webdriver.current_url} {SEARCH_URL}"
+        # assert (
+        #     self.webdriver.current_url == SEARCH_URL
+        # ), f"{self.webdriver.current_url} {SEARCH_URL}"  # need regex: AssertionError: https://www.bing.com/?toWww=1&redig=A5B72363182B49DEBB7465AD7520FDAA https://bing.com/
 
     @staticmethod
     def getAnswerCode(key: str, string: str) -> str:

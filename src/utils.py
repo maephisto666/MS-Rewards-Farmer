@@ -120,11 +120,12 @@ class Utils:
             self.webdriver.get(urlBefore)
 
     def getBingInfo(self) -> Any:
-        cookieJar = WebDriverWait(self.webdriver, timeout=20).until(lambda d: d.get_cookies())
-        cookies = {cookie["name"]: cookie["value"] for cookie in cookieJar}
-        response = requests.get(
-            "https://www.bing.com/rewards/panelflyout/getuserinfo",
-            cookies=cookies,
+        session = requests.Session()
+        for cookie in self.webdriver.get_cookies():
+            session.cookies.set(cookie["name"], cookie["value"])
+
+        response = session.get(
+            "https://www.bing.com/rewards/panelflyout/getuserinfo"
         )
         assert response.status_code == requests.codes.ok
         return response.json()

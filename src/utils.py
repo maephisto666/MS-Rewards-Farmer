@@ -112,8 +112,12 @@ class Utils:
         return str(t)
 
     def getDashboardData(self) -> dict:
-        self.goToRewards()
-        return self.webdriver.execute_script("return dashboard")
+        urlBefore = self.webdriver.current_url
+        try:
+            self.goToRewards()
+            return self.webdriver.execute_script("return dashboard")
+        finally:
+            self.webdriver.get(urlBefore)
 
     def getBingInfo(self) -> Any:
         cookieJar = WebDriverWait(self.webdriver, timeout=20).until(lambda d: d.get_cookies())

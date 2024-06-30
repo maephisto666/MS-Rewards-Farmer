@@ -37,7 +37,10 @@ class Searches:
         self.browser = browser
         self.webdriver = browser.webdriver
 
-        self.googleTrendsShelf: shelve.Shelf = shelve.open("google_trends")
+        self.googleTrendsShelf: shelve.Shelf = shelve.open(
+            (Utils.getProjectRoot() / "google_trends").__str__()
+        )
+        logging.debug(f"googleTrendsShelf.__dict__ = {self.googleTrendsShelf.__dict__}")
         logging.debug(f"google_trends = {list(self.googleTrendsShelf.items())}")
         loadDate: date | None = None
         if LOAD_DATE_KEY in self.googleTrendsShelf:

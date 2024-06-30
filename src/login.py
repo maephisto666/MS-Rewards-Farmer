@@ -21,7 +21,7 @@ class Login:
         self.utils = browser.utils
         self.args = args
 
-    def login(self) -> int:
+    def login(self) -> None:
         if self.utils.isLoggedIn():
             logging.info("[LOGIN] Already logged-in")
         else:
@@ -30,8 +30,6 @@ class Login:
             logging.info("[LOGIN] Logged-in successfully !")
 
         assert self.utils.isLoggedIn()
-
-        return self.utils.getAccountPoints()
 
     def executeLogin(self) -> None:
         self.utils.waitUntilVisible(By.ID, "i0116")

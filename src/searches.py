@@ -116,7 +116,7 @@ class Searches:
 
     def bingSearch(self, term: str) -> int:
         # Function to perform a single Bing search
-        pointsBefore = self.getAccountPoints()
+        pointsBefore = self.browser.utils.getAccountPoints()
 
         terms = self.getRelatedTerms(term)
         logging.debug(f"terms={terms}")
@@ -135,7 +135,7 @@ class Searches:
                 term = next(termsCycle)
                 logging.debug(f"term={term}")
                 searchbar.send_keys(term)
-                time.sleep(2)
+                time.sleep(4)
                 try:
                     assert searchbar.get_attribute("value") == term
                 except AssertionError:
@@ -145,7 +145,7 @@ class Searches:
 
             searchbar.submit()
 
-            pointsAfter = self.getAccountPoints()
+            pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
                 del self.googleTrendsShelf[passedInTerm]
                 return pointsAfter
@@ -174,6 +174,3 @@ class Searches:
         self.googleTrendsShelf[passedInTerm] = None
 
         return pointsBefore
-
-    def getAccountPoints(self) -> int:
-        return self.browser.utils.getBingInfo()["userInfo"]["balance"]

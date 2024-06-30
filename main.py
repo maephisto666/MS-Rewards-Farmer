@@ -223,9 +223,10 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         remainingSearches = utils.getRemainingSearches()
 
         if remainingSearches.desktop != 0:
+            # todo Add with support here so shelve closing is better
             accountPointsCounter = Searches(
                 desktopBrowser, remainingSearches
-            ).bingSearches(remainingSearches.desktop)
+            ).bingSearches(remainingSearches.desktop)  # todo Seems redundant
 
         goalPoints = utils.getGoalPoints()
         goalTitle = utils.getGoalTitle()

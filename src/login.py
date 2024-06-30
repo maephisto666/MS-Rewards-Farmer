@@ -76,6 +76,18 @@ class Login:
             )  # kmsi = keep me signed form
             self.utils.waitUntilClickable(By.ID, "acceptButton").click()
 
+        isAskingToProtect = self.utils.checkIfTextPresentAfterDelay('protect your account')
+        logging.debug(f"isAskingToProtect = {isAskingToProtect}")
+
+        if isTwoFactorEnabled:
+            assert (
+                self.args.visible
+            ), "Account protection detected, run in visible mode to handle login"
+            print(
+                "Account protection detected, handle prompts and press enter when on rewards page"
+            )
+            input()
+
         self.utils.waitUntilVisible(
             By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]'
         )

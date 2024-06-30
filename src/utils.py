@@ -103,11 +103,15 @@ class Utils:
 
     def goToRewards(self) -> None:
         self.webdriver.get(REWARDS_URL)
-        assert self.webdriver.current_url == REWARDS_URL
+        assert (
+            self.webdriver.current_url == REWARDS_URL
+        ), f"{self.webdriver.current_url} {REWARDS_URL}"
 
     def goToSearch(self) -> None:
         self.webdriver.get(SEARCH_URL)
-        # assert self.webdriver.current_url == SEARCH_URL, f"{self.webdriver.current_url} {SEARCH_URL}"
+        # assert (
+        #     self.webdriver.current_url == SEARCH_URL
+        # ), f"{self.webdriver.current_url} {SEARCH_URL}"  # need regex: AssertionError: https://www.bing.com/?toWww=1&redig=A5B72363182B49DEBB7465AD7520FDAA https://bing.com/
 
     @staticmethod
     def getAnswerCode(key: str, string: str) -> str:
@@ -116,20 +120,26 @@ class Utils:
         return str(t)
 
     def getDashboardData(self) -> dict:
-        self.goToRewards()
-        return self.webdriver.execute_script("return dashboard")
+        urlBefore = self.webdriver.current_url
+        try:
+            self.goToRewards()
+            return self.webdriver.execute_script("return dashboard")
+        finally:
+            self.webdriver.get(urlBefore)
 
     def getBingInfo(self) -> Any:
-        cookieJar = WebDriverWait(self.webdriver, timeout=20).until(lambda d: d.get_cookies())
-        cookies = {cookie["name"]: cookie["value"] for cookie in cookieJar}
-        response = requests.get(
-            "https://www.bing.com/rewards/panelflyout/getuserinfo",
-            cookies=cookies,
+        session = requests.Session()
+        for cookie in self.webdriver.get_cookies():
+            session.cookies.set(cookie["name"], cookie["value"])
+
+        response = session.get(
+            "https://www.bing.com/rewards/panelflyout/getuserinfo"
         )
         assert response.status_code == requests.codes.ok
-        return response.json()
+        return response.json()["userInfo"]
 
     def isLoggedIn(self) -> bool:
+        # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred
         self.webdriver.get(
             "https://rewards.bing.com/Signin/"
         )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
@@ -140,9 +150,8 @@ class Utils:
             return True
         return False
 
-    # todo - See if faster, but reliable, way to get this information that doesn't change page
     def getAccountPoints(self) -> int:
-        return self.getDashboardData()["userStatus"]["availablePoints"]
+        return self.getBingInfo()["balance"]
 
     def getGoalPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]

@@ -168,8 +168,7 @@ class Searches:
         # update - Seems like account points aren't refreshing correctly see
         logging.error("[BING] Reached max search attempt retries")
 
-        # move failing term to end of list
-        logging.debug("Moving term to end of list")
+        logging.debug("Moving passedInTerm to end of list")
         del self.googleTrendsShelf[passedInTerm]
         self.googleTrendsShelf[passedInTerm] = None
 

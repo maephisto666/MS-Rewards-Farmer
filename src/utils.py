@@ -71,7 +71,7 @@ class Utils:
         self, by: str, selector: str, timeToWait: float = 10
     ) -> WebElement:
         return WebDriverWait(self.webdriver, timeToWait).until(
-            ec.visibility_of_element_located((by, selector))
+            ec.element_to_be_clickable((by, selector))
         )
 
     def checkIfTextPresentAfterDelay(

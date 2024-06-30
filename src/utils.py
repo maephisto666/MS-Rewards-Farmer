@@ -3,6 +3,7 @@ import json
 import locale as pylocale
 import logging
 import time
+import re
 from argparse import Namespace
 from pathlib import Path
 from typing import NamedTuple, Any
@@ -65,13 +66,20 @@ class Utils:
         return WebDriverWait(self.webdriver, timeToWait).until(
             ec.visibility_of_element_located((by, selector))
         )
-
+    
     def waitUntilClickable(
         self, by: str, selector: str, timeToWait: float = 10
     ) -> WebElement:
         return WebDriverWait(self.webdriver, timeToWait).until(
             ec.element_to_be_clickable((by, selector))
         )
+
+    def checkIfTextPresentAfterDelay(
+        self, text: str, timeToWait: float = 10
+    ) -> bool:
+        time.sleep(timeToWait)
+        text_found = re.search(text, self.webdriver.page_source)
+        return text_found is not None
 
     def waitUntilQuestionRefresh(self) -> WebElement:
         return self.waitUntilVisible(By.CLASS_NAME, "rqECredits", timeToWait=20)

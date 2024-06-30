@@ -77,7 +77,7 @@ class Login:
         isAskingToProtect = self.utils.checkIfTextPresentAfterDelay('protect your account')
         logging.debug(f"isAskingToProtect = {isAskingToProtect}")
 
-        if isTwoFactorEnabled:
+        if isAskingToProtect:
             assert (
                 self.args.visible
             ), "Account protection detected, run in visible mode to handle login"

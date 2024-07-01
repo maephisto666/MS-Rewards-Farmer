@@ -141,7 +141,7 @@ class Searches:
             searchbar = self.browser.utils.waitUntilClickable(
                 By.ID, "sb_form_q", timeToWait=20
             )
-            for _ in range(10):
+            for _ in range(100):
                 searchbar.click()
                 searchbar.clear()
                 term = next(termsCycle)

@@ -129,12 +129,17 @@ class Utils:
 
     def getBingInfo(self) -> Any:
         session = requests.Session()
+        retries = Retry(total=5,
+                        backoff_factor=0.1,
+                        status_forcelist=[500, 502, 503, 504])
+        session.mount('http://',
+                      HTTPAdapter(max_retries=retries))  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+
         for cookie in self.webdriver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
 
-        response = session.get(
-            "https://www.bing.com/rewards/panelflyout/getuserinfo"
-        )
+        response = session.get("https://www.bing.com/rewards/panelflyout/getuserinfo")
+
         assert response.status_code == requests.codes.ok
         return response.json()["userInfo"]
 

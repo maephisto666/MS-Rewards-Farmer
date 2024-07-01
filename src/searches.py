@@ -1,3 +1,4 @@
+import dbm.dumb
 import json
 import logging
 import random
@@ -37,9 +38,8 @@ class Searches:
         self.browser = browser
         self.webdriver = browser.webdriver
 
-        self.googleTrendsShelf: shelve.Shelf = shelve.open(
-            (Utils.getProjectRoot() / "google_trends").__str__()
-        )
+        dumbDbm = dbm.dumb.open((Utils.getProjectRoot() / "google_trends").__str__())
+        self.googleTrendsShelf: shelve.Shelf = shelve.Shelf(dumbDbm)
         logging.debug(f"googleTrendsShelf.__dict__ = {self.googleTrendsShelf.__dict__}")
         logging.debug(f"google_trends = {list(self.googleTrendsShelf.items())}")
         loadDate: date | None = None

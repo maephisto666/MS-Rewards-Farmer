@@ -235,7 +235,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
             utils = mobileBrowser.utils
             Login(mobileBrowser, args).login()
-            with Searches(desktopBrowser, remainingSearches) as searches:
+            with Searches(mobileBrowser, remainingSearches) as searches:
                 accountPointsCounter = searches.bingSearches(remainingSearches.mobile)  # todo Seems redundant
 
             goalPoints = utils.getGoalPoints()

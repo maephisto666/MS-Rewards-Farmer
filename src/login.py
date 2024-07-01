@@ -36,6 +36,7 @@ class Login:
 
         emailField = self.utils.waitUntilClickable(By.NAME, "loginfmt")
         logging.info("[LOGIN] Entering email...")
+        emailField.click()
         emailField.send_keys(self.browser.username)
         assert emailField.get_attribute("value") == self.browser.username
         self.utils.waitUntilClickable(By.ID, "idSIButton9").click()
@@ -57,7 +58,9 @@ class Login:
             )
             input()
 
-            with contextlib.suppress(TimeoutException):  # In case user clicked stay signed in
+            with contextlib.suppress(
+                TimeoutException
+            ):  # In case user clicked stay signed in
                 self.utils.waitUntilVisible(
                     By.NAME, "kmsiForm"
                 )  # kmsi = keep me signed form
@@ -65,6 +68,7 @@ class Login:
         else:
             passwordField = self.utils.waitUntilClickable(By.NAME, "passwd")
             logging.info("[LOGIN] Entering password...")
+            passwordField.click()
             passwordField.send_keys(self.browser.password)
             assert passwordField.get_attribute("value") == self.browser.password
             self.utils.waitUntilClickable(By.ID, "idSIButton9").click()
@@ -74,7 +78,9 @@ class Login:
             )  # kmsi = keep me signed form
             self.utils.waitUntilClickable(By.ID, "acceptButton").click()
 
-        isAskingToProtect = self.utils.checkIfTextPresentAfterDelay('protect your account')
+        isAskingToProtect = self.utils.checkIfTextPresentAfterDelay(
+            "protect your account"
+        )
         logging.debug(f"isAskingToProtect = {isAskingToProtect}")
 
         if isAskingToProtect:

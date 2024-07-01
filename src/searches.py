@@ -1,3 +1,4 @@
+import contextlib
 import dbm.dumb
 import json
 import logging
@@ -10,7 +11,10 @@ from itertools import cycle
 from typing import Final
 
 import requests
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.browser import Browser
 from src.utils import Utils, RemainingSearches
@@ -134,23 +138,25 @@ class Searches:
         logging.debug(f"passedInTerm={passedInTerm}")
 
         for i in range(self.maxAttempts):
-            searchbar = self.browser.utils.waitUntilVisible(
+            searchbar = self.browser.utils.waitUntilClickable(
                 By.ID, "sb_form_q", timeToWait=20
             )
-
-            for _ in range(100):
+            for _ in range(10):
+                searchbar.click()
                 searchbar.clear()
                 term = next(termsCycle)
                 logging.debug(f"term={term}")
                 searchbar.send_keys(term)
-                time.sleep(4)
-                try:
-                    assert searchbar.get_attribute("value") == term
-                except AssertionError:
-                    logging.debug('searchbar.get_attribute("value") != term')
-                    continue
-                break
-
+                with contextlib.suppress(TimeoutException):
+                    WebDriverWait(self.webdriver, 10).until(
+                        expected_conditions.text_to_be_present_in_element_value(
+                            (By.ID, "sb_form_q"), term
+                        )
+                    )
+                    break
+                logging.debug("error send_keys")
+            else:
+                raise TimeoutException
             searchbar.submit()
 
             pointsAfter = self.browser.utils.getAccountPoints()

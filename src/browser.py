@@ -52,16 +52,16 @@ class Browser:
         self.utils = Utils(self.webdriver)
         logging.debug("out __init__")
 
-    def __enter__(self) -> "Browser":
+    def __enter__(self):
         logging.debug("in __enter__")
         return self
 
     def __exit__(
-        self,
-        exc_type: Type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
+            self,
+            exc_type: Type[BaseException] | None,
+            exc_value: BaseException | None,
+            traceback: TracebackType | None,
+    ):
         # Cleanup actions when exiting the browser context
         logging.debug(
             f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}"

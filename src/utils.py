@@ -2,8 +2,8 @@ import contextlib
 import json
 import locale as pylocale
 import logging
-import time
 import re
+import time
 from argparse import Namespace
 from pathlib import Path
 from typing import NamedTuple, Any
@@ -11,12 +11,14 @@ from typing import NamedTuple, Any
 import requests
 import yaml
 from apprise import Apprise
+from requests.adapters import HTTPAdapter
 from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
+from urllib3 import Retry
 
 from .constants import REWARDS_URL
 from .constants import SEARCH_URL
@@ -64,19 +66,17 @@ class Utils:
         self, by: str, selector: str, timeToWait: float = 10
     ) -> WebElement:
         return WebDriverWait(self.webdriver, timeToWait).until(
-            ec.visibility_of_element_located((by, selector))
+            expected_conditions.visibility_of_element_located((by, selector))
         )
-    
+
     def waitUntilClickable(
         self, by: str, selector: str, timeToWait: float = 10
     ) -> WebElement:
         return WebDriverWait(self.webdriver, timeToWait).until(
-            ec.element_to_be_clickable((by, selector))
+            expected_conditions.element_to_be_clickable((by, selector))
         )
 
-    def checkIfTextPresentAfterDelay(
-        self, text: str, timeToWait: float = 10
-    ) -> bool:
+    def checkIfTextPresentAfterDelay(self, text: str, timeToWait: float = 10) -> bool:
         time.sleep(timeToWait)
         text_found = re.search(text, self.webdriver.page_source)
         return text_found is not None

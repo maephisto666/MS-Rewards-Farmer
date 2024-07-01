@@ -1,4 +1,5 @@
 import logging
+import time
 
 from src.browser import Browser
 from .activities import Activities
@@ -19,8 +20,7 @@ class MorePromotions:
         self.browser.utils.goToRewards()
         for promotion in morePromotions:
             try:
-                promotionTitle = promotion["title"]
-                logging.debug(f"promotionTitle={promotionTitle}")
+                logging.debug(f"promotion title={promotion['title']}")
                 # Open the activity for the promotion
                 if (
                     promotion["complete"] is not False
@@ -32,15 +32,25 @@ class MorePromotions:
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
-                if promotion["promotionType"] == "urlreward":
-                    if promotion["title"] == "Search the lyrics of a song":
-                        self.browser.webdriver.get(
-                            "https://www.bing.com/search?q=black+sabbath+supernaut+lyrics"
-                        )
-                    elif promotion["title"] == "Translate anything":
-                        self.browser.webdriver.get(
-                            "https://www.bing.com/search?q=translate+pencil+sharpener+to+spanish"
-                        )
+                if "Search the lyrics of a song" in promotion["title"]:
+                    self.browser.webdriver.get(
+                        "https://www.bing.com/search?q=black+sabbath+supernaut+lyrics"
+                    )
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
+                elif "Translate anything" in promotion["title"]:
+                    self.browser.webdriver.get(
+                        "https://www.bing.com/search?q=translate+pencil+sharpener+to+spanish"
+                    )
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
+                elif "Discover open job roles" in promotion["title"]:
+                    self.browser.webdriver.get(
+                        "https://www.bing.com/search?q=walmart+open+job+roles"
+                    )
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
+                elif promotion["promotionType"] == "urlreward":
                     # Complete search for URL reward
                     self.activities.completeSearch()
                 elif (

@@ -50,6 +50,12 @@ class MorePromotions:
                     )
                     time.sleep(2)
                     self.browser.utils.closeCurrentTab()
+                elif "Plan a quick getaway" in promotion["title"]:
+                    self.browser.webdriver.get(
+                        "https://www.bing.com/search?q=flights+nyc+to+paris"
+                    )
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
                 elif promotion["promotionType"] == "urlreward":
                     # Complete search for URL reward
                     self.activities.completeSearch()

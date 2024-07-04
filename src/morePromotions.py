@@ -20,7 +20,8 @@ class MorePromotions:
         self.browser.utils.goToRewards()
         for promotion in morePromotions:
             try:
-                logging.debug(f"promotion title={promotion['title']}")
+                promotionTitle = promotion["title"]
+                logging.debug(f"promotionTitle={promotionTitle}")
                 # Open the activity for the promotion
                 if (
                     promotion["complete"] is not False
@@ -32,25 +33,25 @@ class MorePromotions:
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
-                if "Search the lyrics of a song" in promotion["title"]:
+                if "Search the lyrics of a song" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=black+sabbath+supernaut+lyrics"
                     )
                     time.sleep(2)
                     self.browser.utils.closeCurrentTab()
-                elif "Translate anything" in promotion["title"]:
+                elif "Translate anything" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=translate+pencil+sharpener+to+spanish"
                     )
                     time.sleep(2)
                     self.browser.utils.closeCurrentTab()
-                elif "Discover open job roles" in promotion["title"]:
+                elif "Discover open job roles" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=walmart+open+job+roles"
                     )
                     time.sleep(2)
                     self.browser.utils.closeCurrentTab()
-                elif "Plan a quick getaway" in promotion["title"]:
+                elif "Plan a quick getaway" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=flights+nyc+to+paris"
                     )

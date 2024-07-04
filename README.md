@@ -88,7 +88,7 @@
 
   `(ex: http://user:pass@host:port)`
 
-- -cv/--chromeversion to use a specifiv version of chrome
+- -cv/--chromeversion to use a specific version of chrome
 
   `(ex: 118)`
 

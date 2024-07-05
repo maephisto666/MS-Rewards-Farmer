@@ -17,7 +17,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.browser import Browser
-from src.utils import Utils, RemainingSearches
+from src.utils import Utils
 
 LOAD_DATE_KEY = "loadDate"
 
@@ -38,7 +38,7 @@ class Searches:
         config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
     ]
 
-    def __init__(self, browser: Browser, searches: RemainingSearches):
+    def __init__(self, browser: Browser):
         self.browser = browser
         self.webdriver = browser.webdriver
 
@@ -53,7 +53,9 @@ class Searches:
         if loadDate is None or loadDate < date.today():
             self.googleTrendsShelf.clear()
             self.googleTrendsShelf[LOAD_DATE_KEY] = date.today()
-            trends = self.getGoogleTrends(searches.getTotal())
+            trends = self.getGoogleTrends(
+                browser.getRemainingSearches(desktopAndMobile=True).getTotal()
+            )
             random.shuffle(trends)
             for trend in trends:
                 self.googleTrendsShelf[trend] = None
@@ -102,7 +104,7 @@ class Searches:
             return [term]
         return relatedTerms
 
-    def bingSearches(self, numberOfSearches: int, pointsCounter: int = 0) -> int:
+    def bingSearches(self) -> None:
         # Function to perform Bing searches
         logging.info(
             f"[BING] Starting {self.browser.browserType.capitalize()} Edge Bing searches..."
@@ -110,33 +112,27 @@ class Searches:
 
         self.browser.utils.goToSearch()
 
-        # todo Make sure rewards quiz is done
-
-        for searchCount in range(1, numberOfSearches + 1):
+        remainingSearches = self.browser.getRemainingSearches()
+        for searchCount in range(1, remainingSearches + 1):
             # todo Disable cooldown for first 3 searches (Earning starts with your third search)
-            logging.info(f"[BING] {searchCount}/{numberOfSearches}")
-            googleTrends: list[str] = list(self.googleTrendsShelf.keys())
-            logging.debug(f"self.googleTrendsShelf.keys() = {googleTrends}")
-            googleTrend = list(self.googleTrendsShelf.keys())[1]
-            pointsCounter = self.bingSearch(googleTrend)
-            logging.debug(f"pointsCounter = {pointsCounter}")
+            logging.info(f"[BING] {searchCount}/{remainingSearches}")
+            self.bingSearch()
             time.sleep(random.randint(10, 15))
 
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )
-        return pointsCounter
 
-    def bingSearch(self, term: str) -> int:
+    def bingSearch(self) -> None:
         # Function to perform a single Bing search
         pointsBefore = self.browser.utils.getAccountPoints()
 
-        terms = self.getRelatedTerms(term)
+        rootTerm = list(self.googleTrendsShelf.keys())[1]
+        terms = self.getRelatedTerms(rootTerm)
         logging.debug(f"terms={terms}")
         termsCycle: cycle[str] = cycle(terms)
         baseDelay = Searches.baseDelay
-        passedInTerm = term
-        logging.debug(f"passedInTerm={passedInTerm}")
+        logging.debug(f"rootTerm={rootTerm}")
 
         for i in range(self.maxAttempts):
             if i != 0:
@@ -156,7 +152,7 @@ class Searches:
             searchbar = self.browser.utils.waitUntilClickable(
                 By.ID, "sb_form_q", timeToWait=20
             )
-            for _ in range(100):
+            for _ in range(1000):
                 searchbar.click()
                 searchbar.clear()
                 term = next(termsCycle)
@@ -171,12 +167,13 @@ class Searches:
                     break
                 logging.debug("error send_keys")
             else:
+                # todo Still happens occasionally, gotta be a fix
                 raise TimeoutException
             searchbar.submit()
 
             pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
-                del self.googleTrendsShelf[passedInTerm]
+                del self.googleTrendsShelf[rootTerm]
                 return pointsAfter
 
             # todo
@@ -186,7 +183,7 @@ class Searches:
         logging.error("[BING] Reached max search attempt retries")
 
         logging.debug("Moving passedInTerm to end of list")
-        del self.googleTrendsShelf[passedInTerm]
-        self.googleTrendsShelf[passedInTerm] = None
+        del self.googleTrendsShelf[rootTerm]
+        self.googleTrendsShelf[rootTerm] = None
 
         return pointsBefore

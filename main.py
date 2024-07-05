@@ -21,8 +21,9 @@ from src import (
     DailySet,
     Account,
 )
+from src.browser import RemainingSearches
 from src.loggingColoredFormatter import ColoredFormatter
-from src.utils import Utils, RemainingSearches
+from src.utils import Utils
 
 
 def main():
@@ -37,11 +38,11 @@ def main():
     for currentAccount in loadedAccounts:
         try:
             earned_points = executeBot(currentAccount, args)
-        except Exception as e:
+        except Exception as e1:
             logging.error("", exc_info=True)
             Utils.sendNotification(
                 f"⚠️ Error executing {currentAccount.username}, please check the log",
-                f"{e}\n{e.__traceback__}",
+                f"{e1}\n{e1.__traceback__}",
             )
             continue
         previous_points = previous_points_data.get(currentAccount.username, 0)
@@ -204,44 +205,53 @@ class AppriseSummary(Enum):
 def executeBot(currentAccount: Account, args: argparse.Namespace):
     logging.info(f"********************{currentAccount.username}********************")
 
-    accountPointsCounter: int
-    remainingSearches: RemainingSearches
-    startingPoints: int
+    # noinspection PyUnusedLocal
+    accountPointsCounter: int | None = None
+    # noinspection PyUnusedLocal
+    remainingSearches: RemainingSearches | None = None
+    # noinspection PyUnusedLocal
+    startingPoints: int | None = None
 
-    with (Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser):
+    with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         utils = desktopBrowser.utils
         Login(desktopBrowser, args).login()
-        startingPoints = accountPointsCounter = utils.getAccountPoints()
+        startingPoints = utils.getAccountPoints()
         logging.info(
             f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
         )
+        # todo Send notification if these fail to Apprise versus just logging
         ReadToEarn(desktopBrowser).completeReadToEarn(startingPoints)
         DailySet(desktopBrowser).completeDailySet()
         PunchCards(desktopBrowser).completePunchCards()
         MorePromotions(desktopBrowser).completeMorePromotions()
         # VersusGame(desktopBrowser).completeVersusGame()
-        remainingSearches = utils.getRemainingSearches()
 
-        if remainingSearches.desktop != 0:
-            with Searches(desktopBrowser, remainingSearches) as searches:
-                accountPointsCounter = searches.bingSearches(remainingSearches.desktop)  # todo Seems redundant
+        with Searches(desktopBrowser) as searches:
+            searches.bingSearches()
+
+        # noinspection PyUnusedLocal
+        goalPoints = utils.getGoalPoints()
+        # noinspection PyUnusedLocal
+        goalTitle = utils.getGoalTitle()
+
+        # noinspection PyUnusedLocal
+        remainingSearches = desktopBrowser.getRemainingSearches(desktopAndMobile=True)
+        # noinspection PyUnusedLocal
+        accountPointsCounter = utils.getAccountPoints()
+
+    time.sleep(7.5)  # give time for browser to close, probably can be more fine-tuned
+
+    with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
+        utils = mobileBrowser.utils
+        Login(mobileBrowser, args).login()
+        with Searches(mobileBrowser) as searches:
+            searches.bingSearches()
 
         goalPoints = utils.getGoalPoints()
         goalTitle = utils.getGoalTitle()
 
-    time.sleep(7.5)  # give time for browser to close, probably can be more fine-tuned
-
-    if remainingSearches.mobile != 0:
-        with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
-            utils = mobileBrowser.utils
-            Login(mobileBrowser, args).login()
-            with Searches(mobileBrowser, remainingSearches) as searches:
-                accountPointsCounter = searches.bingSearches(remainingSearches.mobile)  # todo Seems redundant
-
-            goalPoints = utils.getGoalPoints()
-            goalTitle = utils.getGoalTitle()
-
-            remainingSearches = utils.getRemainingSearches()
+        remainingSearches = mobileBrowser.getRemainingSearches(desktopAndMobile=True)
+        accountPointsCounter = utils.getAccountPoints()
 
     logging.info(
         f"[POINTS] You have earned {utils.formatNumber(accountPointsCounter - startingPoints)} points this run !"

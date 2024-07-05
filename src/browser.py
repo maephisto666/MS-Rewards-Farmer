@@ -3,7 +3,7 @@ import logging
 import random
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Type
+from typing import Any, Type, NamedTuple
 
 import ipapi
 import seleniumwire.undetected_chromedriver as webdriver
@@ -15,6 +15,14 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 from src import Account
 from src.userAgentGenerator import GenerateUserAgent
 from src.utils import Utils
+
+
+class RemainingSearches(NamedTuple):
+    desktop: int
+    mobile: int
+
+    def getTotal(self) -> int:
+        return self.desktop + self.mobile
 
 
 class Browser:
@@ -225,3 +233,33 @@ class Browser:
         # driver.__exit__(None, None, None)
 
         return version
+
+    def getRemainingSearches(
+            self, desktopAndMobile: bool = False
+    ) -> RemainingSearches | int:
+        dashboard = self.utils.getDashboardData()
+        searchPoints = 1
+        counters = dashboard["userStatus"]["counters"]
+
+        progressDesktop = counters["pcSearch"][0]["pointProgress"]
+        targetDesktop = counters["pcSearch"][0]["pointProgressMax"]
+        if len(counters["pcSearch"]) >= 2:
+            progressDesktop = progressDesktop + counters["pcSearch"][1]["pointProgress"]
+            targetDesktop = targetDesktop + counters["pcSearch"][1]["pointProgressMax"]
+        if targetDesktop in [30, 90, 102]:
+            searchPoints = 3
+        elif targetDesktop == 50 or targetDesktop >= 170 or targetDesktop == 150:
+            searchPoints = 5
+        remainingDesktop = int((targetDesktop - progressDesktop) / searchPoints)
+        remainingMobile = 0
+        if dashboard["userStatus"]["levelInfo"]["activeLevel"] != "Level1":
+            progressMobile = counters["mobileSearch"][0]["pointProgress"]
+            targetMobile = counters["mobileSearch"][0]["pointProgressMax"]
+            remainingMobile = int((targetMobile - progressMobile) / searchPoints)
+        if desktopAndMobile:
+            return RemainingSearches(desktop=remainingDesktop, mobile=remainingMobile)
+        elif self.mobile:
+            return remainingMobile
+        elif not self.mobile:
+            return remainingDesktop
+        raise AssertionError

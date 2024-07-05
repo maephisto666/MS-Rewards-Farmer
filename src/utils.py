@@ -25,14 +25,6 @@ from .constants import REWARDS_URL
 from .constants import SEARCH_URL
 
 
-class RemainingSearches(NamedTuple):
-    desktop: int
-    mobile: int
-
-    def getTotal(self) -> int:
-        return self.desktop + self.mobile
-
-
 class Utils:
     args: Namespace
 
@@ -224,28 +216,6 @@ class Utils:
     def visitNewTab(self, timeToWait: float = 0) -> None:
         self.switchToNewTab(timeToWait)
         self.closeCurrentTab()
-
-    def getRemainingSearches(self) -> RemainingSearches:
-        dashboard = self.getDashboardData()
-        searchPoints = 1
-        counters = dashboard["userStatus"]["counters"]
-
-        progressDesktop = counters["pcSearch"][0]["pointProgress"]
-        targetDesktop = counters["pcSearch"][0]["pointProgressMax"]
-        if len(counters["pcSearch"]) >= 2:
-            progressDesktop = progressDesktop + counters["pcSearch"][1]["pointProgress"]
-            targetDesktop = targetDesktop + counters["pcSearch"][1]["pointProgressMax"]
-        if targetDesktop in [30, 90, 102]:
-            searchPoints = 3
-        elif targetDesktop == 50 or targetDesktop >= 170 or targetDesktop == 150:
-            searchPoints = 5
-        remainingDesktop = int((targetDesktop - progressDesktop) / searchPoints)
-        remainingMobile = 0
-        if dashboard["userStatus"]["levelInfo"]["activeLevel"] != "Level1":
-            progressMobile = counters["mobileSearch"][0]["pointProgress"]
-            targetMobile = counters["mobileSearch"][0]["pointProgressMax"]
-            remainingMobile = int((targetMobile - progressMobile) / searchPoints)
-        return RemainingSearches(desktop=remainingDesktop, mobile=remainingMobile)
 
     @staticmethod
     def formatNumber(number, num_decimals=2) -> str:

@@ -29,9 +29,9 @@ class AttemptsStrategy(Enum):
 
 class Searches:
     config = Utils.loadConfig()
-    maxAttempts: Final[int] = config.get("attempts", {}).get("max", 6)
+    maxAttempts: Final[int] = config.get("attempts", {}).get("max", 7)
     baseDelay: Final[float] = config.get("attempts", {}).get(
-        "base_delay_in_seconds", 60
+        "base_delay_in_seconds", 14.0625
     )
     # attemptsStrategy = Final[  # todo Figure why doesn't work with equality below
     attemptsStrategy = AttemptsStrategy[

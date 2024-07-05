@@ -126,7 +126,10 @@ class Utils:
             self.goToRewards()
             return self.webdriver.execute_script("return dashboard")
         finally:
-            self.webdriver.get(urlBefore)
+            try:
+                self.webdriver.get(urlBefore)
+            except TimeoutException:
+                self.goToRewards()
 
     def getBingInfo(self) -> Any:
         session = self.makeRequestsSession()

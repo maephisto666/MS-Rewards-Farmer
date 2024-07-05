@@ -4,6 +4,8 @@ from typing import Any
 import requests
 from requests import HTTPError, Response
 
+from src.utils import Utils
+
 
 class GenerateUserAgent:
     """A class for generating user agents for Microsoft Rewards Farmer."""
@@ -178,8 +180,7 @@ class GenerateUserAgent:
 
     @staticmethod
     def getWebdriverPage(url: str) -> Response:
-        response = None
-        response = requests.get(url)
+        response = Utils.makeRequestsSession().get(url)
         if response.status_code != requests.codes.ok:  # pylint: disable=no-member
             raise HTTPError(
                 f"Failed to get webdriver page {url}. "

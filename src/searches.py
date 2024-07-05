@@ -71,10 +71,11 @@ class Searches:
         # Function to retrieve Google Trends search terms
         searchTerms: list[str] = []
         i = 0
+        session = Utils.makeRequestsSession()
         while len(searchTerms) < wordsCount:
             i += 1
             # Fetching daily trends from Google Trends API
-            r = requests.get(
+            r = session.get(
                 f"https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}"
                 f'&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )

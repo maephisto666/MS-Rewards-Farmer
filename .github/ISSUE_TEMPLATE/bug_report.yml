@@ -21,6 +21,25 @@ body:
         - label: |
             The title is no longer "[BUG] Title" and I edited it with the right error name.
           required: true
+  - type: dropdown
+    id: branch
+    attributes:
+      label: Branch
+      description: Which branch?
+      options:
+        - master
+        - develop
+      default: 0
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: Which commit?
+      placeholder: 5fd7d6c (get using `git rev-parse --short HEAD`)
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:

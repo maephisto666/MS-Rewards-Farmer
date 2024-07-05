@@ -220,6 +220,8 @@ class Browser:
         driver = WebDriver(options=chrome_options)
         version = driver.capabilities["browserVersion"]
 
+        driver.close()
         driver.quit()
+        # driver.__exit__(None, None, None)
 
         return version

@@ -139,6 +139,20 @@ class Searches:
         logging.debug(f"passedInTerm={passedInTerm}")
 
         for i in range(self.maxAttempts):
+            if i != 0:
+                sleepTime: float
+                if Searches.attemptsStrategy == Searches.attemptsStrategy.exponential:
+                    sleepTime = baseDelay * 2 ** (i - 1)
+                elif Searches.attemptsStrategy == Searches.attemptsStrategy.constant:
+                    sleepTime = baseDelay
+                else:
+                    raise AssertionError
+                logging.debug(
+                    f"[BING] Search attempt failed {i}/{Searches.maxAttempts}, sleeping {sleepTime}"
+                    f" seconds..."
+                )
+                time.sleep(sleepTime)
+
             searchbar = self.browser.utils.waitUntilClickable(
                 By.ID, "sb_form_q", timeToWait=20
             )

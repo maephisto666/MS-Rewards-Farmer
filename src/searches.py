@@ -183,18 +183,6 @@ class Searches:
             # if i == (maxAttempts / 2):
             #     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
             #     self.webdriver.proxy = self.browser.giveMeProxy()
-
-            baseDelay += random.randint(1, 10)  # add some jitter
-            logging.debug(
-                f"[BING] Search attempt failed {i + 1}/{Searches.maxAttempts}, retrying after sleeping {baseDelay}"
-                f" seconds..."
-            )
-            time.sleep(baseDelay)
-
-            if Searches.attemptsStrategy == AttemptsStrategy.exponential:
-                baseDelay *= 2
-        # todo debug why we get to this point occasionally even though searches complete
-        # update - Seems like account points aren't refreshing correctly see
         logging.error("[BING] Reached max search attempt retries")
 
         logging.debug("Moving passedInTerm to end of list")

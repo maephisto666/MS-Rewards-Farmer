@@ -129,12 +129,7 @@ class Utils:
             self.webdriver.get(urlBefore)
 
     def getBingInfo(self) -> Any:
-        session = requests.Session()
-        retries = Retry(total=5,
-                        backoff_factor=0.1,
-                        status_forcelist=[500, 502, 503, 504])
-        session.mount('http://',
-                      HTTPAdapter(max_retries=retries))  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+        session = self.makeRequestsSession()
 
         for cookie in self.webdriver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])

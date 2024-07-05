@@ -1,17 +1,12 @@
 import logging
-import urllib.parse
-from datetime import datetime
-
-from src.browser import Browser
-from src.utils import Utils
-
-from .activities import Activities
-
-import requests
-from requests_oauthlib import OAuth2Session
+import random
 import secrets
 import time
-import random
+
+from requests_oauthlib import OAuth2Session
+
+from src.browser import Browser
+from .activities import Activities
 
 client_id = '0000000040170455'
 authorization_base_url = 'https://login.live.com/oauth20_authorize.srf'

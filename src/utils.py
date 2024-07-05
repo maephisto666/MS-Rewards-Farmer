@@ -6,11 +6,12 @@ import re
 import time
 from argparse import Namespace
 from pathlib import Path
-from typing import NamedTuple, Any
+from typing import Any
 
 import requests
 import yaml
 from apprise import Apprise
+from requests import Session
 from requests.adapters import HTTPAdapter
 from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.webdriver import WebDriver
@@ -142,6 +143,20 @@ class Utils:
 
         assert response.status_code == requests.codes.ok
         return response.json()["userInfo"]
+
+    @staticmethod
+    def makeRequestsSession() -> Session:
+        session = requests.Session()
+        retry = Retry(
+            total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504]
+        )
+        session.mount(
+            "https://", HTTPAdapter(max_retries=retry)
+        )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+        session.mount(
+            "http://", HTTPAdapter(max_retries=retry)
+        )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+        return session
 
     def isLoggedIn(self) -> bool:
         # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred

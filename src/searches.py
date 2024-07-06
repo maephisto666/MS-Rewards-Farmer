@@ -29,7 +29,7 @@ class AttemptsStrategy(Enum):
 
 class Searches:
     config = Utils.loadConfig()
-    maxAttempts: Final[int] = config.get("attempts", {}).get("max", 7)
+    maxAttempts: Final[int] = config.get("attempts", {}).get("max", 8)
     baseDelay: Final[float] = config.get("attempts", {}).get(
         "base_delay_in_seconds", 14.0625
     )
@@ -144,7 +144,7 @@ class Searches:
                 else:
                     raise AssertionError
                 logging.debug(
-                    f"[BING] Search attempt failed {i}/{Searches.maxAttempts}, sleeping {sleepTime}"
+                    f"[BING] Search attempt failed {i}/{Searches.maxAttempts - 1}, sleeping {sleepTime}"
                     f" seconds..."
                 )
                 time.sleep(sleepTime)

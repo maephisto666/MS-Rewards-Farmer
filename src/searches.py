@@ -174,7 +174,7 @@ class Searches:
             pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
                 del self.googleTrendsShelf[rootTerm]
-                return pointsAfter
+                return
 
             # todo
             # if i == (maxAttempts / 2):
@@ -185,5 +185,3 @@ class Searches:
         logging.debug("Moving passedInTerm to end of list")
         del self.googleTrendsShelf[rootTerm]
         self.googleTrendsShelf[rootTerm] = None
-
-        return pointsBefore

@@ -134,7 +134,7 @@ class Searches:
         baseDelay = Searches.baseDelay
         logging.debug(f"rootTerm={rootTerm}")
 
-        for i in range(self.maxRetries):
+        for i in range(self.maxRetries + 1):
             if i != 0:
                 sleepTime: float
                 if Searches.retriesStrategy == Searches.retriesStrategy.exponential:
@@ -144,7 +144,7 @@ class Searches:
                 else:
                     raise AssertionError
                 logging.debug(
-                    f"[BING] Search attempt failed {i}/{Searches.maxRetries - 1}, sleeping {sleepTime}"
+                    f"[BING] Search attempt failed {i}/{Searches.maxRetries}, sleeping {sleepTime}"
                     f" seconds..."
                 )
                 time.sleep(sleepTime)

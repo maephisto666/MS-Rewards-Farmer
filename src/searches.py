@@ -81,6 +81,7 @@ class Searches:
                 f"https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}"
                 f'&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )
+            assert r.status_code == requests.codes.ok
             trends = json.loads(r.text[6:])
             for topic in trends["default"]["trendingSearchesDays"][0][
                 "trendingSearches"

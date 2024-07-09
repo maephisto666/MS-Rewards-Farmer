@@ -54,7 +54,7 @@ class Searches:
             self.googleTrendsShelf.clear()
             self.googleTrendsShelf[LOAD_DATE_KEY] = date.today()
             trends = self.getGoogleTrends(
-                browser.getRemainingSearches(desktopAndMobile=True).getTotal()
+                browser.getRemainingSearches(desktopAndMobile=True).getTotal() * 2
             )
             random.shuffle(trends)
             for trend in trends:
@@ -113,12 +113,18 @@ class Searches:
         self.browser.utils.goToSearch()
 
         remainingSearches = self.browser.getRemainingSearches()
-        for searchCount in range(1, remainingSearches + 1):
+        maxSearches = remainingSearches * 2
+        searchCount = 0
+        while searchCount < remainingSearches and searchCount < maxSearches :
+            searchCount = searchCount + 1
             # todo Disable cooldown for first 3 searches (Earning starts with your third search)
             logging.info(f"[BING] {searchCount}/{remainingSearches}")
             self.bingSearch()
             time.sleep(random.randint(10, 15))
-
+            if searchCount == numberOfSearches:
+                remainingSearches = self.browser.getRemainingSearches()
+                logging.info("Adding " + str(remainingSearches - searchCount) + " Extra Searches")
+                
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )

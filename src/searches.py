@@ -123,7 +123,8 @@ class Searches:
             time.sleep(random.randint(10, 15))
             if searchCount == remainingSearches:
                 remainingSearches = self.browser.getRemainingSearches()
-                logging.info("Adding " + str(remainingSearches - searchCount) + " Extra Searches")
+                if remainingSearches > 0:
+                    logging.info("Adding " + str(remainingSearches) + " Extra Searches")
                 
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"

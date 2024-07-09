@@ -1,6 +1,8 @@
 import logging
 import time
 
+from selenium.webdriver.common.by import By
+
 from src.browser import Browser
 from .activities import Activities
 from .utils import Utils
@@ -41,6 +43,7 @@ class MorePromotions:
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
+                # todo These and following are US-English specific, maybe there's a good way to internationalize
                 if "Search the lyrics of a song" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=black+sabbath+supernaut+lyrics"
@@ -63,6 +66,36 @@ class MorePromotions:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=flights+nyc+to+paris"
                     )
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
+                elif "Too tired to cook tonight?" in promotionTitle:
+                    searchbar = self.browser.utils.waitUntilClickable(
+                        By.ID, "sb_form_q", timeToWait=20
+                    )
+                    searchbar.click()
+                    searchbar.send_keys("pizza delivery near me")
+                    searchbar.submit()
+
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
+                elif "Quickly convert your money" in promotionTitle:
+                    searchbar = self.browser.utils.waitUntilClickable(
+                        By.ID, "sb_form_q", timeToWait=20
+                    )
+                    searchbar.click()
+                    searchbar.send_keys("convert 374 usd to yen")
+                    searchbar.submit()
+
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
+                elif "Learn to cook a new recipe" in promotionTitle:
+                    searchbar = self.browser.utils.waitUntilClickable(
+                        By.ID, "sb_form_q", timeToWait=20
+                    )
+                    searchbar.click()
+                    searchbar.send_keys("how cook pierogi")
+                    searchbar.submit()
+
                     time.sleep(2)
                     self.browser.utils.closeCurrentTab()
                 elif promotion["promotionType"] == "urlreward":

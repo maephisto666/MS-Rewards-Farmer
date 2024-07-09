@@ -121,7 +121,7 @@ class Searches:
             logging.info(f"[BING] {searchCount}/{remainingSearches}")
             self.bingSearch()
             time.sleep(random.randint(10, 15))
-            if searchCount == numberOfSearches:
+            if searchCount == remainingSearches:
                 remainingSearches = self.browser.getRemainingSearches()
                 logging.info("Adding " + str(remainingSearches - searchCount) + " Extra Searches")
                 

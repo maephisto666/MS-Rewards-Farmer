@@ -22,20 +22,20 @@ from src.utils import Utils
 LOAD_DATE_KEY = "loadDate"
 
 
-class AttemptsStrategy(Enum):
+class RetriesStrategy(Enum):
     exponential = auto()
     constant = auto()
 
 
 class Searches:
     config = Utils.loadConfig()
-    maxAttempts: Final[int] = config.get("attempts", {}).get("max", 8)
-    baseDelay: Final[float] = config.get("attempts", {}).get(
+    maxRetries: Final[int] = config.get("retries", {}).get("max", 8)
+    baseDelay: Final[float] = config.get("retries", {}).get(
         "base_delay_in_seconds", 14.0625
     )
-    # attemptsStrategy = Final[  # todo Figure why doesn't work with equality below
-    attemptsStrategy = AttemptsStrategy[
-        config.get("attempts", {}).get("strategy", AttemptsStrategy.constant.name)
+    # retriesStrategy = Final[  # todo Figure why doesn't work with equality below
+    retriesStrategy = RetriesStrategy[
+        config.get("retries", {}).get("strategy", RetriesStrategy.constant.name)
     ]
 
     def __init__(self, browser: Browser):
@@ -81,6 +81,7 @@ class Searches:
                 f"https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}"
                 f'&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )
+            assert r.status_code == requests.codes.ok
             trends = json.loads(r.text[6:])
             for topic in trends["default"]["trendingSearchesDays"][0][
                 "trendingSearches"
@@ -134,17 +135,17 @@ class Searches:
         baseDelay = Searches.baseDelay
         logging.debug(f"rootTerm={rootTerm}")
 
-        for i in range(self.maxAttempts):
+        for i in range(self.maxRetries + 1):
             if i != 0:
                 sleepTime: float
-                if Searches.attemptsStrategy == Searches.attemptsStrategy.exponential:
+                if Searches.retriesStrategy == Searches.retriesStrategy.exponential:
                     sleepTime = baseDelay * 2 ** (i - 1)
-                elif Searches.attemptsStrategy == Searches.attemptsStrategy.constant:
+                elif Searches.retriesStrategy == Searches.retriesStrategy.constant:
                     sleepTime = baseDelay
                 else:
                     raise AssertionError
                 logging.debug(
-                    f"[BING] Search attempt failed {i}/{Searches.maxAttempts - 1}, sleeping {sleepTime}"
+                    f"[BING] Search attempt failed {i}/{Searches.maxRetries}, sleeping {sleepTime}"
                     f" seconds..."
                 )
                 time.sleep(sleepTime)
@@ -174,10 +175,10 @@ class Searches:
             pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
                 del self.googleTrendsShelf[rootTerm]
-                return pointsAfter
+                return
 
             # todo
-            # if i == (maxAttempts / 2):
+            # if i == (maxRetries / 2):
             #     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
             #     self.webdriver.proxy = self.browser.giveMeProxy()
         logging.error("[BING] Reached max search attempt retries")
@@ -185,5 +186,3 @@ class Searches:
         logging.debug("Moving passedInTerm to end of list")
         del self.googleTrendsShelf[rootTerm]
         self.googleTrendsShelf[rootTerm] = None
-
-        return pointsBefore

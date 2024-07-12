@@ -252,7 +252,7 @@ def runReporter(currentBrowserUtil, runInfo):
         pass
 
 
-def desktopSearch(currentAccount, args, startingPoints, accountPointsCounter):
+def desktopSearch(currentAccount, args, accountPointsCounter):
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         utils = desktopBrowser.utils
         Login(desktopBrowser, args).login()
@@ -295,10 +295,11 @@ def desktopSearch(currentAccount, args, startingPoints, accountPointsCounter):
 
     return accountPointsCounter
 
-def mobileSearch(currentAccount, args, startingPoints, accountPointsCounter):
+def mobileSearch(currentAccount, args, accountPointsCounter):
     with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
         utils = mobileBrowser.utils
         Login(mobileBrowser, args).login()
+        startingPoints = utils.getAccountPoints()
         with Searches(mobileBrowser) as searches:
             searches.bingSearches()
 
@@ -327,17 +328,15 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
 
     # noinspection PyUnusedLocal
     accountPointsCounter: int | None = None
-    # noinspection PyUnusedLocal
-    startingPoints: int | None = None
 
     if args.searchtype == "desktop":
-        accountPointsCounter = desktopSearch(currentAccount, args, startingPoints, accountPointsCounter)
+        accountPointsCounter = desktopSearch(currentAccount, args, accountPointsCounter)
     elif args.searchtype == "mobile":
-        accountPointsCounter = mobileSearch(currentAccount, args, startingPoints, accountPointsCounter)
+        accountPointsCounter = mobileSearch(currentAccount, args, accountPointsCounter)
     else:
-        accountPointsCounter = desktopSearch(currentAccount, args, startingPoints, accountPointsCounter)
+        accountPointsCounter = desktopSearch(currentAccount, args, accountPointsCounter)
         # The startingPoints for the consecutive run will be the previous accountPointsCounter, just to be clear
-        accountPointsCounter = mobileSearch(currentAccount, args, accountPointsCounter, accountPointsCounter)
+        accountPointsCounter = mobileSearch(currentAccount, args, accountPointsCounter)
 
     return accountPointsCounter
 

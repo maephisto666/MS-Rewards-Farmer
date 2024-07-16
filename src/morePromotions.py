@@ -68,6 +68,18 @@ class MorePromotions:
                     )
                     time.sleep(2)
                     self.browser.utils.closeCurrentTab()
+                elif "You can track your package" in promotionTitle:
+                    self.browser.webdriver.get(
+                        "https://www.bing.com/search?q=usps+tracking"
+                    )
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
+                elif "Find somewhere new to explore" in promotionTitle:
+                    self.browser.webdriver.get(
+                        "https://www.bing.com/search?q=directions+to+new+york"
+                    )
+                    time.sleep(2)
+                    self.browser.utils.closeCurrentTab()
                 elif "Too tired to cook tonight?" in promotionTitle:
                     searchbar = self.browser.utils.waitUntilClickable(
                         By.ID, "sb_form_q", timeToWait=20

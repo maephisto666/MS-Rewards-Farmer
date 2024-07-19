@@ -92,6 +92,7 @@
 
   `(ex: 118)`
 
+[//]: # (todo update)
 ---
 
 > [!TIP]
@@ -117,8 +118,15 @@
 
 ---
 
-> [!NOTE]
-> You may see [WARNING] in your logs - this is currently enabled for debugging and to provide in any issues you may need to open
+## Contributing
+
+Fork this repo and:
+
+* if providing a bugfix, create a pull request into master.
+* if providing a new feature, please create a pull request into develop. Extra points if you update
+  the [CHANGELOG.md](CHANGELOG.md).
+
+---
 
 ## To Do List (When time permits or someone makes a PR)
 

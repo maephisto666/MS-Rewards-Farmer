@@ -43,6 +43,7 @@ class MorePromotions:
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
+                self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
                 # todo These and following are US-English specific, maybe there's a good way to internationalize
                 if "Search the lyrics of a song" in promotionTitle:
                     self.browser.webdriver.get(

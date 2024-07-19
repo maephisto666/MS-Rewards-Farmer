@@ -41,13 +41,16 @@
 
 3. (Windows Only) Make sure Visual C++ redistributable DLLs are installed
 
-   If they're not, install the current "vc_redist.exe" from this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170) and reboot your computer
+   If they're not, install the current "vc_redist.exe" from
+   this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170) and reboot your
+   computer
 
 4. Edit the `accounts.json.sample` with your accounts credentials and rename it by removing `.sample` at the end.
 
-   The "proxy" field is not mandatory, you can omit it if you don't want to use proxy (don't keep it as an empty string, remove the line completely).
+   The "proxy" field is not mandatory, you can omit it if you don't want to use proxy (don't keep it as an empty string,
+   remove the line completely).
 
-   - If you want to add more than one account, the syntax is the following:
+    - If you want to add more than one account, the syntax is the following:
 
    ```json
    [
@@ -76,7 +79,8 @@
 
   `https://trends.google.com/trends/ for proper geolocation abbreviation for your choice. These MUST be uppercase!!!`
 
-- -p/--proxy to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in accounts.json)
+- -p/--proxy to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in
+  accounts.json)
 
   `(ex: http://user:pass@host:port)`
 
@@ -88,7 +92,8 @@
 
 
 > [!TIP]
-> If you are having issues first ask - did I make sure I have updated all of the files and cleared the sessions folder before running again?
+> If you are having issues first ask - did I make sure I have updated all of the files and cleared the sessions folder
+> before running again?
 
 > [!TIP]
 > Have I tried to run it with -v so I could see what might be causing the error?
@@ -119,5 +124,5 @@ Fork this repo and:
 
 - [x] Complete "Read To Earn" (30 pts)
 - [ ] Setup flags for mobile/desktop search only
-- [ ] Setup flags to load config / save data in working directory 
+- [ ] Setup flags to load config / save data in working directory
 - [ ] Provide Windows Task Scheduler config

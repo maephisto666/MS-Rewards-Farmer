@@ -33,6 +33,7 @@ class MorePromotions:
                     logging.debug("Already done, continuing")
                     # todo Handle special "Quote of the day" which is falsely complete
                     continue
+                pointsBefore = self.browser.utils.getAccountPoints()
                 if "Mid-week puzzle" in promotionTitle:
                     Utils.sendNotification(
                         "Mid-week puzzle found",
@@ -128,6 +129,12 @@ class MorePromotions:
                 else:
                     # Default to completing search
                     self.activities.completeSearch()
+                pointsAfter = self.browser.utils.getAccountPoints()
+                if pointsBefore == pointsAfter:
+                    Utils.sendNotification(
+                        "Incomplete promotion",
+                        f"title={promotionTitle} type={promotion['promotionType']}",
+                    )
             except Exception:  # pylint: disable=broad-except
                 logging.error("[MORE PROMOS] Error More Promotions", exc_info=True)
                 # Reset tabs in case of an exception

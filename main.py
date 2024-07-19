@@ -158,6 +158,13 @@ def argumentParser() -> argparse.Namespace:
         action="store_true",
         help="Optional: Disable Apprise, overrides config.yaml, useful when developing",
     )
+    parser.add_argument(
+        "-t",
+        "--searchtype",
+        type=str,
+        default=None,
+        help="Optional: Set to only search in either desktop or mobile (ex: 'desktop' or 'mobile')"
+    )
     return parser.parse_args()
 
 
@@ -201,17 +208,51 @@ class AppriseSummary(Enum):
     on_error = auto()
     never = auto()
 
+# A bit hard coded for the passing over the info and might not be clear when reading the code about what runInfo is
+def runReporter(currentBrowserUtil, runInfo):
+    logging.info(
+        f"[POINTS] You have earned {currentBrowserUtil.formatNumber(runInfo['accountPointsCounter'] - runInfo['startingPoints'])} points this run !"
+    )
+    logging.info(
+        f"[POINTS] You are now at {currentBrowserUtil.formatNumber(runInfo['accountPointsCounter'])} points !"
+    )
+    appriseSummary = AppriseSummary[
+        currentBrowserUtil.config.get("apprise", {}).get("summary", AppriseSummary.always.name)
+    ]
+    if appriseSummary == AppriseSummary.always:
+        goalNotifier = ""
+        if runInfo['goalPoints'] > 0:
+            logging.info(
+                f"[POINTS] You are now at {(currentBrowserUtil.formatNumber((runInfo['accountPointsCounter'] / runInfo['goalPoints']) * 100))}% of your "
+                f"goal ({runInfo['goalTitle']}) !"
+            )
+            goalNotifier = (
+                f"🎯 Goal reached: {(currentBrowserUtil.formatNumber((runInfo['accountPointsCounter'] / runInfo['goalPoints']) * 100))}%"
+                f" ({runInfo['goalTitle']})"
+            )
 
-def executeBot(currentAccount: Account, args: argparse.Namespace):
-    logging.info(f"********************{currentAccount.username}********************")
+        Utils.sendNotification(
+            "Daily Points Update",
+            "\n".join(
+                [
+                    f"👤 Account: {runInfo['currentAccount'].username}",
+                    f"⭐️ Points earned today: {currentBrowserUtil.formatNumber(runInfo['accountPointsCounter'] - runInfo['startingPoints'])}",
+                    f"💰 Total points: {currentBrowserUtil.formatNumber(runInfo['accountPointsCounter'])}",
+                    goalNotifier,
+                ]
+            ),
+        )
+    elif appriseSummary == AppriseSummary.on_error:
+        if runInfo['remainingSearches'].getTotal() > 0:
+            Utils.sendNotification(
+                "Error: remaining searches",
+                f"account username: {runInfo['currentAccount'].username}, {runInfo['remainingSearches']}",
+            )
+    elif appriseSummary == AppriseSummary.never:
+        pass
 
-    # noinspection PyUnusedLocal
-    accountPointsCounter: int | None = None
-    # noinspection PyUnusedLocal
-    remainingSearches: RemainingSearches | None = None
-    # noinspection PyUnusedLocal
-    startingPoints: int | None = None
 
+def desktopSearch(currentAccount, args, accountPointsCounter):
     with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
         utils = desktopBrowser.utils
         Login(desktopBrowser, args).login()
@@ -239,11 +280,26 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         # noinspection PyUnusedLocal
         accountPointsCounter = utils.getAccountPoints()
 
-    time.sleep(7.5)  # give time for browser to close, probably can be more fine-tuned
+        # Hash everything into a dictionary and send it over to the runReporter
+        runInfo = {
+            "currentAccount": currentAccount,
+            "startingPoints": startingPoints,
+            "accountPointsCounter": accountPointsCounter,
+            "remainingSearches": remainingSearches,
+            "goalPoints": goalPoints,
+            "goalTitle": goalTitle,
+        }
+        runReporter(utils, runInfo)
+    
+    time.sleep(7.5)
 
+    return accountPointsCounter
+
+def mobileSearch(currentAccount, args, accountPointsCounter):
     with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
         utils = mobileBrowser.utils
         Login(mobileBrowser, args).login()
+        startingPoints = utils.getAccountPoints()
         with Searches(mobileBrowser) as searches:
             searches.bingSearches()
 
@@ -253,46 +309,34 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         remainingSearches = mobileBrowser.getRemainingSearches(desktopAndMobile=True)
         accountPointsCounter = utils.getAccountPoints()
 
-    logging.info(
-        f"[POINTS] You have earned {utils.formatNumber(accountPointsCounter - startingPoints)} points this run !"
-    )
-    logging.info(
-        f"[POINTS] You are now at {utils.formatNumber(accountPointsCounter)} points !"
-    )
-    appriseSummary = AppriseSummary[
-        utils.config.get("apprise", {}).get("summary", AppriseSummary.always.name)
-    ]
-    if appriseSummary == AppriseSummary.always:
-        goalNotifier = ""
-        if goalPoints > 0:
-            logging.info(
-                f"[POINTS] You are now at {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% of your "
-                f"goal ({goalTitle}) !"
-            )
-            goalNotifier = (
-                f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}%"
-                f" ({goalTitle})"
-            )
+        # Hash everything into a dictionary and send it over to the runReporter
+        runInfo = {
+            "currentAccount": currentAccount,
+            "startingPoints": startingPoints,
+            "accountPointsCounter": accountPointsCounter,
+            "remainingSearches": remainingSearches,
+            "goalPoints": goalPoints,
+            "goalTitle": goalTitle,
+        }
+        runReporter(utils, runInfo)
 
-        Utils.sendNotification(
-            "Daily Points Update",
-            "\n".join(
-                [
-                    f"👤 Account: {currentAccount.username}",
-                    f"⭐️ Points earned today: {utils.formatNumber(accountPointsCounter - startingPoints)}",
-                    f"💰 Total points: {utils.formatNumber(accountPointsCounter)}",
-                    goalNotifier,
-                ]
-            ),
-        )
-    elif appriseSummary == AppriseSummary.on_error:
-        if remainingSearches.getTotal() > 0:
-            Utils.sendNotification(
-                "Error: remaining searches",
-                f"account username: {currentAccount.username}, {remainingSearches}",
-            )
-    elif appriseSummary == AppriseSummary.never:
-        pass
+    time.sleep(7.5)
+    return accountPointsCounter
+
+def executeBot(currentAccount: Account, args: argparse.Namespace):
+    logging.info(f"********************{currentAccount.username}********************")
+
+    # noinspection PyUnusedLocal
+    accountPointsCounter: int | None = None
+
+    if args.searchtype == "desktop":
+        accountPointsCounter = desktopSearch(currentAccount, args, accountPointsCounter)
+    elif args.searchtype == "mobile":
+        accountPointsCounter = mobileSearch(currentAccount, args, accountPointsCounter)
+    else:
+        accountPointsCounter = desktopSearch(currentAccount, args, accountPointsCounter)
+        # The startingPoints for the consecutive run will be the previous accountPointsCounter, just to be clear
+        accountPointsCounter = mobileSearch(currentAccount, args, accountPointsCounter)
 
     return accountPointsCounter
 

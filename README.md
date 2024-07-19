@@ -1,19 +1,17 @@
 ### A "simple" python application that uses Selenium to help with your M$ Rewards
 
----
-
 ![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
 ![MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 ![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)
 ![GitHub contributors](https://img.shields.io/github/contributors/klept0/MS-Rewards-Farmer?style=for-the-badge)
 ![GitHub issues](https://img.shields.io/github/issues/klept0/MS-Rewards-Farmer?style=for-the-badge)
 
----
+
 
 > [!IMPORTANT]
 > If you are multi-accounting and abusing the service for which this is intended - **_DO NOT COMPLAIN ABOUT BANS!!!_**
 
----
+
 
 > [!CAUTION]
 > Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
@@ -24,15 +22,11 @@
 >
 > Do not redeem more than one reward per day.
 
----
-
 #### Group Chat - [Telegram](https://t.me/klept0_MS_Rewards_Farmer/) (pay attention to captchas - helps prevent spam)
 
 #### Original bot by [@charlesbel](https://github.com/charlesbel) - refactored/updated/maintained by [@klept0](https://github.com/klept0) and a community of volunteers.
 
 #### PULL REQUESTS ARE WELCOME AND APPRECIATED!
-
----
 
 ## Installation
 
@@ -74,8 +68,6 @@
 
    `python main.py`
 
----
-
 ## Launch arguments
 
 - -v/--visible to disable headless
@@ -93,14 +85,13 @@
   `(ex: 118)`
 
 [//]: # (todo update)
----
+
 
 > [!TIP]
 > If you are having issues first ask - did I make sure I have updated all of the files and cleared the sessions folder before running again?
 
 > [!TIP]
 > Have I tried to run it with -v so I could see what might be causing the error?
----
 
 ## Features
 
@@ -116,8 +107,6 @@
 - Proxy Support (3.0) - they need to be **high quality** proxies
 - Logs to CSV file for point tracking
 
----
-
 ## Contributing
 
 Fork this repo and:
@@ -125,8 +114,6 @@ Fork this repo and:
 * if providing a bugfix, create a pull request into master.
 * if providing a new feature, please create a pull request into develop. Extra points if you update
   the [CHANGELOG.md](CHANGELOG.md).
-
----
 
 ## To Do List (When time permits or someone makes a PR)
 

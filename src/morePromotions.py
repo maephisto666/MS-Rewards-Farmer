@@ -36,74 +36,44 @@ class MorePromotions:
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
-                self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
+                searchbar = self.browser.utils.waitUntilClickable(
+                    By.ID, "sb_form_q", timeToWait=20
+                )
+                searchbar.click()
                 # todo These and following are US-English specific, maybe there's a good way to internationalize
                 if "Search the lyrics of a song" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=black+sabbath+supernaut+lyrics"
                     )
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "Translate anything" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=translate+pencil+sharpener+to+spanish"
                     )
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "Discover open job roles" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=walmart+open+job+roles"
                     )
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "Plan a quick getaway" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=flights+nyc+to+paris"
                     )
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "You can track your package" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=usps+tracking"
                     )
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "Find somewhere new to explore" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=directions+to+new+york"
                     )
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "Too tired to cook tonight?" in promotionTitle:
-                    searchbar = self.browser.utils.waitUntilClickable(
-                        By.ID, "sb_form_q", timeToWait=20
-                    )
-                    searchbar.click()
                     searchbar.send_keys("pizza delivery near me")
                     searchbar.submit()
-
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "Quickly convert your money" in promotionTitle:
-                    searchbar = self.browser.utils.waitUntilClickable(
-                        By.ID, "sb_form_q", timeToWait=20
-                    )
-                    searchbar.click()
                     searchbar.send_keys("convert 374 usd to yen")
                     searchbar.submit()
-
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif "Learn to cook a new recipe" in promotionTitle:
-                    searchbar = self.browser.utils.waitUntilClickable(
-                        By.ID, "sb_form_q", timeToWait=20
-                    )
-                    searchbar.click()
                     searchbar.send_keys("how cook pierogi")
                     searchbar.submit()
-
-                    time.sleep(2)
-                    self.browser.utils.closeCurrentTab()
                 elif promotion["promotionType"] == "urlreward":
                     # Complete search for URL reward
                     self.activities.completeSearch()
@@ -121,12 +91,15 @@ class MorePromotions:
                 else:
                     # Default to completing search
                     self.activities.completeSearch()
+                self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
                 pointsAfter = self.browser.utils.getAccountPoints()
                 if pointsBefore == pointsAfter:
                     Utils.sendNotification(
                         "Incomplete promotion",
                         f"title={promotionTitle} type={promotion['promotionType']}",
                     )
+                self.browser.utils.resetTabs()
+                time.sleep(2)
             except Exception:  # pylint: disable=broad-except
                 logging.error("[MORE PROMOS] Error More Promotions", exc_info=True)
                 # Reset tabs in case of an exception

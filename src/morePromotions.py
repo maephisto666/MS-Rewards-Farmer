@@ -31,16 +31,8 @@ class MorePromotions:
                     or promotion["pointProgressMax"] == 0
                 ):
                     logging.debug("Already done, continuing")
-                    # todo Handle special "Quote of the day" which is falsely complete
                     continue
                 pointsBefore = self.browser.utils.getAccountPoints()
-                if "Mid-week puzzle" in promotionTitle:
-                    Utils.sendNotification(
-                        "Mid-week puzzle found",
-                        "MS-Rewards-Farmer detected mid-week puzzle activity, which isn't supported."
-                        " Please manually complete",
-                    )
-                    continue
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )

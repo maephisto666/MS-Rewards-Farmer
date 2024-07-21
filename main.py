@@ -301,6 +301,8 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
     elif appriseSummary == AppriseSummary.never:
         pass
 
+    return accountPoints
+
 
 def export_points_to_csv(points_data):
     logs_directory = Utils.getProjectRoot() / "logs"

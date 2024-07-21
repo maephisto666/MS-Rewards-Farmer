@@ -1,6 +1,8 @@
+import contextlib
 import logging
 import time
 
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
@@ -36,10 +38,11 @@ class MorePromotions:
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
-                searchbar = self.browser.utils.waitUntilClickable(
-                    By.ID, "sb_form_q", timeToWait=20
-                )
-                searchbar.click()
+                with contextlib.suppress(TimeoutException):
+                    searchbar = self.browser.utils.waitUntilClickable(
+                        By.ID, "sb_form_q"
+                    )
+                    searchbar.click()
                 # todo These and following are US-English specific, maybe there's a good way to internationalize
                 if "Search the lyrics of a song" in promotionTitle:
                     self.browser.webdriver.get(

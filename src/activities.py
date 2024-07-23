@@ -23,6 +23,7 @@ class Activities:
         # Open the More Promotions activity for the given cardId
         self.webdriver.find_element(By.CSS_SELECTOR,
                                     f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId + 1}) .ds-card-sec").click()
+        self.browser.utils.switchToNewTab(timeToWait=5)
 
     def completeSearch(self):
         # Simulate completing a search activity

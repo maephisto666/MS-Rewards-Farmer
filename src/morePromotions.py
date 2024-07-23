@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import random
 import time
 
 from selenium.common import TimeoutException
@@ -25,7 +26,7 @@ class MorePromotions:
         self.browser.utils.goToRewards()
         for promotion in morePromotions:
             try:
-                promotionTitle = promotion["title"]
+                promotionTitle = promotion["title"].replace("\u200b", "").replace("\xa0", " ")
                 logging.debug(f"promotionTitle={promotionTitle}")
                 # Open the activity for the promotion
                 if (
@@ -38,6 +39,7 @@ class MorePromotions:
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
+                self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
                 with contextlib.suppress(TimeoutException):
                     searchbar = self.browser.utils.waitUntilClickable(
                         By.ID, "sb_form_q"
@@ -45,13 +47,14 @@ class MorePromotions:
                     searchbar.click()
                 # todo These and following are US-English specific, maybe there's a good way to internationalize
                 if "Search the lyrics of a song" in promotionTitle:
-                    self.browser.webdriver.get(
-                        "https://www.bing.com/search?q=black+sabbath+supernaut+lyrics"
-                    )
+                    searchbar.send_keys("black sabbath supernaut lyrics")
+                    searchbar.submit()
                 elif "Translate anything" in promotionTitle:
-                    self.browser.webdriver.get(
-                        "https://www.bing.com/search?q=translate+pencil+sharpener+to+spanish"
-                    )
+                    searchbar.send_keys("translate pencil sharpener to spanish")
+                    searchbar.submit()
+                elif "Let's watch that movie again!" in promotionTitle:
+                    searchbar.send_keys("aliens movie")
+                    searchbar.submit()
                 elif "Discover open job roles" in promotionTitle:
                     self.browser.webdriver.get(
                         "https://www.bing.com/search?q=walmart+open+job+roles"
@@ -95,6 +98,7 @@ class MorePromotions:
                     # Default to completing search
                     self.activities.completeSearch()
                 self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
+                time.sleep(random.randint(5, 10))
                 pointsAfter = self.browser.utils.getAccountPoints()
                 if pointsBefore == pointsAfter:
                     Utils.sendNotification(

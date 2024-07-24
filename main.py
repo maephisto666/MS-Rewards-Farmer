@@ -211,7 +211,7 @@ class AppriseSummary(Enum):
 def executeBot(currentAccount: Account, args: argparse.Namespace):
     logging.info(f"********************{currentAccount.username}********************")
 
-    startingPoints: int
+    startingPoints: int | None = None
     accountPoints: int
     remainingSearches: RemainingSearches
     goalTitle: str
@@ -247,7 +247,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
             utils = mobileBrowser.utils
             Login(mobileBrowser, args).login()
-            if startingPoints is not None:
+            if startingPoints is None:
                 startingPoints = utils.getAccountPoints()
             with Searches(mobileBrowser) as searches:
                 searches.bingSearches()

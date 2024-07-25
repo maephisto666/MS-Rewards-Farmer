@@ -57,7 +57,7 @@ class ReadToEarn:
         # Do Daily Check in
         json_data = {
         'amount': 1,
-        'country': 'us',
+        'country': self.browser.localeGeo.lower(),
         'id': 1,
         'type': 101,
         'attributes': {
@@ -71,7 +71,7 @@ class ReadToEarn:
         # json data to confirm an article is read
         json_data = {
             'amount': 1,
-            'country': 'us',
+            'country': self.browser.localeGeo.lower(),
             'id': 1,
             'type': 101,
             'attributes': {

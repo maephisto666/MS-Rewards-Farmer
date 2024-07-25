@@ -65,8 +65,10 @@ class ReadToEarn:
             },
         }
         json_data['id'] = secrets.token_hex(64)
+        logging.info("[READ TO EARN] Daily App Check In")
         r = mobileApp.post("https://prod.rewardsplatform.microsoft.com/dapi/me/activities",json=json_data)
         balance = r.json().get("response").get("balance")
+        time.sleep(random.randint(10, 20))
         
         # json data to confirm an article is read
         json_data = {

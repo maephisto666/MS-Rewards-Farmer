@@ -1,9 +1,7 @@
 import random
 import time
 
-from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
 
 from src.browser import Browser
 
@@ -23,18 +21,9 @@ class Activities:
 
     def openMorePromotionsActivity(self, cardId: int):
         # Open the More Promotions activity for the given cardId
-        activity: WebElement
-        try:
-            activity = self.webdriver.find_element(
-                By.XPATH,
-                f'//*[@id="more-activities"]/div/mee-card[{cardId}]/div/card-content/mee-rewards-more-activities-card-item/div/a',
-            )
-        # Handle when card is big, appears to be random
-        except NoSuchElementException:
-            activity = self.webdriver.find_element(By.XPATH,
-                                                   "//mee-card-group[@id=\'more-activities\']/div/mee-card/div/card-content/mee-rewards-more-activities-card-item/div/a")
-        activity.click()
-        self.browser.utils.switchToNewTab(timeToWait=8)
+        self.webdriver.find_element(By.CSS_SELECTOR,
+                                    f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId + 1}) .ds-card-sec").click()
+        self.browser.utils.switchToNewTab(timeToWait=5)
 
     def completeSearch(self):
         # Simulate completing a search activity

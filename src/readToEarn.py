@@ -20,7 +20,7 @@ class ReadToEarn:
         self.webdriver = browser.webdriver
         self.activities = Activities(browser)
     
-    def completeReadToEarn(self,startingPoints):
+    def completeReadToEarn(self):
         
         logging.info("[READ TO EARN] " + "Trying to complete Read to Earn...")
            
@@ -54,6 +54,20 @@ class ReadToEarn:
         # Use returned URL to create a token
         token = mobileApp.fetch_token(token_url, authorization_response=redirect_response,include_client_id=True)
         
+        # Do Daily Check in
+        json_data = {
+        'amount': 1,
+        'country': 'us',
+        'id': 1,
+        'type': 101,
+        'attributes': {
+            'offerid': 'Gamification_Sapphire_DailyCheckIn',
+            },
+        }
+        json_data['id'] = secrets.token_hex(64)
+        r = mobileApp.post("https://prod.rewardsplatform.microsoft.com/dapi/me/activities",json=json_data)
+        balance = r.json().get("response").get("balance")
+        
         # json data to confirm an article is read
         json_data = {
             'amount': 1,
@@ -65,7 +79,6 @@ class ReadToEarn:
                 },
             }
 
-        balance = startingPoints
         # 10 is the most articles you can read. Sleep time is a guess, not tuned
         for i in range(10):
             # Replace ID with a random value so get credit for a new article

@@ -226,7 +226,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
                 f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
             )
             # todo Send notification if these fail to Apprise versus just logging
-            ReadToEarn(desktopBrowser).completeReadToEarn(startingPoints)
+            ReadToEarn(desktopBrowser).completeReadToEarn()
             DailySet(desktopBrowser).completeDailySet()
             PunchCards(desktopBrowser).completePunchCards()
             MorePromotions(desktopBrowser).completeMorePromotions()

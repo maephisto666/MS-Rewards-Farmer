@@ -203,9 +203,22 @@ def setupAccounts() -> list[Account]:
 
 
 class AppriseSummary(Enum):
+    """
+    configures how results are summarized via Apprise
+    """
+
     ALWAYS = auto()
+    """
+    the default, as it was before, how many points were gained and goal percentage if set
+    """
     ON_ERROR = auto()
+    """
+    only sends email if for some reason there's remaining searches 
+    """
     NEVER = auto()
+    """
+    never send summary 
+    """
 
 
 def executeBot(currentAccount: Account, args: argparse.Namespace):

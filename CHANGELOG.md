@@ -27,11 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - More logging
 - Config to make `requests` more reliable
 - More checks for bug report
+- Me, cal4, as a sponsoree
 
 ### Changed
 
 - More reliable searches and closer to human behavior
 - When logger is set to debug, doesn't include library code now
+- Line endings to LF
 
 ### Removed
 

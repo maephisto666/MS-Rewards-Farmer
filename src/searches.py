@@ -23,16 +23,32 @@ LOAD_DATE_KEY = "loadDate"
 
 
 class RetriesStrategy(Enum):
+    """
+    method to use when retrying
+    """
+
     EXPONENTIAL = auto()
+    """
+    an exponentially increasing `base_delay_in_seconds` between attempts
+    """
     CONSTANT = auto()
+    """
+    the default; a constant `base_delay_in_seconds` between attempts
+    """
 
 
 class Searches:
     config = Utils.loadConfig()
     maxRetries: Final[int] = config.get("retries", {}).get("max", 8)
+    """
+    the max amount of retries to attempt
+    """
     baseDelay: Final[float] = config.get("retries", {}).get(
         "base_delay_in_seconds", 14.0625
     )
+    """
+    how many seconds to delay
+    """
     # retriesStrategy = Final[  # todo Figure why doesn't work with equality below
     retriesStrategy = RetriesStrategy[
         config.get("retries", {}).get("strategy", RetriesStrategy.CONSTANT.name)

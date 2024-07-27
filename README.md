@@ -73,22 +73,18 @@
 
 ## Launch arguments
 
-- -v/--visible to disable headless
-- -l/--lang to force a language (ex: en)
-- -g/--geo to force a searching geolocation (ex: US)
-
+- `-v/--visible` to disable headless
+- `-l/--lang` to force a language (ex: en)
+- `-g/--geo` to force a searching geolocation (ex: US)
   `https://trends.google.com/trends/ for proper geolocation abbreviation for your choice. These MUST be uppercase!!!`
-
-- -p/--proxy to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in
+- `-p/--proxy` to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in
   accounts.json)
-
   `(ex: http://user:pass@host:port)`
-
-- -cv/--chromeversion to use a specific version of chrome
-
+- `-cv/--chromeversion` to use a specific version of chrome
   `(ex: 118)`
-
-[//]: # (todo update)
+- `-da/--disable-apprise` to disable Apprise notification, overriding [config.yaml](config.yaml). Useful when running
+  manually as opposed to on a schedule.
+- `-t/--searchtype` to only do `desktop` or `mobile` searches, `(ex: --searchtype=mobile)`
 
 ## Features
 

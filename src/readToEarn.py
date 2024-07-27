@@ -23,7 +23,7 @@ class ReadToEarn:
     def completeReadToEarn(self):
         
         logging.info("[READ TO EARN] " + "Trying to complete Read to Earn...")
-           
+
         accountName = self.browser.username
         
         # Should Really Cache Token and load it in.
@@ -69,7 +69,7 @@ class ReadToEarn:
         r = mobileApp.post("https://prod.rewardsplatform.microsoft.com/dapi/me/activities",json=json_data)
         balance = r.json().get("response").get("balance")
         time.sleep(random.randint(10, 20))
-        
+
         # json data to confirm an article is read
         json_data = {
             'amount': 1,

@@ -135,8 +135,7 @@ class Utils:
         return response.json()["userInfo"]
 
     @staticmethod
-    def makeRequestsSession() -> Session:
-        session = requests.Session()
+    def makeRequestsSession(session: Session = requests.session()) -> Session:
         retry = Retry(
             total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504]
         )

@@ -258,8 +258,6 @@ class Browser:
             remainingMobile = int((targetMobile - progressMobile) / searchPoints)
         if desktopAndMobile:
             return RemainingSearches(desktop=remainingDesktop, mobile=remainingMobile)
-        elif self.mobile:
+        if self.mobile:
             return remainingMobile
-        elif not self.mobile:
-            return remainingDesktop
-        raise AssertionError
+        return remainingDesktop

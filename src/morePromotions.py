@@ -17,6 +17,7 @@ class MorePromotions:
         self.browser = browser
         self.activities = Activities(browser)
 
+    # todo Refactor so less complex
     def completeMorePromotions(self):
         # Function to complete More Promotions
         logging.info("[MORE PROMOS] " + "Trying to complete More Promotions...")
@@ -56,21 +57,17 @@ class MorePromotions:
                     searchbar.send_keys("aliens movie")
                     searchbar.submit()
                 elif "Discover open job roles" in promotionTitle:
-                    self.browser.webdriver.get(
-                        "https://www.bing.com/search?q=walmart+open+job+roles"
-                    )
+                    searchbar.send_keys("walmart open job roles")
+                    searchbar.submit()
                 elif "Plan a quick getaway" in promotionTitle:
-                    self.browser.webdriver.get(
-                        "https://www.bing.com/search?q=flights+nyc+to+paris"
-                    )
+                    searchbar.send_keys("flights nyc to paris")
+                    searchbar.submit()
                 elif "You can track your package" in promotionTitle:
-                    self.browser.webdriver.get(
-                        "https://www.bing.com/search?q=usps+tracking"
-                    )
+                    searchbar.send_keys("usps tracking")
+                    searchbar.submit()
                 elif "Find somewhere new to explore" in promotionTitle:
-                    self.browser.webdriver.get(
-                        "https://www.bing.com/search?q=directions+to+new+york"
-                    )
+                    searchbar.send_keys("directions to new york")
+                    searchbar.submit()
                 elif "Too tired to cook tonight?" in promotionTitle:
                     searchbar.send_keys("pizza delivery near me")
                     searchbar.submit()
@@ -99,12 +96,15 @@ class MorePromotions:
                     self.activities.completeSearch()
                 self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
                 time.sleep(random.randint(5, 10))
+
+                # todo Bundle this into one notification
                 pointsAfter = self.browser.utils.getAccountPoints()
                 if pointsBefore == pointsAfter:
                     Utils.sendNotification(
                         "Incomplete promotion",
                         f"title={promotionTitle} type={promotion['promotionType']}",
                     )
+
                 self.browser.utils.resetTabs()
                 time.sleep(2)
             except Exception:  # pylint: disable=broad-except

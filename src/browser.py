@@ -86,7 +86,7 @@ class Browser:
         options.headless = self.headless
         options.add_argument(f"--lang={self.localeLang}")
         options.add_argument("--log-level=3")
-        options.add_argument("--blink-settings=imagesEnabled=false")
+        options.add_argument("--blink-settings=imagesEnabled=false")      #If you are having MFA sign in issues comment this line out
         options.add_argument("--ignore-certificate-errors")
         options.add_argument("--ignore-certificate-errors-spki-list")
         options.add_argument("--ignore-ssl-errors")

@@ -1,14 +1,14 @@
 requests
 selenium>=4.15.2 # not directly required, pinned by Snyk to avoid a vulnerability
-ipapi
+ipapi~=1.0.4
 undetected-chromedriver==3.5.5
 selenium-wire
 numpy>=1.22.2 # not directly required, pinned by Snyk to avoid a vulnerability
 setuptools>=70.0.0 # not directly required, pinned by Snyk to avoid a vulnerability
 psutil
-blinker==1.7.0 #prevents issues on newer versions
-apprise
-pyyaml
+blinker==1.7.0 # prevents issues on newer versions
+apprise~=1.8.0
+pyyaml~=6.0.1
 urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
 requests-oauthlib
 zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability

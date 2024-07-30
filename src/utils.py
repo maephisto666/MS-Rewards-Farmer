@@ -1,191 +1,166 @@
 import contextlib
 import json
 import locale as pylocale
-import random
+import logging
+import re
 import time
-import urllib.parse
+from argparse import Namespace
 from pathlib import Path
+from typing import Any
 
 import requests
+import yaml
+from apprise import Apprise
+from requests import Session
+from requests.adapters import HTTPAdapter
+from selenium.common import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support import expected_conditions as ec
+from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
+from urllib3 import Retry
 
-import apprise
-import yaml
-
-from .constants import BASE_URL
+from .constants import REWARDS_URL
+from .constants import SEARCH_URL
 
 
 class Utils:
-    def __init__(self, webdriver: WebDriver, config_file='config.yaml'):
+    args: Namespace
+
+    def __init__(self, webdriver: WebDriver):
         self.webdriver = webdriver
         with contextlib.suppress(Exception):
             locale = pylocale.getdefaultlocale()[0]
             pylocale.setlocale(pylocale.LC_NUMERIC, locale)
-        
-        self.config = self.load_config(config_file)
+
+        self.config = self.loadConfig()
 
     @staticmethod
-    def load_config(config_file):
-        with open(config_file, 'r') as file:
+    def getProjectRoot() -> Path:
+        return Path(__file__).parent.parent
+
+    @staticmethod
+    def loadConfig(config_file=getProjectRoot() / "config.yaml") -> dict:
+        with open(config_file, "r") as file:
             return yaml.safe_load(file)
 
     @staticmethod
-    def send_notification(title, body, config_file='config.yaml'):
-        apobj = apprise.Apprise()
-        for url in Utils.load_config(config_file)['apprise']['urls']:
-            apobj.add(url)
-        apobj.notify(body=body, title=title)
+    def sendNotification(title, body) -> None:
+        if Utils.args.disable_apprise:
+            return
+        apprise = Apprise()
+        urls: list[str] = Utils.loadConfig().get("apprise", {}).get("urls", [])
+        for url in urls:
+            apprise.add(url)
+        apprise.notify(body=body, title=title)
 
-    def waitUntilVisible(self, by: str, selector: str, timeToWait: float = 10):
-        WebDriverWait(self.webdriver, timeToWait).until(
-            ec.visibility_of_element_located((by, selector))
+    def waitUntilVisible(
+        self, by: str, selector: str, timeToWait: float = 10
+    ) -> WebElement:
+        return WebDriverWait(self.webdriver, timeToWait).until(
+            expected_conditions.visibility_of_element_located((by, selector))
         )
 
-    def waitUntilClickable(self, by: str, selector: str, timeToWait: float = 10):
-        WebDriverWait(self.webdriver, timeToWait).until(
-            ec.element_to_be_clickable((by, selector))
+    def waitUntilClickable(
+        self, by: str, selector: str, timeToWait: float = 10
+    ) -> WebElement:
+        return WebDriverWait(self.webdriver, timeToWait).until(
+            expected_conditions.element_to_be_clickable((by, selector))
         )
 
-    def waitForMSRewardElement(self, by: str, selector: str):
-        loadingTimeAllowed = 5
-        refreshsAllowed = 5
+    def checkIfTextPresentAfterDelay(self, text: str, timeToWait: float = 10) -> bool:
+        time.sleep(timeToWait)
+        text_found = re.search(text, self.webdriver.page_source)
+        return text_found is not None
 
-        checkingInterval = 0.5
-        checks = loadingTimeAllowed / checkingInterval
+    def waitUntilQuestionRefresh(self) -> WebElement:
+        return self.waitUntilVisible(By.CLASS_NAME, "rqECredits", timeToWait=20)
 
-        tries = 0
-        refreshCount = 0
-        while True:
-            try:
-                self.webdriver.find_element(by, selector)
-                return True
-            except Exception:
-                if tries < checks:
-                    tries += 1
-                    time.sleep(checkingInterval)
-                elif refreshCount < refreshsAllowed:
-                    self.webdriver.refresh()
-                    refreshCount += 1
-                    tries = 0
-                    time.sleep(5)
-                else:
-                    return False
+    def waitUntilQuizLoads(self) -> WebElement:
+        return self.waitUntilVisible(By.XPATH, '//*[@id="rqStartQuiz"]')
 
-    def waitUntilQuestionRefresh(self):
-        return self.waitForMSRewardElement(By.CLASS_NAME, "rqECredits")
+    def resetTabs(self) -> None:
+        curr = self.webdriver.current_window_handle
 
-    def waitUntilQuizLoads(self):
-        return self.waitForMSRewardElement(By.XPATH, '//*[@id="rqStartQuiz"]')
+        for handle in self.webdriver.window_handles:
+            if handle != curr:
+                self.webdriver.switch_to.window(handle)
+                time.sleep(0.5)
+                self.webdriver.close()
+                time.sleep(0.5)
 
-    def waitUntilJS(self, jsSrc: str):
-        loadingTimeAllowed = 5
-        refreshsAllowed = 5
+        self.webdriver.switch_to.window(curr)
+        time.sleep(0.5)
+        self.goToRewards()
 
-        checkingInterval = 0.5
-        checks = loadingTimeAllowed / checkingInterval
+    def goToRewards(self) -> None:
+        self.webdriver.get(REWARDS_URL)
+        assert (
+            self.webdriver.current_url == REWARDS_URL
+        ), f"{self.webdriver.current_url} {REWARDS_URL}"
 
-        tries = 0
-        refreshCount = 0
-        while True:
-            elem = self.webdriver.execute_script(jsSrc)
-            if elem:
-                return elem
+    def goToSearch(self) -> None:
+        self.webdriver.get(SEARCH_URL)
+        # assert (
+        #     self.webdriver.current_url == SEARCH_URL
+        # ), f"{self.webdriver.current_url} {SEARCH_URL}"  # need regex: AssertionError: https://www.bing.com/?toWww=1&redig=A5B72363182B49DEBB7465AD7520FDAA https://bing.com/
 
-            if tries < checks:
-                tries += 1
-                time.sleep(checkingInterval)
-            elif refreshCount < refreshsAllowed:
-                self.webdriver.refresh()
-                refreshCount += 1
-                tries = 0
-                time.sleep(5)
-            else:
-                return elem
-
-    def resetTabs(self):
-        try:
-            curr = self.webdriver.current_window_handle
-
-            for handle in self.webdriver.window_handles:
-                if handle != curr:
-                    self.webdriver.switch_to.window(handle)
-                    time.sleep(0.5)
-                    self.webdriver.close()
-                    time.sleep(0.5)
-
-            self.webdriver.switch_to.window(curr)
-            time.sleep(0.5)
-            self.goHome()
-        except Exception:
-            self.goHome()
-
-    def goHome(self):
-        reloadThreshold = 5
-        reloadInterval = 10
-        targetUrl = urllib.parse.urlparse(BASE_URL)
-        self.webdriver.get(BASE_URL)
-        reloads = 0
-        interval = 1
-        intervalCount = 0
-        while True:
-            self.tryDismissCookieBanner()
-            with contextlib.suppress(Exception):
-                self.webdriver.find_element(By.ID, "more-activities")
-                break
-            currentUrl = urllib.parse.urlparse(self.webdriver.current_url)
-            if (
-                currentUrl.hostname != targetUrl.hostname
-            ) and self.tryDismissAllMessages():
-                time.sleep(1)
-                self.webdriver.get(BASE_URL)
-            time.sleep(interval)
-            if "proofs" in str(self.webdriver.current_url):
-                return "Verify"
-            intervalCount += 1
-            if intervalCount >= reloadInterval:
-                intervalCount = 0
-                reloads += 1
-                self.webdriver.refresh()
-                if reloads >= reloadThreshold:
-                    break
-
-    def getAnswerCode(self, key: str, string: str) -> str:
+    @staticmethod
+    def getAnswerCode(key: str, string: str) -> str:
         t = sum(ord(string[i]) for i in range(len(string)))
         t += int(key[-2:], 16)
         return str(t)
 
     def getDashboardData(self) -> dict:
-        return self.webdriver.execute_script("return dashboard")
+        urlBefore = self.webdriver.current_url
+        try:
+            self.goToRewards()
+            return self.webdriver.execute_script("return dashboard")
+        finally:
+            try:
+                self.webdriver.get(urlBefore)
+            except TimeoutException:
+                self.goToRewards()
 
-    def getBingInfo(self):
-        cookieJar = self.webdriver.get_cookies()
-        cookies = {cookie["name"]: cookie["value"] for cookie in cookieJar}
-        maxTries = 5
-        for _ in range(maxTries):
-            with contextlib.suppress(Exception):
-                response = requests.get(
-                    "https://www.bing.com/rewards/panelflyout/getuserinfo",
-                    cookies=cookies,
-                )
-                if response.status_code == requests.codes.ok:
-                    return response.json()
-            time.sleep(1)
-        return None
+    def getBingInfo(self) -> Any:
+        session = self.makeRequestsSession()
 
-    def checkBingLogin(self):
-        if data := self.getBingInfo():
-            return data["userInfo"]["isRewardsUser"]
-        else:
-            return False
+        for cookie in self.webdriver.get_cookies():
+            session.cookies.set(cookie["name"], cookie["value"])
+
+        response = session.get("https://www.bing.com/rewards/panelflyout/getuserinfo")
+
+        assert response.status_code == requests.codes.ok
+        return response.json()["userInfo"]
+
+    @staticmethod
+    def makeRequestsSession(session: Session = requests.session()) -> Session:
+        retry = Retry(
+            total=5, backoff_factor=0.1, status_forcelist=[500, 502, 503, 504]
+        )
+        session.mount(
+            "https://", HTTPAdapter(max_retries=retry)
+        )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+        session.mount(
+            "http://", HTTPAdapter(max_retries=retry)
+        )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+        return session
+
+    def isLoggedIn(self) -> bool:
+        # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred
+        self.webdriver.get(
+            "https://rewards.bing.com/Signin/"
+        )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
+        with contextlib.suppress(TimeoutException):
+            self.waitUntilVisible(
+                By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
+            )
+            return True
+        return False
 
     def getAccountPoints(self) -> int:
-        return self.getDashboardData()["userStatus"]["availablePoints"]
-
-    def getBingAccountPoints(self) -> int:
-        return data["userInfo"]["balance"] if (data := self.getBingInfo()) else 0
+        return self.getBingInfo()["balance"]
 
     def getGoalPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]
@@ -193,7 +168,7 @@ class Utils:
     def getGoalTitle(self) -> str:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["title"]
 
-    def tryDismissAllMessages(self):
+    def tryDismissAllMessages(self) -> None:
         buttons = [
             (By.ID, "iLandingViewAction"),
             (By.ID, "iShowSkip"),
@@ -202,95 +177,61 @@ class Utils:
             (By.ID, "idSIButton9"),
             (By.CSS_SELECTOR, ".ms-Button.ms-Button--primary"),
             (By.ID, "bnp_btn_accept"),
-            (By.ID, "acceptButton")
+            (By.ID, "acceptButton"),
         ]
-        result = False
         for button in buttons:
             try:
-                elements = self.webdriver.find_elements(button[0], button[1])
-                try:
-                    for element in elements:
-                        element.click()
-                except Exception:
-                    continue
-                result = True
-            except Exception:
+                elements = self.webdriver.find_elements(by=button[0], value=button[1])
+            except NoSuchElementException:  # Expected?
+                logging.debug("", exc_info=True)
                 continue
-        return result
+            for element in elements:
+                element.click()
 
-    def tryDismissCookieBanner(self):
-        with contextlib.suppress(Exception):
+    def tryDismissCookieBanner(self) -> None:
+        with contextlib.suppress(NoSuchElementException):  # Expected
             self.webdriver.find_element(By.ID, "cookie-banner").find_element(
                 By.TAG_NAME, "button"
             ).click()
             time.sleep(2)
 
-    def tryDismissBingCookieBanner(self):
-        with contextlib.suppress(Exception):
+    def tryDismissBingCookieBanner(self) -> None:
+        with contextlib.suppress(NoSuchElementException):  # Expected
             self.webdriver.find_element(By.ID, "bnp_btn_accept").click()
             time.sleep(2)
 
-    def switchToNewTab(self, timeToWait: int = 0):
+    def switchToNewTab(self, timeToWait: float = 0) -> None:
         time.sleep(0.5)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[1])
         if timeToWait > 0:
             time.sleep(timeToWait)
 
-    def closeCurrentTab(self):
+    def closeCurrentTab(self) -> None:
         self.webdriver.close()
         time.sleep(0.5)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[0])
         time.sleep(0.5)
 
-    def visitNewTab(self, timeToWait: int = 0):
+    def visitNewTab(self, timeToWait: float = 0) -> None:
         self.switchToNewTab(timeToWait)
         self.closeCurrentTab()
 
-    def getRemainingSearches(self):
-        dashboard = self.getDashboardData()
-        searchPoints = 1
-        counters = dashboard["userStatus"]["counters"]
-
-        if "pcSearch" not in counters:
-            return 0, 0
-
-        progressDesktop = counters["pcSearch"][0]["pointProgress"]
-        targetDesktop = counters["pcSearch"][0]["pointProgressMax"]
-        if len(counters["pcSearch"]) >= 2:
-            progressDesktop = progressDesktop + counters["pcSearch"][1]["pointProgress"]
-            targetDesktop = targetDesktop + counters["pcSearch"][1]["pointProgressMax"]
-        if targetDesktop in [30, 90, 102]:
-            searchPoints = 3
-        elif targetDesktop == 50 or targetDesktop >= 170 or targetDesktop == 150:
-            searchPoints = 5
-        remainingDesktop = int((targetDesktop - progressDesktop) / searchPoints)
-        remainingMobile = 0
-        if dashboard["userStatus"]["levelInfo"]["activeLevel"] != "Level1":
-            progressMobile = counters["mobileSearch"][0]["pointProgress"]
-            targetMobile = counters["mobileSearch"][0]["pointProgressMax"]
-            remainingMobile = int((targetMobile - progressMobile) / searchPoints)
-        return remainingDesktop, remainingMobile
-
-    def formatNumber(self, number, num_decimals=2):
+    @staticmethod
+    def formatNumber(number, num_decimals=2) -> str:
         return pylocale.format_string(
             f"%10.{num_decimals}f", number, grouping=True
         ).strip()
 
-    def randomSeconds(self, max_value):
-        random_number = random.uniform(self, max_value)
-        return round(random_number, 3)
+    @staticmethod
+    def getBrowserConfig(sessionPath: Path) -> dict | None:
+        configFile = sessionPath / "config.json"
+        if not configFile.exists():
+            return
+        with open(configFile, "r") as f:
+            return json.load(f)
 
     @staticmethod
-    def getBrowserConfig(sessionPath: Path) -> dict:
-        configFile = sessionPath.joinpath("config.json")
-        if configFile.exists():
-            with open(configFile, "r") as f:
-                return json.load(f)
-        else:
-            return {}
-
-    @staticmethod
-    def saveBrowserConfig(sessionPath: Path, config: dict):
-        configFile = sessionPath.joinpath("config.json")
+    def saveBrowserConfig(sessionPath: Path, config: dict) -> None:
+        configFile = sessionPath / "config.json"
         with open(configFile, "w") as f:
             json.dump(config, f)

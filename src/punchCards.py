@@ -1,4 +1,3 @@
-import contextlib
 import logging
 import random
 import time
@@ -7,8 +6,7 @@ import urllib.parse
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
-
-from .constants import BASE_URL
+from .constants import REWARDS_URL
 
 
 class PunchCards:
@@ -59,6 +57,7 @@ class PunchCards:
         logging.info("[PUNCH CARDS] " + "Trying to complete the Punch Cards...")
         self.completePromotionalItems()
         punchCards = self.browser.utils.getDashboardData()["punchCards"]
+        self.browser.utils.goToRewards()
         for punchCard in punchCards:
             try:
                 if (
@@ -73,18 +72,18 @@ class PunchCards:
                         punchCard["childPromotions"],
                     )
             except Exception:  # pylint: disable=broad-except
+                logging.error("[PUNCH CARDS] Error Punch Cards", exc_info=True)
                 self.browser.utils.resetTabs()
-        logging.info("[PUNCH CARDS] Completed the Punch Cards successfully !")
-        time.sleep(random.randint(100, 700) / 100)
-        self.webdriver.get(BASE_URL)
-        time.sleep(random.randint(100, 700) / 100)
+                continue
+        logging.info("[PUNCH CARDS] Exiting")
 
     def completePromotionalItems(self):
         # Function to complete promotional items
-        with contextlib.suppress(Exception):
+        try:
             item = self.browser.utils.getDashboardData()["promotionalItem"]
+            self.browser.utils.goToRewards()
             destUrl = urllib.parse.urlparse(item["destinationUrl"])
-            baseUrl = urllib.parse.urlparse(BASE_URL)
+            baseUrl = urllib.parse.urlparse(REWARDS_URL)
             if (
                 (item["pointProgressMax"] in [100, 200, 500])
                 and not item["complete"]
@@ -101,3 +100,5 @@ class PunchCards:
                     By.XPATH, '//*[@id="promo-item"]/section/div/div/div/span'
                 ).click()
                 self.browser.utils.visitNewTab(8)
+        except Exception:
+            logging.debug("", exc_info=True)

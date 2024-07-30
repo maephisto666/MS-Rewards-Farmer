@@ -4,6 +4,8 @@ from typing import Any
 import requests
 from requests import HTTPError, Response
 
+from src.utils import Utils
+
 
 class GenerateUserAgent:
     """A class for generating user agents for Microsoft Rewards Farmer."""
@@ -31,7 +33,7 @@ class GenerateUserAgent:
 
     def userAgent(
         self,
-        browserConfig: dict[str, Any],
+        browserConfig: dict[str, Any] | None,
         mobile: bool = False,
     ) -> tuple[str, dict[str, Any], Any]:
         """
@@ -52,16 +54,16 @@ class GenerateUserAgent:
             else self.USER_AGENT_TEMPLATES.get("edge_pc", "")
         )
 
+        # todo - Refactor, kinda spaghetti code-y
         newBrowserConfig = None
-        if userAgentMetadata := browserConfig.get("userAgentMetadata"):
-            platformVersion = userAgentMetadata["platformVersion"]
-
+        if browserConfig is not None:
+            platformVersion = browserConfig.get("userAgentMetadata")["platformVersion"]
         else:
             # ref : https://textslashplain.com/2021/09/21/determining-os-platform-version/
             platformVersion = (
                 f"{random.randint(9,13) if mobile else random.randint(1,15)}.0.0"
             )
-            newBrowserConfig = browserConfig
+            newBrowserConfig = {}
             newBrowserConfig["userAgentMetadata"] = {
                 "platformVersion": platformVersion,
             }
@@ -178,8 +180,7 @@ class GenerateUserAgent:
 
     @staticmethod
     def getWebdriverPage(url: str) -> Response:
-        response = None
-        response = requests.get(url)
+        response = Utils.makeRequestsSession().get(url)
         if response.status_code != requests.codes.ok:  # pylint: disable=no-member
             raise HTTPError(
                 f"Failed to get webdriver page {url}. "

@@ -1,39 +1,35 @@
 import argparse
-import atexit
 import csv
 import json
 import logging
+import logging.config
 import logging.handlers as handlers
 import random
 import re
 import sys
-import time
 from datetime import datetime
-from pathlib import Path
-
-import psutil
+from enum import Enum, auto
 
 from src import (
     Browser,
-    DailySet,
     Login,
     MorePromotions,
     PunchCards,
     Searches,
     ReadToEarn,
+    DailySet,
+    Account,
 )
+from src.browser import RemainingSearches
 from src.loggingColoredFormatter import ColoredFormatter
 from src.utils import Utils
-
-POINTS_COUNTER = 0
 
 
 def main():
     args = argumentParser()
+    Utils.args = args
     setupLogging()
     loadedAccounts = setupAccounts()
-    # Register the cleanup function to be called on script exit
-    atexit.register(cleanupChromeProcesses)
 
     # Load previous day's points data
     previous_points_data = load_previous_points_data()
@@ -41,30 +37,35 @@ def main():
     for currentAccount in loadedAccounts:
         try:
             earned_points = executeBot(currentAccount, args)
-            account_name = currentAccount.get("username", "")
-            previous_points = previous_points_data.get(account_name, 0)
+        except Exception as e1:
+            logging.error("", exc_info=True)
+            Utils.sendNotification(
+                f"⚠️ Error executing {currentAccount.username}, please check the log",
+                f"{e1}\n{e1.__traceback__}",
+            )
+            continue
+        previous_points = previous_points_data.get(currentAccount.username, 0)
 
-            # Calculate the difference in points from the prior day
-            points_difference = earned_points - previous_points
+        # Calculate the difference in points from the prior day
+        points_difference = earned_points - previous_points
 
-            # Append the daily points and points difference to CSV and Excel
-            log_daily_points_to_csv(account_name, earned_points, points_difference)
+        # Append the daily points and points difference to CSV and Excel
+        log_daily_points_to_csv(earned_points, points_difference)
 
-            # Update the previous day's points data
-            previous_points_data[account_name] = earned_points
+        # Update the previous day's points data
+        previous_points_data[currentAccount.username] = earned_points
 
-            logging.info(f"[POINTS] Data for '{account_name}' appended to the file.")
-        except Exception as e:
-            Utils.send_notification("⚠️ Error occurred, please check the log", str(e))
-            logging.exception(f"{e.__class__.__name__}: {e}")
+        logging.info(
+            f"[POINTS] Data for '{currentAccount.username}' appended to the file."
+        )
 
     # Save the current day's points data for the next day in the "logs" folder
     save_previous_points_data(previous_points_data)
     logging.info("[POINTS] Data saved for the next day.")
 
 
-def log_daily_points_to_csv(date, earned_points, points_difference):
-    logs_directory = Path(__file__).resolve().parent / "logs"
+def log_daily_points_to_csv(earned_points, points_difference):
+    logs_directory = Utils.getProjectRoot() / "logs"
     csv_filename = logs_directory / "points_data.csv"
 
     # Create a new row with the date, daily points, and points difference
@@ -88,16 +89,24 @@ def log_daily_points_to_csv(date, earned_points, points_difference):
 
 
 def setupLogging():
-    format = "%(asctime)s [%(levelname)s] %(message)s"
+    _format = "%(asctime)s [%(levelname)s] %(message)s"
     terminalHandler = logging.StreamHandler(sys.stdout)
-    terminalHandler.setFormatter(ColoredFormatter(format))
+    terminalHandler.setFormatter(ColoredFormatter(_format))
 
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     logs_directory.mkdir(parents=True, exist_ok=True)
 
+    # so only our code is logged if level=logging.DEBUG or finer
+    # if not working see https://stackoverflow.com/a/48891485/4164390
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": True,
+        }
+    )
     logging.basicConfig(
-        level=logging.INFO,
-        format=format,
+        level=logging.DEBUG,
+        format=_format,
         handlers=[
             handlers.TimedRotatingFileHandler(
                 logs_directory / "activity.log",
@@ -109,16 +118,6 @@ def setupLogging():
             terminalHandler,
         ],
     )
-
-
-def cleanupChromeProcesses():
-    # Use psutil to find and terminate Chrome processes
-    for process in psutil.process_iter(["pid", "name"]):
-        if process.info["name"] == "chrome.exe":
-            try:
-                psutil.Process(process.info["pid"]).terminate()
-            except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
-                pass
 
 
 def argumentParser() -> argparse.Namespace:
@@ -152,10 +151,23 @@ def argumentParser() -> argparse.Namespace:
         default=None,
         help="Optional: Set fixed Chrome version (ex. 118)",
     )
+    parser.add_argument(
+        "-da",
+        "--disable-apprise",
+        action="store_true",
+        help="Optional: Disable Apprise, overrides config.yaml, useful when developing",
+    )
+    parser.add_argument(
+        "-t",
+        "--searchtype",
+        type=str,
+        default=None,
+        help="Optional: Set to only search in either desktop or mobile (ex: 'desktop' or 'mobile')",
+    )
     return parser.parse_args()
 
 
-def setupAccounts() -> list:
+def setupAccounts() -> list[Account]:
     """Sets up and validates a list of accounts loaded from 'accounts.json'."""
 
     def validEmail(email: str) -> bool:
@@ -163,7 +175,7 @@ def setupAccounts() -> list:
         pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         return bool(re.match(pattern, email))
 
-    accountPath = Path(__file__).resolve().parent / "accounts.json"
+    accountPath = Utils.getProjectRoot() / "accounts.json"
     if not accountPath.exists():
         accountPath.write_text(
             json.dumps(
@@ -176,114 +188,137 @@ def setupAccounts() -> list:
     [ACCOUNT] A new file has been created, please edit with your credentials and save.
     """
         logging.warning(noAccountsNotice)
-        exit()
-    loadedAccounts = json.loads(accountPath.read_text(encoding="utf-8"))
-    for account in loadedAccounts:
-        if not validEmail(account["username"]):
-            logging.error(f"[CREDENTIALS] Wrong Email Address: '{account['username']}'")
-            exit()
+        exit(1)
+    loadedAccounts: list[Account] = []
+    for rawAccount in json.loads(accountPath.read_text(encoding="utf-8")):
+        account: Account = Account(**rawAccount)
+        if not validEmail(account.username):
+            logging.warning(
+                f"[CREDENTIALS] Invalid email: {account.username}, skipping this account"
+            )
+            continue
+        loadedAccounts.append(account)
     random.shuffle(loadedAccounts)
     return loadedAccounts
 
 
-def executeBot(currentAccount, args: argparse.Namespace):
-    logging.info(
-        f"********************{currentAccount.get('username', '')}********************"
-    )
-    
-    accountPointsCounter = 0
-    remainingSearches = 0
-    remainingSearchesM = 0
-    startingPoints = 0
+class AppriseSummary(Enum):
+    """
+    configures how results are summarized via Apprise
+    """
 
-    with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
-        utils = desktopBrowser.utils
-        accountPointsCounter = Login(desktopBrowser).login()
-        startingPoints = accountPointsCounter
-        if startingPoints == "Locked":
-            Utils.send_notification("🚫 Account is Locked", currentAccount["username"])
-            return 0
-        if startingPoints == "Verify":
-            Utils.send_notification("❗️ Account needs to be verified", currentAccount["username"])
-            return 0
-        logging.info(
-            f"[POINTS] You have {utils.formatNumber(accountPointsCounter)} points on your account"
-        )
-        ReadToEarn(desktopBrowser).completeReadToEarn(startingPoints)
-        DailySet(desktopBrowser).completeDailySet()
-        PunchCards(desktopBrowser).completePunchCards()
-        MorePromotions(desktopBrowser).completeMorePromotions()
-        # VersusGame(desktopBrowser).completeVersusGame()
-        (
-            remainingSearches,
-            remainingSearchesM,
-        ) = utils.getRemainingSearches()
+    ALWAYS = auto()
+    """
+    the default, as it was before, how many points were gained and goal percentage if set
+    """
+    ON_ERROR = auto()
+    """
+    only sends email if for some reason there's remaining searches 
+    """
+    NEVER = auto()
+    """
+    never send summary 
+    """
 
-        # Introduce random pauses before and after searches
-        pause_before_search = random.uniform(
-            11.0, 15.0
-        )  # Random pause between 11 to 15 seconds
-        time.sleep(pause_before_search)
 
-        if remainingSearches != 0:
-            accountPointsCounter = Searches(desktopBrowser).bingSearches(
-                remainingSearches
+def executeBot(currentAccount: Account, args: argparse.Namespace):
+    logging.info(f"********************{currentAccount.username}********************")
+
+    startingPoints: int | None = None
+    accountPoints: int
+    remainingSearches: RemainingSearches
+    goalTitle: str
+    goalPoints: int
+
+    if args.searchtype in ("desktop", None):
+        with Browser(mobile=False, account=currentAccount, args=args) as desktopBrowser:
+            utils = desktopBrowser.utils
+            Login(desktopBrowser, args).login()
+            startingPoints = utils.getAccountPoints()
+            logging.info(
+                f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
             )
+            # todo Send notification if these fail to Apprise versus just logging
+            DailySet(desktopBrowser).completeDailySet()
+            PunchCards(desktopBrowser).completePunchCards()
+            MorePromotions(desktopBrowser).completeMorePromotions()
+            # VersusGame(desktopBrowser).completeVersusGame()
 
-        pause_after_search = random.uniform(
-            11.0, 15.0
-        )  # Random pause between 11 to 15 seconds
-        time.sleep(pause_after_search)
+            with Searches(desktopBrowser) as searches:
+                searches.bingSearches()
 
-        utils.goHome()
-        goalPoints = utils.getGoalPoints()
-        goalTitle = utils.getGoalTitle()
-        desktopBrowser.closeBrowser()
-
-    if remainingSearchesM != 0:
-        desktopBrowser.closeBrowser()
-        with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
-            utils = mobileBrowser.utils
-            accountPointsCounter = Login(mobileBrowser).login()
-            accountPointsCounter = Searches(mobileBrowser).bingSearches(
-                remainingSearchesM
-            )
-
-            utils.goHome()
             goalPoints = utils.getGoalPoints()
             goalTitle = utils.getGoalTitle()
-            mobileBrowser.closeBrowser()
+
+            remainingSearches = desktopBrowser.getRemainingSearches(
+                desktopAndMobile=True
+            )
+            accountPoints = utils.getAccountPoints()
+
+    if args.searchtype in ("mobile", None):
+        with Browser(mobile=True, account=currentAccount, args=args) as mobileBrowser:
+            utils = mobileBrowser.utils
+            Login(mobileBrowser, args).login()
+            if startingPoints is None:
+                startingPoints = utils.getAccountPoints()
+            ReadToEarn(mobileBrowser).completeReadToEarn()
+            with Searches(mobileBrowser) as searches:
+                searches.bingSearches()
+
+            goalPoints = utils.getGoalPoints()
+            goalTitle = utils.getGoalTitle()
+
+            remainingSearches = mobileBrowser.getRemainingSearches(
+                desktopAndMobile=True
+            )
+            accountPoints = utils.getAccountPoints()
 
     logging.info(
-        f"[POINTS] You have earned {utils.formatNumber(accountPointsCounter - startingPoints)} points today !"
+        f"[POINTS] You have earned {Utils.formatNumber(accountPoints - startingPoints)} points this run !"
     )
     logging.info(
-        f"[POINTS] You are now at {utils.formatNumber(accountPointsCounter)} points !"
+        f"[POINTS] You are now at {Utils.formatNumber(accountPoints)} points !"
     )
-    goalNotifier = ""
-    if goalPoints > 0:
-        logging.info(
-            f"[POINTS] You are now at {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% of your goal ({goalTitle}) !\n"
+    appriseSummary = AppriseSummary[
+        Utils.loadConfig().get("apprise", {}).get("summary", AppriseSummary.ALWAYS.name)
+    ]
+    if appriseSummary == AppriseSummary.ALWAYS:
+        goalStatus = ""
+        if goalPoints > 0:
+            logging.info(
+                f"[POINTS] You are now at {(Utils.formatNumber((accountPoints / goalPoints) * 100))}% of your "
+                f"goal ({goalTitle}) !"
+            )
+            goalStatus = (
+                f"🎯 Goal reached: {(Utils.formatNumber((accountPoints / goalPoints) * 100))}%"
+                f" ({goalTitle})"
+            )
+
+        Utils.sendNotification(
+            "Daily Points Update",
+            "\n".join(
+                [
+                    f"👤 Account: {currentAccount.username}",
+                    f"⭐️ Points earned today: {Utils.formatNumber(accountPoints - startingPoints)}",
+                    f"💰 Total points: {Utils.formatNumber(accountPoints)}",
+                    goalStatus,
+                ]
+            ),
         )
-        goalNotifier = f"🎯 Goal reached: {(utils.formatNumber((accountPointsCounter / goalPoints) * 100))}% ({goalTitle})"
+    elif appriseSummary == AppriseSummary.ON_ERROR:
+        if remainingSearches.getTotal() > 0:
+            Utils.sendNotification(
+                "Error: remaining searches",
+                f"account username: {currentAccount.username}, {remainingSearches}",
+            )
+    elif appriseSummary == AppriseSummary.NEVER:
+        pass
 
-    Utils.send_notification(
-        "Daily Points Update",
-        "\n".join(
-            [
-                f"👤 Account: {currentAccount.get('username')}",
-                f"⭐️ Points earned today: {utils.formatNumber(accountPointsCounter - startingPoints)}",
-                f"💰 Total points: {utils.formatNumber(accountPointsCounter)}",
-                goalNotifier,
-            ]
-        ),
-    )
-
-    return accountPointsCounter
+    return accountPoints
 
 
 def export_points_to_csv(points_data):
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     csv_filename = logs_directory / "points_data.csv"
     with open(csv_filename, mode="a", newline="") as file:  # Use "a" mode for append
         fieldnames = ["Account", "Earned Points", "Points Difference"]
@@ -299,9 +334,10 @@ def export_points_to_csv(points_data):
 
 # Define a function to load the previous day's points data from a file in the "logs" folder
 def load_previous_points_data():
-    logs_directory = Path(__file__).resolve().parent / "logs"
     try:
-        with open(logs_directory / "previous_points_data.json", "r") as file:
+        with open(
+            Utils.getProjectRoot() / "logs" / "previous_points_data.json", "r"
+        ) as file:
             return json.load(file)
     except FileNotFoundError:
         return {}
@@ -309,10 +345,16 @@ def load_previous_points_data():
 
 # Define a function to save the current day's points data for the next day in the "logs" folder
 def save_previous_points_data(data):
-    logs_directory = Path(__file__).resolve().parent / "logs"
+    logs_directory = Utils.getProjectRoot() / "logs"
     with open(logs_directory / "previous_points_data.json", "w") as file:
         json.dump(data, file, indent=4)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        logging.exception("")
+        Utils.sendNotification(
+            "⚠️ Error occurred, please check the log", f"{e}\n{e.__traceback__}"
+        )

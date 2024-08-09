@@ -2,48 +2,66 @@ import getpass
 import os
 import subprocess
 from datetime import datetime
+from pathlib import Path
 
-# 取得當前使用者的名稱
+# Get the directory of the script being run
+script_dir = Path(__file__).parent.resolve()
+
+# Get the current user's name
 current_user = getpass.getuser()
 
 
-# 取得當前使用者的SID
+# Get the current user's SID
 def get_user_sid(username):
     try:
-        output = subprocess.check_output(
-            f'wmic useraccount where name="{username}" get sid', shell=True
-        )
-        sid = output.decode().split("\n")[1].strip()
+        command = [
+            "powershell",
+            "-Command",
+            f"(Get-WmiObject -Class Win32_UserAccount -Filter \"Name='{username}'\").SID",
+        ]
+        output = subprocess.check_output(command, universal_newlines=True)
+        sid = output.strip()
         return sid
     except Exception as e:
         print(f"Error getting SID for user {username}: {e}")
         return None
 
 
-current_user_sid = get_user_sid(current_user)
+sid = get_user_sid(current_user)
+
+if sid is None:
+    print("Unable to retrieve SID automatically.")
+    print(
+        "Please manually check your SID by running the following command in Command Prompt:"
+    )
+    print("whoami /user")
+    sid = input("Enter your SID manually: ")
+
 computer_name = os.environ["COMPUTERNAME"]
 
 # Let the user choose between Miniconda and Anaconda
 print("Please choose your Python distribution:")
-print("1. Miniconda")
+print("1. Local (Windows system Python without virtual environment)")
 print("2. Anaconda")
-choice = input("Enter your choice (1 or 2): ")
+print("3. Miniconda")
+choice = input("Enter your choice (1, 2, or 3): ")
 
 if choice == "1":
-    base_path = f"C:\\Users\\{current_user}\\miniconda3"
+    command = f"{script_dir}\\MS_reward.bat"
 elif choice == "2":
     base_path = f"C:\\Users\\{current_user}\\anaconda3"
+    command = f"{base_path}\\Scripts\\activate.bat {base_path} &amp;&amp; conda activate {{env_name}} &amp;&amp; {script_dir}\\MS_reward.bat"
+elif choice == "3":
+    base_path = f"C:\\Users\\{current_user}\\miniconda3"
+    command = f"{base_path}\\Scripts\\activate.bat {base_path} &amp;&amp; conda activate {{env_name}} &amp;&amp; {script_dir}\\MS_reward.bat"
 else:
-    print("Invalid choice, please rerun the script and choose 1 or 2.")
+    print("Invalid choice, please rerun the script and choose 1, 2, or 3.")
     exit(1)
 
 # Let the user enter the name of the environment they are using
-env_name = input("Please enter the name of the environment you are using: ")
-
-# Use the current working directory as the output path
-output_path = os.path.join(os.getcwd(), "MS_reward.xml")
-print(f"The XML file will be saved to: {output_path}")
-
+if choice in ["2", "3"]:
+    env_name = input("Please enter the name of the environment you are using: ")
+    command = command.format(env_name=env_name)
 
 xml_content = f"""<?xml version="1.0" encoding="UTF-16"?>
 <Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
@@ -54,7 +72,7 @@ xml_content = f"""<?xml version="1.0" encoding="UTF-16"?>
   </RegistrationInfo>
   <Triggers>
     <CalendarTrigger>
-      <StartBoundary>2024-07-03T06:00:00</StartBoundary>
+      <StartBoundary>2024-08-09T06:00:00</StartBoundary>
       <Enabled>true</Enabled>
       <ScheduleByDay>
         <DaysInterval>1</DaysInterval>
@@ -63,7 +81,7 @@ xml_content = f"""<?xml version="1.0" encoding="UTF-16"?>
   </Triggers>
   <Principals>
     <Principal id="Author">
-      <UserId>{current_user_sid}</UserId>
+      <UserId>{sid}</UserId>
       <LogonType>InteractiveToken</LogonType>
       <RunLevel>LeastPrivilege</RunLevel>
     </Principal>
@@ -90,14 +108,19 @@ xml_content = f"""<?xml version="1.0" encoding="UTF-16"?>
   <Actions Context="Author">
     <Exec>
       <Command>%windir%\\System32\\cmd.exe</Command>
-      <Arguments>/K "{base_path}\\Scripts\\activate.bat {base_path} &amp;&amp; conda activate {env_name} &amp;&amp; {os.getcwd()}\\MS_reward.bat"</Arguments>
-      <WorkingDirectory>{os.getcwd()}</WorkingDirectory>
+      <Arguments>/K "{command}"</Arguments>
+      <WorkingDirectory>{script_dir}</WorkingDirectory>
     </Exec>
   </Actions>
 </Task>"""
 
+# Use the script directory as the output path
+output_path = script_dir / "MS_reward.xml"
 
 with open(output_path, "w", encoding="utf-16") as file:
     file.write(xml_content)
 
 print(f"XML file has been generated and saved to: {output_path}")
+print("To import, see https://superuser.com/a/485565/709704")
+print("The trigger time is set to 6:00 AM on the specified day.")
+print("You can modify the settings after importing the task into the Task Scheduler.")

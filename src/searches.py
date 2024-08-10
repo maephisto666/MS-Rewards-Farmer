@@ -97,7 +97,7 @@ class Searches:
                 f"https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}"
                 f'&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )
-            assert r.status_code == requests.codes.ok
+            assert r.status_code == requests.codes.ok  # todo Add guidance if assertion fails
             trends = json.loads(r.text[6:])
             for topic in trends["default"]["trendingSearchesDays"][0][
                 "trendingSearches"
@@ -113,10 +113,10 @@ class Searches:
 
     def getRelatedTerms(self, term: str) -> list[str]:
         # Function to retrieve related terms from Bing API
-        relatedTerms: list[str] = requests.get(
+        relatedTerms: list[str] = Utils.makeRequestsSession().get(
             f"https://api.bing.com/osjson.aspx?query={term}",
             headers={"User-agent": self.browser.userAgent},
-        ).json()[1]
+        ).json()[1]  # todo Wrap if failed, or assert response?
         if not relatedTerms:
             return [term]
         return relatedTerms

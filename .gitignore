@@ -186,3 +186,4 @@ runbot.bat
 /google_trends.dat
 /google_trends.dir
 /google_trends.bak
+/config-private.yaml

@@ -89,8 +89,8 @@
   `(ex: http://user:pass@host:port)`
 - `-cv/--chromeversion` to use a specific version of chrome
   `(ex: 118)`
-- `-da/--disable-apprise` to disable Apprise notification, overriding [config.yaml](config.yaml). Useful when running
-  manually as opposed to on a schedule.
+- `-da/--disable-apprise` disables Apprise notifications for the session, overriding [config.yaml](config.yaml).
+  Useful when running manually as opposed to on a schedule.
 - `-t/--searchtype` to only do `desktop` or `mobile` searches, `(ex: --searchtype=mobile)`
 
 ## Features

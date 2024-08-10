@@ -42,16 +42,21 @@ class Utils:
         return Path(__file__).parent.parent
 
     @staticmethod
-    def loadConfig(config_file=getProjectRoot() / "config.yaml") -> dict:
-        with open(config_file, "r") as file:
-            return yaml.safe_load(file)
+    def loadConfig(configFilename="config.yaml") -> dict:
+        configFile = Utils.getProjectRoot() / configFilename
+        try:
+            with open(configFile, "r") as file:
+                return yaml.safe_load(file)
+        except OSError:
+            logging.warning(f"{configFilename} doesn't exist")
+            return {}
 
     @staticmethod
     def sendNotification(title, body) -> None:
         if Utils.args.disable_apprise:
             return
         apprise = Apprise()
-        urls: list[str] = Utils.loadConfig().get("apprise", {}).get("urls", [])
+        urls: list[str] = Utils.loadConfig("config-private.yaml").get("apprise", {}).get("urls", [])
         for url in urls:
             apprise.add(url)
         apprise.notify(body=body, title=title)

@@ -25,6 +25,7 @@ class MorePromotions:
             "morePromotions"
         ]
         self.browser.utils.goToRewards()
+        incompletePromotions: list[tuple[str, str]] = []
         for promotion in morePromotions:
             try:
                 promotionTitle = promotion["title"].replace("\u200b", "").replace("\xa0", " ")
@@ -97,14 +98,9 @@ class MorePromotions:
                 self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
                 time.sleep(random.randint(5, 10))
 
-                # todo Bundle this into one notification
                 pointsAfter = self.browser.utils.getAccountPoints()
-                if pointsBefore == pointsAfter:
-                    Utils.sendNotification(
-                        "Incomplete promotion",
-                        f"title={promotionTitle} type={promotion['promotionType']}",
-                    )
-
+                if pointsBefore >= pointsAfter:
+                    incompletePromotions.append((promotionTitle, promotion["promotionType"]))
                 self.browser.utils.resetTabs()
                 time.sleep(2)
             except Exception:  # pylint: disable=broad-except
@@ -112,4 +108,6 @@ class MorePromotions:
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
                 continue
+        if incompletePromotions:
+            Utils.sendNotification("Incomplete promotions(s)", incompletePromotions)
         logging.info("[MORE PROMOS] Exiting")

@@ -13,7 +13,7 @@ import yaml
 from apprise import Apprise
 from requests import Session
 from requests.adapters import HTTPAdapter
-from selenium.common import NoSuchElementException, TimeoutException
+from selenium.common import NoSuchElementException, TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -175,7 +175,6 @@ class Utils:
             (By.ID, "iNext"),
             (By.ID, "iLooksGood"),
             (By.ID, "idSIButton9"),
-            (By.CSS_SELECTOR, ".ms-Button.ms-Button--primary"),
             (By.ID, "bnp_btn_accept"),
             (By.ID, "acceptButton"),
         ]
@@ -187,6 +186,8 @@ class Utils:
                 continue
             for element in elements:
                 element.click()
+        self.tryDismissCookieBanner()
+        self.tryDismissBingCookieBanner()
 
     def tryDismissCookieBanner(self) -> None:
         with contextlib.suppress(NoSuchElementException):  # Expected
@@ -235,3 +236,10 @@ class Utils:
         configFile = sessionPath / "config.json"
         with open(configFile, "w") as f:
             json.dump(config, f)
+
+    def click(self, element: WebElement) -> None:
+        try:
+            element.click()
+        except ElementClickInterceptedException:
+            self.tryDismissAllMessages()
+            element.click()

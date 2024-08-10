@@ -70,7 +70,7 @@ class MorePromotions:
                     searchbar.send_keys("directions to new york")
                     searchbar.submit()
                 elif "Too tired to cook tonight?" in promotionTitle:
-                    searchbar.send_keys("pizza delivery near me")
+                    searchbar.send_keys("mcdonalds")
                     searchbar.submit()
                 elif "Quickly convert your money" in promotionTitle:
                     searchbar.send_keys("convert 374 usd to yen")

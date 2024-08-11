@@ -13,7 +13,8 @@ import yaml
 from apprise import Apprise
 from requests import Session
 from requests.adapters import HTTPAdapter
-from selenium.common import NoSuchElementException, TimeoutException, ElementClickInterceptedException
+from selenium.common import NoSuchElementException, TimeoutException, ElementClickInterceptedException, \
+    ElementNotInteractableException
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -181,7 +182,7 @@ class Utils:
         for button in buttons:
             try:
                 elements = self.webdriver.find_elements(by=button[0], value=button[1])
-            except NoSuchElementException:  # Expected?
+            except (NoSuchElementException, ElementNotInteractableException):  # Expected?
                 logging.debug("", exc_info=True)
                 continue
             for element in elements:
@@ -190,16 +191,14 @@ class Utils:
         self.tryDismissBingCookieBanner()
 
     def tryDismissCookieBanner(self) -> None:
-        with contextlib.suppress(NoSuchElementException):  # Expected
+        with contextlib.suppress(NoSuchElementException, ElementNotInteractableException):  # Expected
             self.webdriver.find_element(By.ID, "cookie-banner").find_element(
                 By.TAG_NAME, "button"
             ).click()
-            time.sleep(2)
 
     def tryDismissBingCookieBanner(self) -> None:
-        with contextlib.suppress(NoSuchElementException):  # Expected
+        with contextlib.suppress(NoSuchElementException, ElementNotInteractableException):  # Expected
             self.webdriver.find_element(By.ID, "bnp_btn_accept").click()
-            time.sleep(2)
 
     def switchToNewTab(self, timeToWait: float = 0) -> None:
         time.sleep(0.5)

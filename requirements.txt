@@ -8,7 +8,7 @@ setuptools
 psutil
 blinker==1.7.0 # prevents issues on newer versions
 apprise~=1.8.1
-pyyaml~=6.0.1
+pyyaml~=6.0.2
 urllib3>=2.2.2 # not directly required, pinned by Snyk to avoid a vulnerability
 requests-oauthlib
 zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability

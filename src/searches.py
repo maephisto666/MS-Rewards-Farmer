@@ -161,7 +161,7 @@ class Searches:
                 else:
                     raise AssertionError
                 logging.debug(
-                    f"[BING] Search attempt failed {i}/{Searches.maxRetries}, sleeping {sleepTime}"
+                    f"[BING] Search attempt not counted {i}/{Searches.maxRetries}, sleeping {sleepTime}"
                     f" seconds..."
                 )
                 time.sleep(sleepTime)

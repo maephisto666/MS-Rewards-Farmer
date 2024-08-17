@@ -1,6 +1,8 @@
+import contextlib
 import random
 import time
 
+from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
@@ -39,19 +41,22 @@ class Activities:
 
     def completeQuiz(self):
         # Simulate completing a quiz activity
-        startQuiz = self.browser.utils.waitUntilQuizLoads()
-        startQuiz.click()
+        with contextlib.suppress(TimeoutException):
+            startQuiz = self.browser.utils.waitUntilQuizLoads()
+            startQuiz.click()
         self.browser.utils.waitUntilVisible(
-            By.XPATH, '//*[@id="currentQuestionContainer"]/div/div[1]', 5
+            By.ID, "overlayPanel", 5
         )
-        time.sleep(random.randint(10, 15))
-        numberOfQuestions = self.webdriver.execute_script(
+        currentQuestionNumber: int = self.webdriver.execute_script(
+            "return _w.rewardsQuizRenderInfo.currentQuestionNumber"
+        )
+        maxQuestions = self.webdriver.execute_script(
             "return _w.rewardsQuizRenderInfo.maxQuestions"
         )
         numberOfOptions = self.webdriver.execute_script(
             "return _w.rewardsQuizRenderInfo.numberOfOptions"
         )
-        for question in range(numberOfQuestions):
+        for _ in range(currentQuestionNumber, maxQuestions + 1):
             if numberOfOptions == 8:
                 answers = []
                 for i in range(numberOfOptions):
@@ -76,13 +81,9 @@ class Activities:
                         == correctOption
                     ):
                         self.webdriver.find_element(By.ID, f"rqAnswerOption{i}").click()
-                        time.sleep(random.randint(10, 15))
 
                         self.browser.utils.waitUntilQuestionRefresh()
                         break
-            if question + 1 != numberOfQuestions:
-                time.sleep(random.randint(10, 15))
-        time.sleep(random.randint(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def completeABC(self):

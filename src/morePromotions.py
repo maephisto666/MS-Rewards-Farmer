@@ -83,7 +83,6 @@ class MorePromotions:
                     self.activities.completeSearch()
                 elif (
                     promotion["promotionType"] == "quiz"
-                    and promotion["pointProgress"] == 0
                 ):
                     # Complete different types of quizzes based on point progress max
                     if promotion["pointProgressMax"] == 10:

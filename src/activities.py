@@ -67,7 +67,6 @@ class Activities:
                         answers.append(f"rqAnswerOption{i}")
                 for answer in answers:
                     self.webdriver.find_element(By.ID, answer).click()
-                    time.sleep(random.randint(10, 15))
                     self.browser.utils.waitUntilQuestionRefresh()
             elif numberOfOptions in [2, 3, 4]:
                 correctOption = self.webdriver.execute_script(

@@ -69,13 +69,16 @@ class MorePromotions:
                     searchbar.send_keys("directions to new york")
                     searchbar.submit()
                 elif "Too tired to cook tonight?" in promotionTitle:
-                    searchbar.send_keys("mcdonalds")
+                    searchbar.send_keys("Pizza Hut near me")
                     searchbar.submit()
                 elif "Quickly convert your money" in promotionTitle:
                     searchbar.send_keys("convert 374 usd to yen")
                     searchbar.submit()
                 elif "Learn to cook a new recipe" in promotionTitle:
                     searchbar.send_keys("how cook pierogi")
+                    searchbar.submit()
+                elif "Find places to stay" in promotionTitle:
+                    searchbar.send_keys("hotels rome italy")
                     searchbar.submit()
                 elif promotion["promotionType"] == "urlreward":
                     # Complete search for URL reward

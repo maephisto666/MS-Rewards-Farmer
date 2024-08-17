@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 2FA login with device-based authentication is supported in theory, BUT doesn't currently work as the undetected chromedriver for some reason does not receive the confirmation signal after the user approves the login
 - Completing quizzes started but not completed in previous runs
 
+### Changed
+
+- Incomplete promotions Apprise notifications
+  - How incomplete promotions are determined
+  - Batched into single versus multiple notifications
+
 ## [0.2.1] - 2024-08-13
 
 ### Fixed

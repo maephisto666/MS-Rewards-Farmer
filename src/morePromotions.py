@@ -37,7 +37,6 @@ class MorePromotions:
                 ):
                     logging.debug("Already done, continuing")
                     continue
-                pointsBefore = self.browser.utils.getAccountPoints()
                 self.activities.openMorePromotionsActivity(
                     morePromotions.index(promotion)
                 )
@@ -97,8 +96,7 @@ class MorePromotions:
                 self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
                 time.sleep(random.randint(5, 10))
 
-                pointsAfter = self.browser.utils.getAccountPoints()
-                if pointsBefore >= pointsAfter:
+                if promotion["pointProgress"] < promotion["pointProgressMax"]:
                     incompletePromotions.append((promotionTitle, promotion["promotionType"]))
                 self.browser.utils.resetTabs()
                 time.sleep(2)

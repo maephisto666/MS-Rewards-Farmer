@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- `apprise.urls` from [config.yaml](config.yaml)
+  - This now lives in `config-private.yaml`, see [.template-config-private.yaml](.template-config-private.yaml) on how
+  - This prevents accidentally leaking sensitive information since `config-private.yaml` is .gitignore'd
+
 ### Added
 
 - Support for automatic handling of logins with 2FA and for passwordless setups:
@@ -27,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Promotions/More activities
   - Too tired to cook tonight?
+- Last searches always timing out (#172)
 
 ## [0.2.1] - 2024-08-13
 

@@ -60,24 +60,6 @@ class Searches:
 
         dumbDbm = dbm.dumb.open((Utils.getProjectRoot() / "google_trends").__str__())
         self.googleTrendsShelf: shelve.Shelf = shelve.Shelf(dumbDbm)
-        logging.debug(f"googleTrendsShelf.__dict__ = {self.googleTrendsShelf.__dict__}")
-        logging.debug(f"google_trends = {list(self.googleTrendsShelf.items())}")
-        loadDate: date | None = None
-        if LOAD_DATE_KEY in self.googleTrendsShelf:
-            loadDate = self.googleTrendsShelf[LOAD_DATE_KEY]
-
-        if loadDate is None or loadDate < date.today():
-            self.googleTrendsShelf.clear()
-            trends = self.getGoogleTrends(
-                browser.getRemainingSearches(desktopAndMobile=True).getTotal()
-            )
-            random.shuffle(trends)
-            for trend in trends:
-                self.googleTrendsShelf[trend] = None
-            self.googleTrendsShelf[LOAD_DATE_KEY] = date.today()
-            logging.debug(
-                f"google_trends after load = {list(self.googleTrendsShelf.items())}"
-            )
 
     def __enter__(self):
         return self
@@ -129,10 +111,21 @@ class Searches:
 
         self.browser.utils.goToSearch()
 
-        remainingSearches = self.browser.getRemainingSearches()
-        for searchCount in range(1, remainingSearches + 1):
-            # todo Disable cooldown for first 3 searches (Earning starts with your third search)
-            logging.info(f"[BING] {searchCount}/{remainingSearches}")
+        while (remainingSearches := self.browser.getRemainingSearches()) > 0:
+            logging.info(f"[BING] Remaining searches={remainingSearches}")
+            desktopAndMobileRemaining = self.browser.getRemainingSearches(desktopAndMobile=True)
+            if desktopAndMobileRemaining.getTotal() > len(self.googleTrendsShelf):
+                # self.googleTrendsShelf.clear()  # Maybe needed?
+                logging.debug(
+                    f"google_trends before load = {list(self.googleTrendsShelf.items())}"
+                )
+                trends = self.getGoogleTrends(desktopAndMobileRemaining.getTotal())
+                random.shuffle(trends)
+                for trend in trends:
+                    self.googleTrendsShelf[trend] = None
+                logging.debug(
+                    f"google_trends after load = {list(self.googleTrendsShelf.items())}"
+                )
             self.bingSearch()
             time.sleep(random.randint(10, 15))
 

@@ -5,4 +5,5 @@ from .login import Login
 from .morePromotions import MorePromotions
 from .punchCards import PunchCards
 from .readToEarn import ReadToEarn
+from .remainingSearches import RemainingSearches
 from .searches import Searches

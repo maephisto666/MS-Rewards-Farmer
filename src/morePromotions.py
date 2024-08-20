@@ -108,8 +108,6 @@ class MorePromotions:
                 self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
                 time.sleep(random.randint(5, 10))
 
-                if promotion["pointProgress"] < promotion["pointProgressMax"]:
-                    incompletePromotions.append((promotionTitle, promotion["promotionType"]))
                 self.browser.utils.resetTabs()
                 time.sleep(2)
             except Exception:  # pylint: disable=broad-except
@@ -117,6 +115,9 @@ class MorePromotions:
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
                 continue
+        for promotion in self.browser.utils.getDashboardData()["morePromotions"]:  # Have to refresh
+            if promotion["pointProgress"] < promotion["pointProgressMax"]:
+                incompletePromotions.append((promotion["title"], promotion["promotionType"]))
         if incompletePromotions:
             Utils.sendNotification("Incomplete promotions(s)", incompletePromotions)
         logging.info("[MORE PROMOS] Exiting")

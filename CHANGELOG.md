@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Completing quizzes started but not completed in previous runs
 - Promotions/More activities
   - Find places to stay
+  - How's the economy?
+  - Who won?
+  - Gaming time
 
 ### Changed
 

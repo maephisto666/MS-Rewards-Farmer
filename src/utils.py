@@ -59,7 +59,7 @@ class Utils:
         urls: list[str] = Utils.loadConfig("config-private.yaml").get("apprise", {}).get("urls", [])
         for url in urls:
             apprise.add(url)
-        apprise.notify(body=body, title=title)
+        assert apprise.notify(title=str(title), body=str(body))
 
     def waitUntilVisible(
         self, by: str, selector: str, timeToWait: float = 10

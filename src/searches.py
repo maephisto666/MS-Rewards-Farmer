@@ -13,6 +13,7 @@ from typing import Final
 import requests
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 
@@ -159,17 +160,19 @@ class Searches:
                 )
                 time.sleep(sleepTime)
 
-            searchbar = self.browser.utils.waitUntilClickable(
-                By.ID, "sb_form_q", timeToWait=20
-            )
+            searchbar: WebElement
             for _ in range(1000):
-                self.browser.utils.click(searchbar)
+                searchbar = self.browser.utils.waitUntilClickable(
+                    By.ID, "sb_form_q", timeToWait=40
+                )
                 searchbar.clear()
                 term = next(termsCycle)
                 logging.debug(f"term={term}")
+                time.sleep(1)
                 searchbar.send_keys(term)
+                time.sleep(1)
                 with contextlib.suppress(TimeoutException):
-                    WebDriverWait(self.webdriver, 10).until(
+                    WebDriverWait(self.webdriver, 20).until(
                         expected_conditions.text_to_be_present_in_element_value(
                             (By.ID, "sb_form_q"), term
                         )

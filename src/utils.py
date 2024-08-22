@@ -241,6 +241,6 @@ class Utils:
     def click(self, element: WebElement) -> None:
         try:
             element.click()
-        except ElementClickInterceptedException:
+        except (ElementClickInterceptedException, ElementNotInteractableException):
             self.tryDismissAllMessages()
             element.click()

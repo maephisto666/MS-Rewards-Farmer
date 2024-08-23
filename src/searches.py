@@ -20,8 +20,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 from src.browser import Browser
 from src.utils import Utils
 
-LOAD_DATE_KEY = "loadDate"
-
 
 class RetriesStrategy(Enum):
     """
@@ -80,7 +78,9 @@ class Searches:
                 f"https://trends.google.com/trends/api/dailytrends?hl={self.browser.localeLang}"
                 f'&ed={(date.today() - timedelta(days=i)).strftime("%Y%m%d")}&geo={self.browser.localeGeo}&ns=15'
             )
-            assert r.status_code == requests.codes.ok  # todo Add guidance if assertion fails
+            assert (
+                r.status_code == requests.codes.ok
+            )  # todo Add guidance if assertion fails
             trends = json.loads(r.text[6:])
             for topic in trends["default"]["trendingSearchesDays"][0][
                 "trendingSearches"
@@ -96,10 +96,14 @@ class Searches:
 
     def getRelatedTerms(self, term: str) -> list[str]:
         # Function to retrieve related terms from Bing API
-        relatedTerms: list[str] = Utils.makeRequestsSession().get(
-            f"https://api.bing.com/osjson.aspx?query={term}",
-            headers={"User-agent": self.browser.userAgent},
-        ).json()[1]  # todo Wrap if failed, or assert response?
+        relatedTerms: list[str] = (
+            Utils.makeRequestsSession()
+            .get(
+                f"https://api.bing.com/osjson.aspx?query={term}",
+                headers={"User-agent": self.browser.userAgent},
+            )
+            .json()[1]
+        )  # todo Wrap if failed, or assert response?
         if not relatedTerms:
             return [term]
         return relatedTerms
@@ -114,7 +118,9 @@ class Searches:
 
         while (remainingSearches := self.browser.getRemainingSearches()) > 0:
             logging.info(f"[BING] Remaining searches={remainingSearches}")
-            desktopAndMobileRemaining = self.browser.getRemainingSearches(desktopAndMobile=True)
+            desktopAndMobileRemaining = self.browser.getRemainingSearches(
+                desktopAndMobile=True
+            )
             if desktopAndMobileRemaining.getTotal() > len(self.googleTrendsShelf):
                 # self.googleTrendsShelf.clear()  # Maybe needed?
                 logging.debug(

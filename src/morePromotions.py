@@ -47,6 +47,7 @@ class MorePromotions:
                     )
                     self.browser.utils.click(searchbar)
                 # todo These and following are US-English specific, maybe there's a good way to internationalize
+                # todo Could use dictionary of promotionTitle to search to simplify
                 if "Search the lyrics of a song" in promotionTitle:
                     searchbar.send_keys("black sabbath supernaut lyrics")
                     searchbar.submit()

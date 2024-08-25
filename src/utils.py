@@ -46,7 +46,10 @@ class Utils:
         configFile = Utils.getProjectRoot() / configFilename
         try:
             with open(configFile, "r") as file:
-                return yaml.safe_load(file)
+                config = yaml.safe_load(file)
+                if not config:
+                    return {}
+                return config
         except OSError:
             logging.warning(f"{configFilename} doesn't exist")
             return {}
@@ -57,6 +60,8 @@ class Utils:
             return
         apprise = Apprise()
         urls: list[str] = Utils.loadConfig("config-private.yaml").get("apprise", {}).get("urls", [])
+        if not urls:
+            return
         for url in urls:
             apprise.add(url)
         assert apprise.notify(title=str(title), body=str(body))

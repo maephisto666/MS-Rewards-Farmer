@@ -25,7 +25,6 @@ class MorePromotions:
             "morePromotions"
         ]
         self.browser.utils.goToRewards()
-        incompletePromotions: list[tuple[str, str]] = []
         for promotion in morePromotions:
             try:
                 promotionTitle = promotion["title"].replace("\u200b", "").replace("\xa0", " ")
@@ -116,6 +115,7 @@ class MorePromotions:
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
                 continue
+    incompletePromotions: list[tuple[str, str]] = []
         for promotion in self.browser.utils.getDashboardData()["morePromotions"]:  # Have to refresh
             if promotion["pointProgress"] < promotion["pointProgressMax"]:
                 incompletePromotions.append((promotion["title"], promotion["promotionType"]))

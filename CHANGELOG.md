@@ -41,8 +41,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Promotions/More activities
   - Too tired to cook tonight?
-- Last searches always timing out (#172)
-- Quizzes #181
+- [Last searches always timing out](https://github.com/klept0/MS-Rewards-Farmer/issues/172)
+- [Quizzes don't complete](https://github.com/klept0/MS-Rewards-Farmer/issues)
 
 ## [0.2.1] - 2024-08-13
 

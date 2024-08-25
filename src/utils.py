@@ -48,6 +48,7 @@ class Utils:
             with open(configFile, "r") as file:
                 config = yaml.safe_load(file)
                 if not config:
+                    logging.info(f"{file} doesn't exist")
                     return {}
                 return config
         except OSError:
@@ -61,6 +62,7 @@ class Utils:
         apprise = Apprise()
         urls: list[str] = Utils.loadConfig("config-private.yaml").get("apprise", {}).get("urls", [])
         if not urls:
+            logging.debug("No urls found, not sending notification")
             return
         for url in urls:
             apprise.add(url)

@@ -2,12 +2,11 @@ import argparse
 import contextlib
 import logging
 from argparse import Namespace
-
 from pyotp import TOTP
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome
-
+from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
 from src.browser import Browser
 
 
@@ -22,17 +21,57 @@ class Login:
         self.utils = browser.utils
         self.args = args
 
+    def check_locked_user(self):
+        try:
+            element = self.webdriver.find_element(By.XPATH, "//div[@id='serviceAbuseLandingTitle']")
+            self.locked(element)
+        except NoSuchElementException:
+            return
+
+    def check_banned_user(self):
+        try:
+            element = self.webdriver.find_element(By.XPATH, '//*[@id="fraudErrorBody"]')
+            self.banned(element)
+        except NoSuchElementException:
+            return
+
+    def locked(self, element):
+        try:
+            if element.is_displayed():
+                logging.critical("This Account is Locked!")
+                self.webdriver.close()
+                raise Exception("Account locked, moving to the next account.")
+        except (ElementNotInteractableException, NoSuchElementException):
+            pass
+
+    def banned(self, element):
+        try:
+            if element.is_displayed():
+                logging.critical("This Account is Banned!")
+                self.webdriver.close()
+                raise Exception("Account banned, moving to the next account.")
+        except (ElementNotInteractableException, NoSuchElementException):
+            pass
+
     def login(self) -> None:
-        if self.utils.isLoggedIn():
-            logging.info("[LOGIN] Already logged-in")
-        else:
-            logging.info("[LOGIN] Logging-in...")
-            self.executeLogin()
-            logging.info("[LOGIN] Logged-in successfully !")
+        try:
+            if self.utils.isLoggedIn():
+                logging.info("[LOGIN] Already logged-in")
+                self.check_locked_user()
+                self.check_banned_user()
+            else:
+                logging.info("[LOGIN] Logging-in...")
+                self.execute_login()
+                logging.info("[LOGIN] Logged-in successfully!")
+                self.check_locked_user()
+                self.check_banned_user()
+            assert self.utils.isLoggedIn()
+        except Exception as e:
+            logging.error(f"Error during login: {e}")
+            self.webdriver.close()
+            raise
 
-        assert self.utils.isLoggedIn()
-
-    def executeLogin(self) -> None:
+    def execute_login(self) -> None:
         # Email field
         emailField = self.utils.waitUntilVisible(By.ID, "i0116")
         logging.info("[LOGIN] Entering email...")
@@ -52,13 +91,11 @@ class Login:
             # Passworless login, have user confirm code on phone
             codeField = self.utils.waitUntilVisible(By.ID, "displaySign")
             logging.warning(
-                "[LOGIN] Confirm your login with code %s on your phone (you have"
-                " one minute)!\a",
+                "[LOGIN] Confirm your login with code %s on your phone (you have one minute)!\a",
                 codeField.text,
             )
             self.utils.waitUntilVisible(By.NAME, "kmsiForm", 60)
             logging.info("[LOGIN] Successfully verified!")
-
         else:
             # Password-based login, enter password from accounts.json
             passwordField = self.utils.waitUntilClickable(By.NAME, "passwd")
@@ -82,13 +119,8 @@ class Login:
             logging.debug("isTOTPEnabled = %s", isTOTPEnabled)
 
             if isDeviceAuthEnabled:
-                # For some reason, undetected chromedriver doesn't receive the confirmation
-                # after the user has confirmed the login on their phone.
-                raise Exception(
-                    "Unfortunatly, device auth is not supported yet. Turn on"
-                    " passwordless login in your account settings, use TOTPs or remove"
-                    " 2FA altogether."
-                )
+                # Device-based authentication not supported
+                raise Exception("Device authentication not supported. Please use TOTP or disable 2FA.")
 
                 # Device auth, have user confirm code on phone
                 codeField = self.utils.waitUntilVisible(
@@ -112,18 +144,21 @@ class Login:
                     otpField.send_keys(otp)
                     assert otpField.get_attribute("value") == otp
                     self.utils.waitUntilClickable(By.ID, "idSubmit_SAOTCC_Continue").click()
-
                 else:
                     # TOTP token not provided, manual intervention required
                     assert self.args.visible, (
-                        "[LOGIN] 2FA detected, provide token in accounts.json or run in"
+                        "[LOGIN] 2FA detected, provide token in accounts.json or or run in"
+                        "[LOGIN] 2FA detected, provide token in accounts.json or handle manually."
                         " visible mode to handle login."
                     )
                     print(
                         "[LOGIN] 2FA detected, handle prompts and press enter when on"
-                        " keep me signed in page."
-                    )
+                        " keep me signed in page.")
                     input()
+                       
+
+        self.check_locked_user()
+        self.check_banned_user()
 
         self.utils.waitUntilVisible(By.NAME, "kmsiForm")
         self.utils.waitUntilClickable(By.ID, "acceptButton").click()
@@ -144,6 +179,4 @@ class Login:
             )
             input()
 
-        self.utils.waitUntilVisible(
-            By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]'
-        )
+        self.utils.waitUntilVisible(By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]')

@@ -1,7 +1,6 @@
 import logging
 import urllib.parse
 from datetime import datetime
-
 from src.browser import Browser
 from .activities import Activities
 
@@ -17,6 +16,7 @@ class DailySet:
         logging.info("[DAILY SET] " + "Trying to complete the Daily Set...")
         data = self.browser.utils.getDashboardData()["dailySetPromotions"]
         self.browser.utils.goToRewards()
+        self.activities.dashboardPopUpModalCloseCross()
         todayDate = datetime.now().strftime("%m/%d/%Y")
         for activity in data.get(todayDate, []):
             cardId = int(activity["offerId"][-1:])

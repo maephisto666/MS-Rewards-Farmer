@@ -120,6 +120,7 @@ class Searches:
             desktopAndMobileRemaining = self.browser.getRemainingSearches(
                 desktopAndMobile=True
             )
+            logging.info(f"[BING] Remaining searches={desktopAndMobileRemaining}")
             if (self.browser.browserType == "desktop" and desktopAndMobileRemaining.desktop == 0) \
                     or (self.browser.browserType == "mobile" and desktopAndMobileRemaining.mobile == 0):
                 break

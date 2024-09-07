@@ -231,27 +231,26 @@ class Browser:
     def getRemainingSearches(
             self, desktopAndMobile: bool = False
     ) -> RemainingSearches | int:
-        dashboard = self.utils.getDashboardData()
+        bingInfo = self.utils.getBingInfo()
         searchPoints = 1
-        counters = dashboard["userStatus"]["counters"]
+        counters = bingInfo["flyoutResult"]["userStatus"]["counters"]
+        pcSearch: dict = counters["PCSearch"][0]
+        mobileSearch: dict = counters["MobileSearch"][0]
+        pointProgressMax: int = pcSearch["pointProgressMax"]
 
-        progressDesktop = counters["pcSearch"][0]["pointProgress"]
-        targetDesktop = counters["pcSearch"][0]["pointProgressMax"]
-        if len(counters["pcSearch"]) >= 2:
-            progressDesktop = progressDesktop + counters["pcSearch"][1]["pointProgress"]
-            targetDesktop = targetDesktop + counters["pcSearch"][1]["pointProgressMax"]
-        if targetDesktop in [30, 90, 102]:
+        searchPoints: int
+        if pointProgressMax in [30, 90, 102]:
             searchPoints = 3
-        elif targetDesktop == 50 or targetDesktop >= 170 or targetDesktop == 150:
+        elif pointProgressMax in [50, 150] or pointProgressMax >= 170:
             searchPoints = 5
-        remainingDesktop = int((targetDesktop - progressDesktop) / searchPoints)
-        remainingMobile = 0
-        if dashboard["userStatus"]["levelInfo"]["activeLevel"] != "Level1":
-            progressMobile = counters["mobileSearch"][0]["pointProgress"]
-            targetMobile = counters["mobileSearch"][0]["pointProgressMax"]
-            remainingMobile = int((targetMobile - progressMobile) / searchPoints)
+        pcPointsRemaining = pcSearch["pointProgressMax"] - pcSearch["pointProgress"]
+        assert pcPointsRemaining % searchPoints == 0
+        remainingDesktopSearches: int = int(pcPointsRemaining / searchPoints)
+        mobilePointsRemaining = mobileSearch["pointProgressMax"] - mobileSearch["pointProgress"]
+        assert mobilePointsRemaining % searchPoints == 0
+        remainingMobileSearches: int = int(mobilePointsRemaining / searchPoints)
         if desktopAndMobile:
-            return RemainingSearches(desktop=remainingDesktop, mobile=remainingMobile)
+            return RemainingSearches(desktop=remainingDesktopSearches, mobile=remainingMobileSearches)
         if self.mobile:
-            return remainingMobile
-        return remainingDesktop
+            return remainingMobileSearches
+        return remainingDesktopSearches

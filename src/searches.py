@@ -136,6 +136,8 @@ class Searches:
                 logging.debug(
                     f"google_trends after load = {list(self.googleTrendsShelf.items())}"
                 )
+
+            # fixme Multiple tabs are getting opened
             self.bingSearch()
             time.sleep(random.randint(10, 15))
 

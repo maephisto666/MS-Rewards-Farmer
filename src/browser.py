@@ -90,6 +90,7 @@ class Browser:
         options.add_argument("--disable-default-apps")
         options.add_argument("--disable-features=Translate")
         options.add_argument("--disable-features=PrivacySandboxSettings4")
+        options.add_argument("--disable-http2")
         options.add_argument("--disable-search-engine-choice-screen") #153
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
@@ -205,8 +206,9 @@ class Browser:
             try:
                 nfo = ipapi.location()
             except RateLimited:
-                logging.warning("Returning default", exc_info=True)
-                return "en", "US"
+                geo = Utils.loadConfig().get("default_geolocation", "US").upper()
+                logging.warning(f"Returning default geolocation {geo}", exc_info=True)
+                return "en", geo
             if isinstance(nfo, dict):
                 if lang is None:
                     lang = nfo["languages"].split(",")[0].split("-")[0]

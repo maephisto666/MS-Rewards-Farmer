@@ -116,11 +116,14 @@ class Searches:
 
         self.browser.utils.goToSearch()
 
-        while (remainingSearches := self.browser.getRemainingSearches()) > 0:
-            logging.info(f"[BING] Remaining searches={remainingSearches}")
+        while True:
             desktopAndMobileRemaining = self.browser.getRemainingSearches(
                 desktopAndMobile=True
             )
+            if (self.browser.browserType == "desktop" and desktopAndMobileRemaining.desktop == 0) \
+                    or (self.browser.browserType == "mobile" and desktopAndMobileRemaining.mobile == 0):
+                break
+
             if desktopAndMobileRemaining.getTotal() > len(self.googleTrendsShelf):
                 # self.googleTrendsShelf.clear()  # Maybe needed?
                 logging.debug(

@@ -125,6 +125,7 @@ class Utils:
         t += int(key[-2:], 16)
         return str(t)
 
+    # Prefer getBingInfo if possible
     def getDashboardData(self) -> dict:
         urlBefore = self.webdriver.current_url
         try:
@@ -145,7 +146,7 @@ class Utils:
         response = session.get("https://www.bing.com/rewards/panelflyout/getuserinfo")
 
         assert response.status_code == requests.codes.ok
-        return response.json()["userInfo"]
+        return response.json()
 
     @staticmethod
     def makeRequestsSession(session: Session = requests.session()) -> Session:
@@ -173,7 +174,7 @@ class Utils:
         return False
 
     def getAccountPoints(self) -> int:
-        return self.getBingInfo()["balance"]
+        return self.getBingInfo()["userInfo"]["balance"]
 
     def getGoalPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]

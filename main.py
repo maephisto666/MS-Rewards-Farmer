@@ -43,6 +43,7 @@ def main():
             Utils.sendNotification(
                 f"⚠️ Error executing {currentAccount.username}, please check the log",
                 traceback.format_exc(),
+                True
             )
             continue
         previous_points = previous_points_data.get(currentAccount.username, 0)
@@ -99,6 +100,15 @@ def setupLogging():
 
     # so only our code is logged if level=logging.DEBUG or finer
     # if not working see https://stackoverflow.com/a/48891485/4164390
+    _levels = {
+        'DEBUG': logging.DEBUG,
+        'INFO': logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR': logging.ERROR,
+        'CRITICAL': logging.CRITICAL
+    }
+    log_level_str = Utils.loadConfig().get("logging", "DEBUG").upper()
+    log_level = _levels.get(log_level_str, logging.DEBUG)
     logging.config.dictConfig(
         {
             "version": 1,
@@ -106,7 +116,7 @@ def setupLogging():
         }
     )
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=log_level,
         format=_format,
         handlers=[
             handlers.TimedRotatingFileHandler(
@@ -357,5 +367,5 @@ if __name__ == "__main__":
     except Exception as e:
         logging.exception("")
         Utils.sendNotification(
-            "⚠️ Error occurred, please check the log", traceback.format_exc()
+            "⚠️ Error occurred, please check the log", traceback.format_exc(), True
         )

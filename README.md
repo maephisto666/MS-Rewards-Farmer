@@ -45,7 +45,9 @@
    this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170) and reboot your
    computer
 
-4. Edit the `accounts.json.sample` with your accounts credentials and rename it by removing `.sample` at the end.
+4. Edit the `.template-config-private.yaml` accordingly and rename it to `config-private.yaml`.
+
+5. Edit the `accounts.json.sample` with your accounts credentials and rename it by removing `.sample` at the end.
 
    The "totp" field is not mandatory, only enter your TOTP key if you use it for 2FA (if ommitting, don't keep
    it as an empty string, remove the line completely).
@@ -72,11 +74,11 @@
    ]
    ```
 
-5. Run the script:
+6. Run the script:
 
    `python main.py`
 
-6. (Windows Only) You can set up automatic execution by generating a Task Scheduler XML file.
+7. (Windows Only) You can set up automatic execution by generating a Task Scheduler XML file.
 
    If you are a Windows user, run the `generate_task_xml.py` script to create a `.xml` file. After generating the file, import it into Task Scheduler to schedule automatic execution of the script. This will allow the script to run at the specified time without manual intervention. 
 

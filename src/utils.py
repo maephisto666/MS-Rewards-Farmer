@@ -56,8 +56,9 @@ class Utils:
             return {}
 
     @staticmethod
-    def sendNotification(title, body) -> None:
-        if Utils.args.disable_apprise:
+    def sendNotification(title, body, is_exception=False) -> None:
+        is_exception_allowed = Utils.loadConfig().get("apprise", {}).get("notify", {}).get("uncaught-exceptions", True)
+        if Utils.args.disable_apprise or (is_exception and not is_exception_allowed):
             return
         apprise = Apprise()
         urls: list[str] = Utils.loadConfig("config-private.yaml").get("apprise", {}).get("urls", [])

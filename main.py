@@ -40,11 +40,11 @@ def main():
             earned_points = executeBot(currentAccount, args)
         except Exception as e1:
             logging.error("", exc_info=True)
-            if Utils.loadConfig().get("apprise", {}).get("exceptions", True):
-                Utils.sendNotification(
-                    f"⚠️ Error executing {currentAccount.username}, please check the log",
-                    traceback.format_exc(),
-                )
+            Utils.sendNotification(
+                f"⚠️ Error executing {currentAccount.username}, please check the log",
+                traceback.format_exc(),
+                True
+            )
             continue
         previous_points = previous_points_data.get(currentAccount.username, 0)
 
@@ -366,7 +366,6 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         logging.exception("")
-        if Utils.loadConfig().get("apprise", {}).get("exceptions", True):
-            Utils.sendNotification(
-                "⚠️ Error occurred, please check the log", traceback.format_exc()
-            )
+        Utils.sendNotification(
+            "⚠️ Error occurred, please check the log", traceback.format_exc(), True
+        )

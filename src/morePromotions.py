@@ -125,6 +125,6 @@ class MorePromotions:
         for promotion in self.browser.utils.getDashboardData()["morePromotions"]:  # Have to refresh
             if promotion["pointProgress"] < promotion["pointProgressMax"]:
                 incompletePromotions.append((promotion["title"], promotion["promotionType"]))
-        if incompletePromotions and Utils.loadConfig().get("apprise", {}).get("promotions", True):
+        if incompletePromotions and Utils.loadConfig().get("apprise", {}).get("notify", {}).get("incomplete-promotions", True):
             Utils.sendNotification(f"Incomplete promotions(s) for {self.browser.username}", incompletePromotions)
         logging.info("[MORE PROMOS] Exiting")

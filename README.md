@@ -45,7 +45,7 @@
    this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170) and reboot your
    computer
 
-4. Edit the `config.yaml.sample` accordingly and rename it by removing `.sample` at the end.
+4. Edit the `.template-config-private.yaml` accordingly and rename it to `config-private.yaml`.
 
 5. Edit the `accounts.json.sample` with your accounts credentials and rename it by removing `.sample` at the end.
 

@@ -206,7 +206,7 @@ class Browser:
             try:
                 nfo = ipapi.location()
             except RateLimited:
-                geo = Utils.loadConfig().get("default_geolocation", "US").upper()
+                geo = Utils.loadConfig("config-private.yaml").get("default_geolocation", "US").upper()
                 logging.warning(f"Returning default geolocation {geo}", exc_info=True)
                 return "en", geo
             if isinstance(nfo, dict):

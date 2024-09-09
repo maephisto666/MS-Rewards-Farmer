@@ -250,7 +250,7 @@ class Browser:
         bingInfo = self.utils.getBingInfo()
         searchPoints = 1
         counters = bingInfo["flyoutResult"]["userStatus"]["counters"]
-            pcSearch: dict = counters["PCSearch"][0]
+        pcSearch: dict = counters["PCSearch"][0]
         mobileSearch: dict = counters["MobileSearch"][0]
         pointProgressMax: int = pcSearch["pointProgressMax"]
 

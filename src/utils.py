@@ -180,6 +180,7 @@ class Utils:
 
         assert response.status_code == requests.codes.ok
         # fixme Add more asserts
+        # todo Add fallback to src.utils.Utils.getDashboardData (slower but more reliable)
         return response.json()
 
     @staticmethod
@@ -204,6 +205,8 @@ class Utils:
 
     def isLoggedIn(self) -> bool:
         # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred
+        if self.getBingInfo()["isRewardsUser"]: # faster, if it works
+            return True
         self.webdriver.get(
             "https://rewards.bing.com/Signin/"
         )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly

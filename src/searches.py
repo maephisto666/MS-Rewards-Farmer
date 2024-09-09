@@ -1,4 +1,3 @@
-import contextlib
 import dbm.dumb
 import json
 import logging
@@ -11,14 +10,10 @@ from itertools import cycle
 from typing import Final
 
 import requests
-from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions
-from selenium.webdriver.support.wait import WebDriverWait
 
 from src.browser import Browser
-from src.utils import Utils
+from src.utils import Utils, CONFIG
 
 
 class RetriesStrategy(Enum):
@@ -37,21 +32,16 @@ class RetriesStrategy(Enum):
 
 
 class Searches:
-    config = Utils.loadConfig()
-    maxRetries: Final[int] = config.get("retries", {}).get("max", 8)
+    maxRetries: Final[int] = CONFIG.get("retries").get("max")
     """
     the max amount of retries to attempt
     """
-    baseDelay: Final[float] = config.get("retries", {}).get(
-        "base_delay_in_seconds", 14.0625
-    )
+    baseDelay: Final[float] = CONFIG.get("retries").get("base_delay_in_seconds")
     """
     how many seconds to delay
     """
     # retriesStrategy = Final[  # todo Figure why doesn't work with equality below
-    retriesStrategy = RetriesStrategy[
-        config.get("retries", {}).get("strategy", RetriesStrategy.CONSTANT.name)
-    ]
+    retriesStrategy = RetriesStrategy[CONFIG.get("retries").get("strategy")]
 
     def __init__(self, browser: Browser):
         self.browser = browser
@@ -138,7 +128,6 @@ class Searches:
                     f"google_trends after load = {list(self.googleTrendsShelf.items())}"
                 )
 
-            # fixme Multiple tabs are getting opened
             self.bingSearch()
             time.sleep(random.randint(10, 15))
 

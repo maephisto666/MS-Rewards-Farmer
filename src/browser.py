@@ -15,7 +15,7 @@ from selenium.webdriver.chrome.webdriver import WebDriver
 
 from src import Account, RemainingSearches
 from src.userAgentGenerator import GenerateUserAgent
-from src.utils import Utils
+from src.utils import Utils, CONFIG
 
 
 class Browser:
@@ -217,9 +217,10 @@ class Browser:
     def getCCodeLang(lang: str, geo: str) -> tuple:
         if lang is None or geo is None:
             try:
+                # fixme Find better way to get this that doesn't involve ip
                 nfo = ipapi.location()
             except RateLimited:
-                geo = Utils.loadConfig("config-private.yaml").get("default_geolocation", "US").upper()
+                geo = CONFIG.get("default").get("geolocation", "US")
                 logging.warning(f"Returning default geolocation {geo}", exc_info=True)
                 return "en", geo
             if isinstance(nfo, dict):
@@ -249,7 +250,7 @@ class Browser:
         bingInfo = self.utils.getBingInfo()
         searchPoints = 1
         counters = bingInfo["flyoutResult"]["userStatus"]["counters"]
-        pcSearch: dict = counters["PCSearch"][0]
+            pcSearch: dict = counters["PCSearch"][0]
         mobileSearch: dict = counters["MobileSearch"][0]
         pointProgressMax: int = pcSearch["pointProgressMax"]
 

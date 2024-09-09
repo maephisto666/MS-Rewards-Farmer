@@ -1,11 +1,14 @@
 # config.yaml
 apprise:
-  summary: ON_ERROR
   notify:
-    uncaught-exceptions: True # True or False
     incomplete-promotions: True # True or False
+    uncaught-exceptions: True # True or False
+  summary: ON_ERROR
+default:
+  geolocation: US # Replace with your country code https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+logging:
+  level: DEBUG # See https://docs.python.org/3/library/logging.html#logging-levels
 retries:
   base_delay_in_seconds: 14.0625 # base_delay_in_seconds * 2^max = 14.0625 * 2^6 = 900 = 15 minutes
-  max: 8
+  max: 4
   strategy: EXPONENTIAL
-logging: DEBUG # DEBUG or INFO

@@ -70,7 +70,7 @@ class Searches:
             )
             assert (
                 r.status_code == requests.codes.ok
-            )  # todo Add guidance if assertion fails
+            ), "Adjust retry config in src.utils.Utils.makeRequestsSession"
             trends = json.loads(r.text[6:])
             for topic in trends["default"]["trendingSearchesDays"][0][
                 "trendingSearches"

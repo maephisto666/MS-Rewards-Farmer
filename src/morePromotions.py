@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 
 from src.browser import Browser
 from .activities import Activities
-from .utils import Utils
+from .utils import Utils, CONFIG
 
 
 # todo Rename MoreActivities?
@@ -130,10 +130,12 @@ class MorePromotions:
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
                 continue
-        incompletePromotions: list[tuple[str, str]] = []
-        for promotion in self.browser.utils.getDashboardData()["morePromotions"]:  # Have to refresh
-            if promotion["pointProgress"] < promotion["pointProgressMax"]:
-                incompletePromotions.append((promotion["title"], promotion["promotionType"]))
-        if incompletePromotions and Utils.loadConfig().get("apprise", {}).get("notify", {}).get("incomplete-promotions", True):
-            Utils.sendNotification(f"We found some incomplete promotions for {self.browser.username} to do!", incompletePromotions)
+        if CONFIG.get("apprise").get("notify").get("incomplete-promotions"):
+            incompletePromotions: list[tuple[str, str]] = []
+            for promotion in self.browser.utils.getDashboardData()["morePromotions"]:  # Have to refresh
+                if promotion["pointProgress"] < promotion["pointProgressMax"]:
+                    incompletePromotions.append((promotion["title"], promotion["promotionType"]))
+            if incompletePromotions:
+                Utils.sendNotification(f"We found some incomplete promotions for {self.browser.username} to do!",
+                                       incompletePromotions)
         logging.info("[MORE PROMOS] Exiting")

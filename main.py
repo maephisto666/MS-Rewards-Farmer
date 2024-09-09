@@ -23,7 +23,7 @@ from src import (
 )
 from src.browser import RemainingSearches
 from src.loggingColoredFormatter import ColoredFormatter
-from src.utils import Utils
+from src.utils import Utils, CONFIG
 
 
 def main():
@@ -40,11 +40,8 @@ def main():
             earned_points = executeBot(currentAccount, args)
         except Exception as e1:
             logging.error("", exc_info=True)
-            Utils.sendNotification(
-                f"⚠️ Error executing {currentAccount.username}, please check the log",
-                traceback.format_exc(),
-                True
-            )
+            Utils.sendNotification(f"⚠️ Error executing {currentAccount.username}, please check the log",
+                                   traceback.format_exc(), e1)
             continue
         previous_points = previous_points_data.get(currentAccount.username, 0)
 
@@ -99,16 +96,6 @@ def setupLogging():
     logs_directory.mkdir(parents=True, exist_ok=True)
 
     # so only our code is logged if level=logging.DEBUG or finer
-    # if not working see https://stackoverflow.com/a/48891485/4164390
-    _levels = {
-        'DEBUG': logging.DEBUG,
-        'INFO': logging.INFO,
-        'WARNING': logging.WARNING,
-        'ERROR': logging.ERROR,
-        'CRITICAL': logging.CRITICAL
-    }
-    log_level_str = Utils.loadConfig().get("logging", "DEBUG").upper()
-    log_level = _levels.get(log_level_str, logging.DEBUG)
     logging.config.dictConfig(
         {
             "version": 1,
@@ -116,7 +103,7 @@ def setupLogging():
         }
     )
     logging.basicConfig(
-        level=log_level,
+        level=logging.getLevelName(CONFIG.get("logging").get("level").upper()),
         format=_format,
         handlers=[
             handlers.TimedRotatingFileHandler(
@@ -291,7 +278,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
         f"[POINTS] You are now at {Utils.formatNumber(accountPoints)} points !"
     )
     appriseSummary = AppriseSummary[
-        Utils.loadConfig().get("apprise", {}).get("summary", AppriseSummary.ALWAYS.name)
+        CONFIG.get("apprise").get("summary")
     ]
     if appriseSummary == AppriseSummary.ALWAYS:
         goalStatus = ""
@@ -367,5 +354,5 @@ if __name__ == "__main__":
     except Exception as e:
         logging.exception("")
         Utils.sendNotification(
-            "⚠️ Error occurred, please check the log", traceback.format_exc(), True
+            "⚠️ Error occurred, please check the log", traceback.format_exc(), e
         )

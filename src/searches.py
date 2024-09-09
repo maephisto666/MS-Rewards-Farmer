@@ -146,6 +146,7 @@ class Searches:
         baseDelay = Searches.baseDelay
         logging.debug(f"rootTerm={rootTerm}")
 
+        # todo If first 3 searches of day, don't retry since points register differently, will be a bit quicker
         for i in range(self.maxRetries + 1):
             if i != 0:
                 sleepTime: float
@@ -161,28 +162,15 @@ class Searches:
                 )
                 time.sleep(sleepTime)
 
-            searchbar: WebElement
-            for _ in range(1000):
-                searchbar = self.browser.utils.waitUntilClickable(
-                    By.ID, "sb_form_q", timeToWait=40
-                )
-                searchbar.clear()
-                term = next(termsCycle)
-                logging.debug(f"term={term}")
-                time.sleep(1)
-                searchbar.send_keys(term)
-                time.sleep(1)
-                with contextlib.suppress(TimeoutException):
-                    WebDriverWait(self.webdriver, 20).until(
-                        expected_conditions.text_to_be_present_in_element_value(
-                            (By.ID, "sb_form_q"), term
-                        )
-                    )
-                    break
-                logging.debug("error send_keys")
-            else:
-                # todo Still happens occasionally, gotta be a fix
-                raise TimeoutException
+            searchbar = self.browser.utils.waitUntilClickable(
+                By.ID, "sb_form_q", timeToWait=40
+            )
+            searchbar.clear()
+            term = next(termsCycle)
+            logging.debug(f"term={term}")
+            time.sleep(1)
+            searchbar.send_keys(term)
+            time.sleep(1)
             searchbar.submit()
 
             pointsAfter = self.browser.utils.getAccountPoints()
@@ -196,6 +184,4 @@ class Searches:
             #     self.webdriver.proxy = self.browser.giveMeProxy()
         logging.error("[BING] Reached max search attempt retries")
 
-        logging.debug("Moving passedInTerm to end of list")
         del self.googleTrendsShelf[rootTerm]
-        self.googleTrendsShelf[rootTerm] = None

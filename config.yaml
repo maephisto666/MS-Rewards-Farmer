@@ -7,7 +7,7 @@ apprise:
 default:
   geolocation: US # Replace with your country code https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 logging:
-  level: DEBUG # See https://docs.python.org/3/library/logging.html#logging-levels
+  level: INFO # See https://docs.python.org/3/library/logging.html#logging-levels
 retries:
   base_delay_in_seconds: 14.0625 # base_delay_in_seconds * 2^max = 14.0625 * 2^6 = 900 = 15 minutes
   max: 4

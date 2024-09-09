@@ -17,7 +17,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: supercar99/ms-rewards
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/ms-rewards
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx

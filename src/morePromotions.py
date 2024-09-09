@@ -135,5 +135,5 @@ class MorePromotions:
             if promotion["pointProgress"] < promotion["pointProgressMax"]:
                 incompletePromotions.append((promotion["title"], promotion["promotionType"]))
         if incompletePromotions and Utils.loadConfig().get("apprise", {}).get("notify", {}).get("incomplete-promotions", True):
-            Utils.sendNotification(f"Incomplete promotions(s) for {self.browser.username}", incompletePromotions)
+            Utils.sendNotification(f"We found some incomplete promotions for {self.browser.username} to do!", incompletePromotions)
         logging.info("[MORE PROMOS] Exiting")

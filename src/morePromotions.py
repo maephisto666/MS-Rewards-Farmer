@@ -10,6 +10,29 @@ from src.browser import Browser
 from .activities import Activities
 from .utils import Utils, CONFIG
 
+PROMOTION_TITLE_TO_SEARCH = {
+    "Search the lyrics of a song": "black sabbath supernaut lyrics",
+    "Translate anything": "translate pencil sharpener to spanish",
+    "Let's watch that movie again!": "aliens movie",
+    "Discover open job roles": "walmart open job roles",
+    "Plan a quick getaway": "flights nyc to paris",
+    "You can track your package": "usps tracking",
+    "Find somewhere new to explore": "directions to new york",
+    "Too tired to cook tonight?": "Pizza Hut near me",
+    "Quickly convert your money": "convert 374 usd to yen",
+    "Learn to cook a new recipe": "how cook pierogi",
+    "Find places to stay": "hotels rome italy",
+    "How's the economy?": "sp 500",
+    "Who won?": "braves score",
+    "Gaming time": "vampire survivors video game",
+    "What time is it?": "china time",
+    "Houses near you": "apartments manhattan",
+    "Get your shopping done faster": "chicken tenders",
+    "Expand your vocabulary": "define polymorphism",
+    "Stay on top of the elections": "election news latest",
+    "Prepare for the weather": "weather tomorrow",
+}
+
 
 # todo Rename MoreActivities?
 class MorePromotions:
@@ -27,7 +50,9 @@ class MorePromotions:
         self.browser.utils.goToRewards()
         for promotion in morePromotions:
             try:
-                promotionTitle = promotion["title"].replace("\u200b", "").replace("\xa0", " ")
+                promotionTitle = (
+                    promotion["title"].replace("\u200b", "").replace("\xa0", " ")
+                )
                 logging.debug(f"promotionTitle={promotionTitle}")
                 # Open the activity for the promotion
                 if (
@@ -46,73 +71,13 @@ class MorePromotions:
                     )
                     self.browser.utils.click(searchbar)
                 # todo These and following are US-English specific, maybe there's a good way to internationalize
-                # todo Could use dictionary of promotionTitle to search to simplify
-                if "Search the lyrics of a song" in promotionTitle:
-                    searchbar.send_keys("black sabbath supernaut lyrics")
-                    searchbar.submit()
-                elif "Translate anything" in promotionTitle:
-                    searchbar.send_keys("translate pencil sharpener to spanish")
-                    searchbar.submit()
-                elif "Let's watch that movie again!" in promotionTitle:
-                    searchbar.send_keys("aliens movie")
-                    searchbar.submit()
-                elif "Discover open job roles" in promotionTitle:
-                    searchbar.send_keys("walmart open job roles")
-                    searchbar.submit()
-                elif "Plan a quick getaway" in promotionTitle:
-                    searchbar.send_keys("flights nyc to paris")
-                    searchbar.submit()
-                elif "You can track your package" in promotionTitle:
-                    searchbar.send_keys("usps tracking")
-                    searchbar.submit()
-                elif "Find somewhere new to explore" in promotionTitle:
-                    searchbar.send_keys("directions to new york")
-                    searchbar.submit()
-                elif "Too tired to cook tonight?" in promotionTitle:
-                    searchbar.send_keys("Pizza Hut near me")
-                    searchbar.submit()
-                elif "Quickly convert your money" in promotionTitle:
-                    searchbar.send_keys("convert 374 usd to yen")
-                    searchbar.submit()
-                elif "Learn to cook a new recipe" in promotionTitle:
-                    searchbar.send_keys("how cook pierogi")
-                    searchbar.submit()
-                elif "Find places to stay" in promotionTitle:
-                    searchbar.send_keys("hotels rome italy")
-                    searchbar.submit()
-                elif "How's the economy?" in promotionTitle:
-                    searchbar.send_keys("sp 500")
-                    searchbar.submit()
-                elif "Who won?" in promotionTitle:
-                    searchbar.send_keys("braves score")
-                    searchbar.submit()
-                elif "Gaming time" in promotionTitle:
-                    searchbar.send_keys("vampire survivors video game")
-                    searchbar.submit()
-                elif "What time is it?" in promotionTitle:
-                    searchbar.send_keys("china time")
-                    searchbar.submit()
-                elif "Houses near you" in promotionTitle:
-                    searchbar.send_keys("apartments manhattan")
-                    searchbar.submit()
-                elif "Get your shopping done faster" in promotionTitle:
-                    searchbar.send_keys("chicken tenders")
-                    searchbar.submit()
-                elif "Expand your vocabulary" in promotionTitle:
-                    searchbar.send_keys("define polymorphism")
-                    searchbar.submit()
-                elif "Stay on top of the elections" in promotionTitle:
-                    searchbar.send_keys("election news latest")
-                    searchbar.submit()
-                elif "Prepare for the weather" in promotionTitle:
-                    searchbar.send_keys("weather tomorrow")
+                if promotionTitle in PROMOTION_TITLE_TO_SEARCH:
+                    searchbar.send_keys(PROMOTION_TITLE_TO_SEARCH[promotionTitle])
                     searchbar.submit()
                 elif promotion["promotionType"] == "urlreward":
                     # Complete search for URL reward
                     self.activities.completeSearch()
-                elif (
-                    promotion["promotionType"] == "quiz"
-                ):
+                elif promotion["promotionType"] == "quiz":
                     # Complete different types of quizzes based on point progress max
                     if promotion["pointProgressMax"] == 10:
                         self.activities.completeABC()
@@ -135,10 +100,16 @@ class MorePromotions:
                 continue
         if CONFIG.get("apprise").get("notify").get("incomplete-promotions"):
             incompletePromotions: list[tuple[str, str]] = []
-            for promotion in self.browser.utils.getDashboardData()["morePromotions"]:  # Have to refresh
+            for promotion in self.browser.utils.getDashboardData()[
+                "morePromotions"
+            ]:  # Have to refresh
                 if promotion["pointProgress"] < promotion["pointProgressMax"]:
-                    incompletePromotions.append((promotion["title"], promotion["promotionType"]))
+                    incompletePromotions.append(
+                        (promotion["title"], promotion["promotionType"])
+                    )
             if incompletePromotions:
-                Utils.sendNotification(f"We found some incomplete promotions for {self.browser.username} to do!",
-                                       incompletePromotions)
+                Utils.sendNotification(
+                    f"We found some incomplete promotions for {self.browser.username} to do!",
+                    incompletePromotions,
+                )
         logging.info("[MORE PROMOS] Exiting")

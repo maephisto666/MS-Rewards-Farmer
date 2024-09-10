@@ -89,20 +89,23 @@ class MorePromotions:
                 elif "Gaming time" in promotionTitle:
                     searchbar.send_keys("vampire survivors video game")
                     searchbar.submit()
-                elif "Expand your vocabulary" in promotionTitle:
-                    searchbar.send_keys("definition definition")
-                    searchbar.submit()
                 elif "What time is it?" in promotionTitle:
                     searchbar.send_keys("china time")
                     searchbar.submit()
                 elif "Houses near you" in promotionTitle:
                     searchbar.send_keys("apartments manhattan")
                     searchbar.submit()
-                elif "Prepare for the weather" in promotionTitle:
-                    searchbar.send_keys("weather")
-                    searchbar.submit()
                 elif "Get your shopping done faster" in promotionTitle:
                     searchbar.send_keys("chicken tenders")
+                    searchbar.submit()
+                elif "Expand your vocabulary" in promotionTitle:
+                    searchbar.send_keys("define polymorphism")
+                    searchbar.submit()
+                elif "Stay on top of the elections" in promotionTitle:
+                    searchbar.send_keys("election news latest")
+                    searchbar.submit()
+                elif "Prepare for the weather" in promotionTitle:
+                    searchbar.send_keys("weather tomorrow")
                     searchbar.submit()
                 elif promotion["promotionType"] == "urlreward":
                     # Complete search for URL reward

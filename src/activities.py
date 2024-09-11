@@ -51,7 +51,7 @@ class Activities:
         element = self.webdriver.find_element(By.CSS_SELECTOR,
                                               f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId + 1}) .ds-card-sec")
         self.browser.utils.click(element)
-        self.browser.utils.switchToNewTab(timeToWait=5)
+        self.browser.utils.switchToNewTab(timeToWait=8)
 
     def completeSearch(self):
         # Simulate completing a search activity

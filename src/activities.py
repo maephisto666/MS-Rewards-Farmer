@@ -1,12 +1,13 @@
 import contextlib
+import logging
 import random
 import time
-import logging
 
 from selenium.common import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
+
 from src.browser import Browser
 
 
@@ -69,6 +70,7 @@ class Activities:
         with contextlib.suppress(TimeoutException):
             startQuiz = self.browser.utils.waitUntilQuizLoads()
             self.browser.utils.click(startQuiz)
+        # this is bugged on Chrome for some reason
         self.browser.utils.waitUntilVisible(
             By.ID, "overlayPanel", 5
         )

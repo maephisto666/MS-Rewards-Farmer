@@ -129,6 +129,7 @@ class Searches:
                 )
 
             self.bingSearch()
+            del self.googleTrendsShelf[list(self.googleTrendsShelf.keys())[0]]
             time.sleep(random.randint(10, 15))
 
         logging.info(
@@ -156,6 +157,7 @@ class Searches:
                     sleepTime = baseDelay
                 else:
                     raise AssertionError
+                sleepTime += baseDelay * random.random()  # Add jitter
                 logging.debug(
                     f"[BING] Search attempt not counted {i}/{Searches.maxRetries}, sleeping {sleepTime}"
                     f" seconds..."
@@ -175,7 +177,6 @@ class Searches:
 
             pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
-                del self.googleTrendsShelf[rootTerm]
                 return
 
             # todo
@@ -183,5 +184,3 @@ class Searches:
             #     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
             #     self.webdriver.proxy = self.browser.giveMeProxy()
         logging.error("[BING] Reached max search attempt retries")
-
-        del self.googleTrendsShelf[rootTerm]

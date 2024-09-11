@@ -264,18 +264,17 @@ class Utils:
         ):  # Expected
             self.webdriver.find_element(By.ID, "bnp_btn_accept").click()
 
-    def switchToNewTab(self, timeToWait: float = 0) -> None:
+    def switchToNewTab(self, timeToWait: float = 0, closeTab: bool = False) -> None:
+        time.sleep(timeToWait)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[1])
+        if closeTab:
+            self.closeCurrentTab()
 
     def closeCurrentTab(self) -> None:
         self.webdriver.close()
         time.sleep(0.5)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[0])
         time.sleep(0.5)
-
-    def visitNewTab(self, timeToWait: float = 0) -> None:
-        self.switchToNewTab(timeToWait)
-        self.closeCurrentTab()
 
     @staticmethod
     def formatNumber(number, num_decimals=2) -> str:

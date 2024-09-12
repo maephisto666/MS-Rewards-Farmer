@@ -1,4 +1,5 @@
 import argparse
+import locale
 import logging
 import os
 import random
@@ -6,10 +7,9 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Type
 
-import ipapi
+import pycountry
 import seleniumwire.undetected_chromedriver as webdriver
 import undetected_chromedriver
-from ipapi.exceptions import RateLimited
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
 
@@ -215,20 +215,25 @@ class Browser:
 
     @staticmethod
     def getCCodeLang(lang: str, geo: str) -> tuple:
-        if lang is None or geo is None:
-            try:
-                # fixme Find better way to get this that doesn't involve ip
-                nfo = ipapi.location()
-            except RateLimited:
-                geo = CONFIG.get("default").get("geolocation", "US")
-                logging.warning(f"Returning default geolocation {geo}", exc_info=True)
-                return "en", geo
-            if isinstance(nfo, dict):
-                if lang is None:
-                    lang = nfo["languages"].split(",")[0].split("-")[0]
-                if geo is None:
-                    geo = nfo["country"]
-        return lang, geo
+        currentLocale = locale.getlocale()
+        language, country = currentLocale[0].split("_")
+
+        if not lang:
+            language = pycountry.languages.get(name=language).alpha_2
+        else:
+            language = lang
+
+        configCountry = CONFIG.get("default").get("location")
+        if not geo and not configCountry:
+            country = pycountry.countries.get(name=country).alpha_2
+        elif geo:
+            country = geo
+        elif configCountry:
+            country = configCountry
+        else:
+            raise AssertionError
+
+        return language, country
 
     @staticmethod
     def getChromeVersion() -> str:

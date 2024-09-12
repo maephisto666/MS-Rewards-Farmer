@@ -88,8 +88,9 @@
 ## Launch arguments
 
 - `-v/--visible` to disable headless
-- `-l/--lang` to force a language (ex: en)
+- `-l/--lang` to force a language (ex: en) see https://serpapi.com/google-languages for options
 - `-g/--geo` to force a searching geolocation (ex: US)
+  see https://serpapi.com/google-trends-locations for options
   `https://trends.google.com/trends/ for proper geolocation abbreviation for your choice. These MUST be uppercase!!!`
 - `-p/--proxy` to add a proxy to the whole program, supports http/https/socks4/socks5 (overrides per-account proxy in
   accounts.json)

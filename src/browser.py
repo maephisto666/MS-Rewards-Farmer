@@ -218,7 +218,6 @@ class Browser:
 
     @staticmethod
     def getLanguageCountry(language: str, country: str) -> tuple[str, str]:
-
         if not country:
             country = CONFIG.get("default").get("location")
 
@@ -241,16 +240,15 @@ class Browser:
                 if not country:
                     country = ipapiLocation["country"]
             except RateLimited:
-                logging.warning(
-                    "Rate limited, explore alternative ways to specify location above in "
-                    "code. Returning (en, US)",
-                    exc_info=True)
+                logging.warning(exc_info=True)
 
         if not language:
             language = "en"
+            logging.warning(f"Not able to figure language returning default: {language}")
 
         if not country:
             country = "US"
+            logging.warning(f"Not able to figure country returning default: {country}")
 
         return language, country
 

@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import locale
 import logging
 import os
@@ -7,9 +8,11 @@ from pathlib import Path
 from types import TracebackType
 from typing import Any, Type
 
+import ipapi
 import pycountry
 import seleniumwire.undetected_chromedriver as webdriver
 import undetected_chromedriver
+from ipapi.exceptions import RateLimited
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
 
@@ -34,7 +37,7 @@ class Browser:
         self.username = account.username
         self.password = account.password
         self.totp = account.totp
-        self.localeLang, self.localeGeo = self.getCCodeLang(args.lang, args.geo)
+        self.localeLang, self.localeGeo = self.getLanguageCountry(args.lang, args.geo)
         self.proxy = None
         if args.proxy:
             self.proxy = args.proxy
@@ -214,24 +217,40 @@ class Browser:
         return sessionsDir
 
     @staticmethod
-    def getCCodeLang(lang: str, geo: str) -> tuple:
-        currentLocale = locale.getlocale()
-        language, country = currentLocale[0].split("_")
+    def getLanguageCountry(language: str, country: str) -> tuple[str, str]:
 
-        if not lang:
-            language = pycountry.languages.get(name=language).alpha_2
-        else:
-            language = lang
+        if not country:
+            country = CONFIG.get("default").get("location")
 
-        configCountry = CONFIG.get("default").get("location")
-        if not geo and not configCountry:
-            country = pycountry.countries.get(name=country).alpha_2
-        elif geo:
-            country = geo
-        elif configCountry:
-            country = configCountry
-        else:
-            raise AssertionError
+        if not language or not country:
+            currentLocale = locale.getlocale()
+            if not language:
+                with contextlib.suppress(ValueError):
+                    language = pycountry.languages.get(
+                        name=currentLocale[0].split("_")[0]).alpha_2
+            if not country:
+                with contextlib.suppress(ValueError):
+                    country = pycountry.countries.get(
+                        name=currentLocale[0].split("_")[1]).alpha_2
+
+        if not language or not country:
+            try:
+                ipapiLocation = ipapi.location()
+                if not language:
+                    language = ipapiLocation["languages"].split(",")[0].split("-")[0]
+                if not country:
+                    country = ipapiLocation["country"]
+            except RateLimited:
+                logging.warning(
+                    "Rate limited, explore alternative ways to specify location above in "
+                    "code. Returning (en, US)",
+                    exc_info=True)
+
+        if not language:
+            language = "en"
+
+        if not country:
+            country = "US"
 
         return language, country
 

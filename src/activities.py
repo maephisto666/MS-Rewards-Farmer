@@ -10,6 +10,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from src.browser import Browser
 from src.utils import CONFIG, Utils
 
+# todo These are US-English specific, maybe there's a good way to internationalize
 ACTIVITY_TITLE_TO_SEARCH = {
     "Search the lyrics of a song": "black sabbath supernaut lyrics",
     "Translate anything": "translate pencil sharpener to spanish",
@@ -104,10 +105,10 @@ class Activities:
                 )
                 for i in range(numberOfOptions):
                     if (
-                        self.webdriver.find_element(
-                            By.ID, f"rqAnswerOption{i}"
-                        ).get_attribute("data-option")
-                        == correctOption
+                            self.webdriver.find_element(
+                                By.ID, f"rqAnswerOption{i}"
+                            ).get_attribute("data-option")
+                            == correctOption
                     ):
                         element = self.webdriver.find_element(By.ID, f"rqAnswerOption{i}")
                         self.browser.utils.click(element)
@@ -123,7 +124,8 @@ class Activities:
         ).text[:-1][1:]
         numberOfQuestions = max(int(s) for s in counter.split() if s.isdigit())
         for question in range(numberOfQuestions):
-            element = self.webdriver.find_element(By.ID, f"questionOptionChoice{question}{random.randint(0, 2)}")
+            element = self.webdriver.find_element(By.ID,
+                                                  f"questionOptionChoice{question}{random.randint(0, 2)}")
             self.browser.utils.click(element)
             time.sleep(random.randint(10, 15))
             element = self.webdriver.find_element(By.ID, f"nextQuestionbtn{question}")
@@ -190,7 +192,6 @@ class Activities:
                     By.ID, "sb_form_q"
                 )
                 self.browser.utils.click(searchbar)
-            # todo These and following are US-English specific, maybe there's a good way to internationalize
             if activityTitle in ACTIVITY_TITLE_TO_SEARCH:
                 searchbar.send_keys(ACTIVITY_TITLE_TO_SEARCH[activityTitle])
                 searchbar.submit()
@@ -236,18 +237,20 @@ class Activities:
             self.doActivity(activity, morePromotions)
         logging.info("[MORE PROMOS] Done")
 
-        if CONFIG.get("apprise").get("notify").get("incomplete-activity"):
-            incompleteActivities: list[tuple[str, str]] = []
+        # todo Send one email for all accounts?
+        if CONFIG.get("apprise").get("notify").get("incomplete-activity").get("enabled"):
+            incompleteActivities: dict[str, tuple[str, str, str]] = {}
             for activity in (self.browser.utils.getDailySetPromotions() +
                              self.browser.utils.getMorePromotions()):  # Have to refresh
                 if activity["pointProgress"] < activity["pointProgressMax"]:
-                    incompleteActivities.append(
-                        (activity["title"], activity["promotionType"])
-                    )
-            # todo Allow option to ignore identity protection
+                    incompleteActivities[activity["title"]] = (
+                        activity["promotionType"], activity["pointProgress"],
+                        activity["pointProgressMax"])
+            if CONFIG.get("apprise").get("notify").get("incomplete-activity").get(
+                    "ignore-safeguard-info"):
+                incompleteActivities.pop("Safeguard your family's info", None)
             if incompleteActivities:
                 Utils.sendNotification(
-                    f"We found some incomplete activities for {self.browser.username} to do!",
+                    f"We found some incomplete activities for {self.browser.username}",
                     incompleteActivities,
                 )
-

@@ -264,7 +264,7 @@ class Activities:
             self.doActivity(activity, morePromotions)
         logging.info("[MORE PROMOS] Done")
 
-        if CONFIG.get("apprise").get("notify").get("incomplete-promotions"):
+        if CONFIG.get("apprise").get("notify").get("incomplete-activity"):
             incompleteActivities: list[tuple[str, str]] = []
             for activity in (self.browser.utils.getDailySetPromotions() +
                              self.browser.utils.getMorePromotions()):  # Have to refresh

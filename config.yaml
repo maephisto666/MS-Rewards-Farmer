@@ -1,6 +1,7 @@
 # config.yaml
 apprise:
   notify:
+    # todo Rename to incomplete-activities
     incomplete-promotions: True # True or False
     uncaught-exceptions: True # True or False
   summary: ON_ERROR

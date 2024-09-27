@@ -14,13 +14,12 @@ from enum import Enum, auto
 from src import (
     Browser,
     Login,
-    MorePromotions,
     PunchCards,
     Searches,
     ReadToEarn,
-    DailySet,
     Account,
 )
+from src.activities import Activities
 from src.browser import RemainingSearches
 from src.loggingColoredFormatter import ColoredFormatter
 from src.utils import Utils, CONFIG
@@ -234,12 +233,9 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
             Login(desktopBrowser, args).login()
             startingPoints = utils.getAccountPoints()
             logging.info(
-                f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
-            )
-            # todo Combine these classes so main loop isn't duplicated
-            DailySet(desktopBrowser).completeDailySet()
+                f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account")
+            Activities(desktopBrowser).completeActivities()
             PunchCards(desktopBrowser).completePunchCards()
-            MorePromotions(desktopBrowser).completeMorePromotions()
             # VersusGame(desktopBrowser).completeVersusGame()
 
             with Searches(desktopBrowser) as searches:

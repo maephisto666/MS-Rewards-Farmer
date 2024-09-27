@@ -1,10 +1,13 @@
 import logging
 import urllib.parse
 from datetime import datetime
+from warnings import deprecated
+
 from src.browser import Browser
 from .activities import Activities
 
 
+@deprecated("Use Activities")
 class DailySet:
     def __init__(self, browser: Browser):
         self.browser = browser

@@ -234,7 +234,7 @@ class Utils:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["title"]
 
     def tryDismissAllMessages(self) -> None:
-        buttons = [
+        byValues = [
             (By.ID, "iLandingViewAction"),
             (By.ID, "iShowSkip"),
             (By.ID, "iNext"),
@@ -242,34 +242,17 @@ class Utils:
             (By.ID, "idSIButton9"),
             (By.ID, "bnp_btn_accept"),
             (By.ID, "acceptButton"),
+            (By.CSS_SELECTOR, ".dashboardPopUpPopUpSelectButton")
         ]
-        for button in buttons:
-            try:
-                elements = self.webdriver.find_elements(by=button[0], value=button[1])
-            except (
-                NoSuchElementException,
-                ElementNotInteractableException,
-            ):  # Expected?
-                logging.debug("", exc_info=True)
-                continue
-            for element in elements:
-                element.click()
-        self.tryDismissCookieBanner()
-        self.tryDismissBingCookieBanner()
-
-    def tryDismissCookieBanner(self) -> None:
-        with contextlib.suppress(
-            NoSuchElementException, ElementNotInteractableException
-        ):  # Expected
-            self.webdriver.find_element(By.ID, "cookie-banner").find_element(
-                By.TAG_NAME, "button"
-            ).click()
-
-    def tryDismissBingCookieBanner(self) -> None:
-        with contextlib.suppress(
-            NoSuchElementException, ElementNotInteractableException
-        ):  # Expected
-            self.webdriver.find_element(By.ID, "bnp_btn_accept").click()
+        for byValue in byValues:
+            dismissButtons = []
+            with contextlib.suppress(NoSuchElementException):
+                dismissButtons = self.webdriver.find_elements(by=byValue[0], value=byValue[1])
+            for dismissButton in dismissButtons:
+                dismissButton.click()
+        with contextlib.suppress(NoSuchElementException):
+            self.webdriver.find_element(By.ID, "cookie-banner").find_element(By.TAG_NAME,
+                                                                             "button").click()
 
     def switchToNewTab(self, timeToWait: float = 0, closeTab: bool = False) -> None:
         time.sleep(timeToWait)

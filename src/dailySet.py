@@ -43,9 +43,7 @@ class DailySet:
                         )
                         # Complete This or That for a specific point progress max
                         self.activities.completeThisOrThat()
-                    elif (
-                        activity["pointProgressMax"] in [40, 30]
-                    ):
+                    elif activity["pointProgressMax"] in [40, 30]:
                         logging.info(f"[DAILY SET] Completing quiz of card {cardId}")
                         # Complete quiz for specific point progress max
                         self.activities.completeQuiz()

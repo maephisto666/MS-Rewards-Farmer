@@ -68,17 +68,14 @@ class Activities:
         cardId += 1
         element = self.webdriver.find_element(By.XPATH,
                                               f'//*[@id="daily-sets"]/mee-card-group[1]/div/mee-card[{cardId}]/div/card-content/mee-rewards-daily-set-item-content/div/a', )
-        # element = self.webdriver.find_element(By.CSS_SELECTOR,
-        #                                       f".ng-scope:nth-child(8) .ng-scope:nth-child({cardId}) .contentContainer:nth-child(3) > .ng-binding:nth-child({cardId})")
-        # element = self.webdriver.find_element(By.XPATH,
-        #                                       f"//div[@id=\'daily-sets\']/mee-card-group/div/mee-card[{cardId}]/div/card-content/mee-rewards-daily-set-item-content/div/a/div[{cardId}]/p")
         self.browser.utils.click(element)
         self.browser.utils.switchToNewTab(timeToWait=8)
 
     def openMorePromotionsActivity(self, cardId: int):
+        cardId += 1
         # Open the More Promotions activity for the given cardId
         element = self.webdriver.find_element(By.CSS_SELECTOR,
-                                              f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId + 1}) .ds-card-sec")
+                                              f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId}) .ds-card-sec")
         self.browser.utils.click(element)
         self.browser.utils.switchToNewTab(timeToWait=8)
 

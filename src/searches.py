@@ -111,8 +111,13 @@ class Searches:
                 desktopAndMobile=True
             )
             logging.info(f"[BING] Remaining searches={desktopAndMobileRemaining}")
-            if (self.browser.browserType == "desktop" and desktopAndMobileRemaining.desktop == 0) \
-                    or (self.browser.browserType == "mobile" and desktopAndMobileRemaining.mobile == 0):
+            if (
+                self.browser.browserType == "desktop"
+                and desktopAndMobileRemaining.desktop == 0
+            ) or (
+                self.browser.browserType == "mobile"
+                and desktopAndMobileRemaining.mobile == 0
+            ):
                 break
 
             if desktopAndMobileRemaining.getTotal() > len(self.googleTrendsShelf):

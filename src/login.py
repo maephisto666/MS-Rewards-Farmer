@@ -2,11 +2,16 @@ import argparse
 import contextlib
 import logging
 from argparse import Namespace
+
 from pyotp import TOTP
 from selenium.common import TimeoutException
+from selenium.common.exceptions import (
+    ElementNotInteractableException,
+    NoSuchElementException,
+)
 from selenium.webdriver.common.by import By
 from undetected_chromedriver import Chrome
-from selenium.common.exceptions import ElementNotInteractableException, NoSuchElementException
+
 from src.browser import Browser
 
 
@@ -23,7 +28,9 @@ class Login:
 
     def check_locked_user(self):
         try:
-            element = self.webdriver.find_element(By.XPATH, "//div[@id='serviceAbuseLandingTitle']")
+            element = self.webdriver.find_element(
+                By.XPATH, "//div[@id='serviceAbuseLandingTitle']"
+            )
             self.locked(element)
         except NoSuchElementException:
             return
@@ -120,7 +127,9 @@ class Login:
 
             if isDeviceAuthEnabled:
                 # Device-based authentication not supported
-                raise Exception("Device authentication not supported. Please use TOTP or disable 2FA.")
+                raise Exception(
+                    "Device authentication not supported. Please use TOTP or disable 2FA."
+                )
 
                 # Device auth, have user confirm code on phone
                 codeField = self.utils.waitUntilVisible(
@@ -140,10 +149,14 @@ class Login:
                     # TOTP token provided
                     logging.info("[LOGIN] Entering OTP...")
                     otp = TOTP(self.browser.totp.replace(" ", "")).now()
-                    otpField = self.utils.waitUntilClickable(By.ID, "idTxtBx_SAOTCC_OTC")
+                    otpField = self.utils.waitUntilClickable(
+                        By.ID, "idTxtBx_SAOTCC_OTC"
+                    )
                     otpField.send_keys(otp)
                     assert otpField.get_attribute("value") == otp
-                    self.utils.waitUntilClickable(By.ID, "idSubmit_SAOTCC_Continue").click()
+                    self.utils.waitUntilClickable(
+                        By.ID, "idSubmit_SAOTCC_Continue"
+                    ).click()
                 else:
                     # TOTP token not provided, manual intervention required
                     assert self.args.visible, (
@@ -153,9 +166,9 @@ class Login:
                     )
                     print(
                         "[LOGIN] 2FA detected, handle prompts and press enter when on"
-                        " keep me signed in page.")
+                        " keep me signed in page."
+                    )
                     input()
-                       
 
         self.check_locked_user()
         self.check_banned_user()
@@ -179,4 +192,6 @@ class Login:
             )
             input()
 
-        self.utils.waitUntilVisible(By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]')
+        self.utils.waitUntilVisible(
+            By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]'
+        )

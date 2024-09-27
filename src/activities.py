@@ -43,16 +43,20 @@ class Activities:
     def openDailySetActivity(self, cardId: int):
         # Open the Daily Set activity for the given cardId
         cardId += 1
-        element = self.webdriver.find_element(By.XPATH,
-                                              f'//*[@id="daily-sets"]/mee-card-group[1]/div/mee-card[{cardId}]/div/card-content/mee-rewards-daily-set-item-content/div/a', )
+        element = self.webdriver.find_element(
+            By.XPATH,
+            f'//*[@id="daily-sets"]/mee-card-group[1]/div/mee-card[{cardId}]/div/card-content/mee-rewards-daily-set-item-content/div/a',
+        )
         self.browser.utils.click(element)
         self.browser.utils.switchToNewTab(timeToWait=8)
 
     def openMorePromotionsActivity(self, cardId: int):
         cardId += 1
         # Open the More Promotions activity for the given cardId
-        element = self.webdriver.find_element(By.CSS_SELECTOR,
-                                              f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId}) .ds-card-sec")
+        element = self.webdriver.find_element(
+            By.CSS_SELECTOR,
+            f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId}) .ds-card-sec",
+        )
         self.browser.utils.click(element)
         self.browser.utils.switchToNewTab(timeToWait=8)
 
@@ -74,9 +78,7 @@ class Activities:
             startQuiz = self.browser.utils.waitUntilQuizLoads()
             self.browser.utils.click(startQuiz)
         # this is bugged on Chrome for some reason
-        self.browser.utils.waitUntilVisible(
-            By.ID, "overlayPanel", 5
-        )
+        self.browser.utils.waitUntilVisible(By.ID, "overlayPanel", 5)
         currentQuestionNumber: int = self.webdriver.execute_script(
             "return _w.rewardsQuizRenderInfo.currentQuestionNumber"
         )
@@ -105,12 +107,14 @@ class Activities:
                 )
                 for i in range(numberOfOptions):
                     if (
-                            self.webdriver.find_element(
-                                By.ID, f"rqAnswerOption{i}"
-                            ).get_attribute("data-option")
-                            == correctOption
+                        self.webdriver.find_element(
+                            By.ID, f"rqAnswerOption{i}"
+                        ).get_attribute("data-option")
+                        == correctOption
                     ):
-                        element = self.webdriver.find_element(By.ID, f"rqAnswerOption{i}")
+                        element = self.webdriver.find_element(
+                            By.ID, f"rqAnswerOption{i}"
+                        )
                         self.browser.utils.click(element)
 
                         self.browser.utils.waitUntilQuestionRefresh()
@@ -124,8 +128,9 @@ class Activities:
         ).text[:-1][1:]
         numberOfQuestions = max(int(s) for s in counter.split() if s.isdigit())
         for question in range(numberOfQuestions):
-            element = self.webdriver.find_element(By.ID,
-                                                  f"questionOptionChoice{question}{random.randint(0, 2)}")
+            element = self.webdriver.find_element(
+                By.ID, f"questionOptionChoice{question}{random.randint(0, 2)}"
+            )
             self.browser.utils.click(element)
             time.sleep(random.randint(10, 15))
             element = self.webdriver.find_element(By.ID, f"nextQuestionbtn{question}")
@@ -172,9 +177,7 @@ class Activities:
 
     def doActivity(self, activity: dict, activities: list[dict]) -> None:
         try:
-            activityTitle = (
-                activity["title"].replace("\u200b", "").replace("\xa0", " ")
-            )
+            activityTitle = activity["title"].replace("\u200b", "").replace("\xa0", " ")
             logging.debug(f"activityTitle={activityTitle}")
             if activity["complete"] is True or activity["pointProgressMax"] == 0:
                 logging.debug("Already done, returning")
@@ -188,9 +191,7 @@ class Activities:
                 self.openMorePromotionsActivity(cardId)
             self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
             with contextlib.suppress(TimeoutException):
-                searchbar = self.browser.utils.waitUntilClickable(
-                    By.ID, "sb_form_q"
-                )
+                searchbar = self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 self.browser.utils.click(searchbar)
             if activityTitle in ACTIVITY_TITLE_TO_SEARCH:
                 searchbar.send_keys(ACTIVITY_TITLE_TO_SEARCH[activityTitle])
@@ -216,9 +217,7 @@ class Activities:
             self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
             time.sleep(random.randint(5, 10))
         except Exception:
-            logging.error(
-                f"[ACTIVITY] Error doing {activityTitle}", exc_info=True
-            )
+            logging.error(f"[ACTIVITY] Error doing {activityTitle}", exc_info=True)
         self.browser.utils.resetTabs()
         time.sleep(2)
 
@@ -238,16 +237,29 @@ class Activities:
         logging.info("[MORE PROMOS] Done")
 
         # todo Send one email for all accounts?
-        if CONFIG.get("apprise").get("notify").get("incomplete-activity").get("enabled"):
+        if (
+            CONFIG.get("apprise")
+            .get("notify")
+            .get("incomplete-activity")
+            .get("enabled")
+        ):
             incompleteActivities: dict[str, tuple[str, str, str]] = {}
-            for activity in (self.browser.utils.getDailySetPromotions() +
-                             self.browser.utils.getMorePromotions()):  # Have to refresh
+            for activity in (
+                self.browser.utils.getDailySetPromotions()
+                + self.browser.utils.getMorePromotions()
+            ):  # Have to refresh
                 if activity["pointProgress"] < activity["pointProgressMax"]:
                     incompleteActivities[activity["title"]] = (
-                        activity["promotionType"], activity["pointProgress"],
-                        activity["pointProgressMax"])
-            if CONFIG.get("apprise").get("notify").get("incomplete-activity").get(
-                    "ignore-safeguard-info"):
+                        activity["promotionType"],
+                        activity["pointProgress"],
+                        activity["pointProgressMax"],
+                    )
+            if (
+                CONFIG.get("apprise")
+                .get("notify")
+                .get("incomplete-activity")
+                .get("ignore-safeguard-info")
+            ):
                 incompleteActivities.pop("Safeguard your family's info", None)
             if incompleteActivities:
                 Utils.sendNotification(

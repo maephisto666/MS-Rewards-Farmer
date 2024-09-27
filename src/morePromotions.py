@@ -100,7 +100,7 @@ class MorePromotions:
                 # Reset tabs in case of an exception
                 self.browser.utils.resetTabs()
                 continue
-        if CONFIG.get("apprise").get("notify").get("incomplete-promotions"):
+        if CONFIG.get("apprise").get("notify").get("incomplete-activity"):
             incompletePromotions: list[tuple[str, str]] = []
             for promotion in self.browser.utils.getDashboardData()[
                 "morePromotions"

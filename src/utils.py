@@ -34,7 +34,7 @@ from .constants import SEARCH_URL
 DEFAULT_CONFIG: MappingProxyType = MappingProxyType(
     {
         "apprise": {
-            "notify": {"incomplete-promotions": True, "uncaught-exceptions": True},
+            "notify": {"incomplete-activity": True, "uncaught-exception": True},
             "summary": "ALWAYS",
         },
         "default": None,
@@ -88,7 +88,7 @@ class Utils:
 
     @staticmethod
     def sendNotification(title, body, e: Exception = None) -> None:
-        if Utils.args.disable_apprise or (e and not CONFIG.get("apprise").get("notify").get("uncaught-exceptions")):
+        if Utils.args.disable_apprise or (e and not CONFIG.get("apprise").get("notify").get("uncaught-exception")):
             return
         apprise = Apprise()
         urls: list[str] = (

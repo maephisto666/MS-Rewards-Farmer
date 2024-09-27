@@ -1,9 +1,8 @@
 # config.yaml
 apprise:
   notify:
-    # todo Rename to incomplete-activities
-    incomplete-promotions: True # True or False
-    uncaught-exceptions: True # True or False
+    incomplete-activity: True # True or False
+    uncaught-exception: True # True or False
   summary: ON_ERROR
 default:
   geolocation: US # Replace with your country code https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2

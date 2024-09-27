@@ -1,7 +1,8 @@
 import logging
 import urllib.parse
 from datetime import datetime
-from warnings import deprecated
+
+from typing_extensions import deprecated
 
 from src.browser import Browser
 from .activities import Activities

@@ -2,10 +2,10 @@ import contextlib
 import logging
 import random
 import time
-from warnings import deprecated
 
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
+from typing_extensions import deprecated
 
 from src.browser import Browser
 from .activities import Activities

@@ -4,7 +4,6 @@ import random
 import time
 
 from selenium.common import TimeoutException
-from selenium.common.exceptions import NoSuchElementException, ElementNotInteractableException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -39,29 +38,6 @@ class Activities:
     def __init__(self, browser: Browser):
         self.browser = browser
         self.webdriver = browser.webdriver
-
-    def click_element_if_visible(self, element):
-        try:
-            if element.is_displayed() and element.is_enabled():
-                element.click()
-                logging.info("Dashboard pop-up registered and closed, needs to be done once on new accounts")
-            else:
-                pass
-        except (ElementNotInteractableException, NoSuchElementException):
-            pass
-
-    def dashboardPopUpModalCloseCross(self):
-        try:
-
-            element = self.webdriver.find_element(By.CSS_SELECTOR, ".dashboardPopUpPopUpSelectButton")
-            self.click_element_if_visible(element)
-            time.sleep(0.25)
-        except NoSuchElementException:
-            return
-
-
-
-
 
     def openDailySetActivity(self, cardId: int):
         # Open the Daily Set activity for the given cardId

@@ -225,7 +225,6 @@ class Activities:
         logging.info("[DAILY SET] " + "Trying to complete the Daily Set...")
         dailySetPromotions = self.browser.utils.getDailySetPromotions()
         self.browser.utils.goToRewards()
-        self.dashboardPopUpModalCloseCross()
         for activity in dailySetPromotions:
             self.doActivity(activity, dailySetPromotions)
         logging.info("[DAILY SET] Done")

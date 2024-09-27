@@ -34,19 +34,28 @@ from .constants import SEARCH_URL
 DEFAULT_CONFIG: MappingProxyType = MappingProxyType(
     {
         "apprise": {
-            "notify": {"incomplete-activity": True, "uncaught-exception": True},
-            "summary": "ALWAYS",
+            "notify": {
+                "incomplete-activity": {"enabled": True, "ignore-safeguard-info": True},
+                "uncaught-exception": {"enabled": True},
+            },
+            "summary": "ON_ERROR",
         },
-        "default": None,
+        "default": {"geolocation": "US"},
         "logging": {"level": "INFO"},
-        "retries": {"base_delay_in_seconds": 14.0625, "max": 4, "strategy": "EXPONENTIAL"},
-    })
+        "retries": {
+            "base_delay_in_seconds": 14.0625,
+            "max": 4,
+            "strategy": "EXPONENTIAL",
+        },
+    }
+)
 DEFAULT_PRIVATE_CONFIG: MappingProxyType = MappingProxyType(
     {
         "apprise": {
             "urls": [],
         },
-    })
+    }
+)
 
 
 class Utils:
@@ -74,7 +83,9 @@ class Utils:
             return yamlContents
 
     @staticmethod
-    def loadConfig(configFilename="config.yaml", defaultConfig=DEFAULT_CONFIG) -> MappingProxyType:
+    def loadConfig(
+        configFilename="config.yaml", defaultConfig=DEFAULT_CONFIG
+    ) -> MappingProxyType:
         configFile = Utils.getProjectRoot() / configFilename
         try:
             return MappingProxyType(defaultConfig | Utils.loadYaml(configFile))
@@ -88,7 +99,13 @@ class Utils:
 
     @staticmethod
     def sendNotification(title, body, e: Exception = None) -> None:
-        if Utils.args.disable_apprise or (e and not CONFIG.get("apprise").get("notify").get("uncaught-exception")):
+        if Utils.args.disable_apprise or (
+            e
+            and not CONFIG.get("apprise")
+            .get("notify")
+            .get("uncaught-exception")
+            .get("enabled")
+        ):
             return
         apprise = Apprise()
         urls: list[str] = (
@@ -172,7 +189,9 @@ class Utils:
                 self.goToRewards()
 
     def getDailySetPromotions(self) -> list[dict]:
-        return self.getDashboardData()["dailySetPromotions"][date.today().strftime("%m/%d/%Y")]
+        return self.getDashboardData()["dailySetPromotions"][
+            date.today().strftime("%m/%d/%Y")
+        ]
 
     def getMorePromotions(self) -> list[dict]:
         return self.getDashboardData()["morePromotions"]
@@ -212,7 +231,7 @@ class Utils:
 
     def isLoggedIn(self) -> bool:
         # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred
-        if self.getBingInfo()["isRewardsUser"]: # faster, if it works
+        if self.getBingInfo()["isRewardsUser"]:  # faster, if it works
             return True
         self.webdriver.get(
             "https://rewards.bing.com/Signin/"
@@ -242,17 +261,20 @@ class Utils:
             (By.ID, "idSIButton9"),
             (By.ID, "bnp_btn_accept"),
             (By.ID, "acceptButton"),
-            (By.CSS_SELECTOR, ".dashboardPopUpPopUpSelectButton")
+            (By.CSS_SELECTOR, ".dashboardPopUpPopUpSelectButton"),
         ]
         for byValue in byValues:
             dismissButtons = []
             with contextlib.suppress(NoSuchElementException):
-                dismissButtons = self.webdriver.find_elements(by=byValue[0], value=byValue[1])
+                dismissButtons = self.webdriver.find_elements(
+                    by=byValue[0], value=byValue[1]
+                )
             for dismissButton in dismissButtons:
                 dismissButton.click()
         with contextlib.suppress(NoSuchElementException):
-            self.webdriver.find_element(By.ID, "cookie-banner").find_element(By.TAG_NAME,
-                                                                             "button").click()
+            self.webdriver.find_element(By.ID, "cookie-banner").find_element(
+                By.TAG_NAME, "button"
+            ).click()
 
     def switchToNewTab(self, timeToWait: float = 0, closeTab: bool = False) -> None:
         time.sleep(timeToWait)

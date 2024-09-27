@@ -244,6 +244,7 @@ class Activities:
                     incompleteActivities.append(
                         (activity["title"], activity["promotionType"])
                     )
+            # todo Allow option to ignore identity protection
             if incompleteActivities:
                 Utils.sendNotification(
                     f"We found some incomplete activities for {self.browser.username} to do!",

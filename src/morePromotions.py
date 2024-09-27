@@ -2,6 +2,7 @@ import contextlib
 import logging
 import random
 import time
+from warnings import deprecated
 
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
@@ -34,6 +35,7 @@ PROMOTION_TITLE_TO_SEARCH = {
 }
 
 
+@deprecated("Use Activities")
 # todo Rename MoreActivities?
 class MorePromotions:
     def __init__(self, browser: Browser):

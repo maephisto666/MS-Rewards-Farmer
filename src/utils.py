@@ -5,6 +5,7 @@ import logging
 import re
 import time
 from argparse import Namespace
+from datetime import date
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any
@@ -169,6 +170,12 @@ class Utils:
                 self.webdriver.get(urlBefore)
             except TimeoutException:
                 self.goToRewards()
+
+    def getDailySetPromotions(self) -> list[dict]:
+        return self.getDashboardData()["dailySetPromotions"][date.today().strftime("%m/%d/%Y")]
+
+    def getMorePromotions(self) -> list[dict]:
+        return self.getDashboardData()["morePromotions"]
 
     def getBingInfo(self) -> Any:
         session = self.makeRequestsSession()

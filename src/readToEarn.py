@@ -7,7 +7,7 @@ from requests_oauthlib import OAuth2Session
 
 from src.browser import Browser
 from .activities import Activities
-from .utils import Utils
+from .utils import makeRequestsSession
 
 # todo Use constant naming style
 client_id = "0000000040170455"
@@ -41,7 +41,7 @@ class ReadToEarn:
         # Use Webdriver to get OAuth2 Token
         # This works, since you already logged into Bing, so no user interaction needed
 
-        mobileApp = Utils.makeRequestsSession(
+        mobileApp = makeRequestsSession(
             OAuth2Session(client_id, scope=scope, redirect_uri=redirect_uri)
         )
         authorization_url, state = mobileApp.authorization_url(

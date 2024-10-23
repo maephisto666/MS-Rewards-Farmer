@@ -1,13 +1,14 @@
 import contextlib
 import logging
-import random
-import time
+from random import randint
+from time import sleep
 
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from src.browser import Browser
+from src.constants import REWARDS_URL
 from src.utils import CONFIG, Utils
 
 # todo These are US-English specific, maybe there's a good way to internationalize
@@ -62,14 +63,15 @@ class Activities:
 
     def completeSearch(self):
         # Simulate completing a search activity
-        time.sleep(random.randint(10, 15))
+        sleep(randint(20, 30))
+        # WebDriverWait(self.webdriver, 30).until()
         self.browser.utils.closeCurrentTab()
 
     def completeSurvey(self):
         # Simulate completing a survey activity
         # noinspection SpellCheckingInspection
-        self.webdriver.find_element(By.ID, f"btoption{random.randint(0, 1)}").click()
-        time.sleep(random.randint(10, 15))
+        self.webdriver.find_element(By.ID, f"btoption{randint(0, 1)}").click()
+        sleep(randint(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def completeQuiz(self):
@@ -129,14 +131,14 @@ class Activities:
         numberOfQuestions = max(int(s) for s in counter.split() if s.isdigit())
         for question in range(numberOfQuestions):
             element = self.webdriver.find_element(
-                By.ID, f"questionOptionChoice{question}{random.randint(0, 2)}"
+                By.ID, f"questionOptionChoice{question}{randint(0, 2)}"
             )
             self.browser.utils.click(element)
-            time.sleep(random.randint(10, 15))
+            sleep(randint(10, 15))
             element = self.webdriver.find_element(By.ID, f"nextQuestionbtn{question}")
             self.browser.utils.click(element)
-            time.sleep(random.randint(10, 15))
-        time.sleep(random.randint(1, 7))
+            sleep(randint(10, 15))
+        sleep(randint(1, 7))
         self.browser.utils.closeCurrentTab()
 
     def completeThisOrThat(self):
@@ -146,7 +148,7 @@ class Activities:
         self.browser.utils.waitUntilVisible(
             By.XPATH, '//*[@id="currentQuestionContainer"]/div/div[1]', 10
         )
-        time.sleep(random.randint(10, 15))
+        sleep(randint(10, 15))
         for _ in range(10):
             correctAnswerCode = self.webdriver.execute_script(
                 "return _w.rewardsQuizRenderInfo.correctAnswer"
@@ -160,9 +162,9 @@ class Activities:
                 answerToClick = answer2
 
             self.browser.utils.click(answerToClick)
-            time.sleep(random.randint(10, 15))
+            sleep(randint(10, 15))
 
-        time.sleep(random.randint(10, 15))
+        sleep(randint(10, 15))
         self.browser.utils.closeCurrentTab()
 
     def getAnswerAndCode(self, answerId: str) -> tuple[WebElement, str]:
@@ -190,6 +192,7 @@ class Activities:
             else:
                 self.openMorePromotionsActivity(cardId)
             self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
+            sleep(1)
             with contextlib.suppress(TimeoutException):
                 searchbar = self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 self.browser.utils.click(searchbar)
@@ -215,11 +218,11 @@ class Activities:
                 # Default to completing search
                 self.completeSearch()
             self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
-            time.sleep(random.randint(5, 10))
+            # sleep(randint(5, 10))
         except Exception:
             logging.error(f"[ACTIVITY] Error doing {activityTitle}", exc_info=True)
         self.browser.utils.resetTabs()
-        time.sleep(2)
+        # sleep(randint(900, 1200))
 
     def completeActivities(self):
         logging.info("[DAILY SET] " + "Trying to complete the Daily Set...")
@@ -264,7 +267,7 @@ class Activities:
             if incompleteActivities:
                 Utils.sendNotification(
                     f"We found some incomplete activities for {self.browser.username}",
-                    incompleteActivities,
+                    str(incompleteActivities) + "\n" + REWARDS_URL,
                 )
 
 

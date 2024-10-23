@@ -197,7 +197,7 @@ class Utils:
         return self.getDashboardData()["morePromotions"]
 
     def getBingInfo(self) -> Any:
-        session = self.makeRequestsSession()
+        session = makeRequestsSession()
 
         for cookie in self.webdriver.get_cookies():
             session.cookies.set(cookie["name"], cookie["value"])
@@ -208,26 +208,6 @@ class Utils:
         # fixme Add more asserts
         # todo Add fallback to src.utils.Utils.getDashboardData (slower but more reliable)
         return response.json()
-
-    @staticmethod
-    def makeRequestsSession(session: Session = requests.session()) -> Session:
-        retry = Retry(
-            total=5,
-            backoff_factor=1,
-            status_forcelist=[
-                500,
-                502,
-                503,
-                504,
-            ],  # todo Use global retries from config
-        )
-        session.mount(
-            "https://", HTTPAdapter(max_retries=retry)
-        )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
-        session.mount(
-            "http://", HTTPAdapter(max_retries=retry)
-        )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
-        return session
 
     def isLoggedIn(self) -> bool:
         # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred
@@ -310,10 +290,32 @@ class Utils:
 
     def click(self, element: WebElement) -> None:
         try:
+            WebDriverWait(self.webdriver, 10).until(expected_conditions.element_to_be_clickable(element))
             element.click()
         except (ElementClickInterceptedException, ElementNotInteractableException):
             self.tryDismissAllMessages()
+            WebDriverWait(self.webdriver, 10).until(expected_conditions.element_to_be_clickable(element))
             element.click()
+
+
+def makeRequestsSession(session: Session = requests.session()) -> Session:
+    retry = Retry(
+        total=5,
+        backoff_factor=1,
+        status_forcelist=[
+            500,
+            502,
+            503,
+            504,
+        ],  # todo Use global retries from config
+    )
+    session.mount(
+        "https://", HTTPAdapter(max_retries=retry)
+    )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+    session.mount(
+        "http://", HTTPAdapter(max_retries=retry)
+    )  # See https://stackoverflow.com/a/35504626/4164390 to finetune
+    return session
 
 
 CONFIG = Utils.loadConfig()

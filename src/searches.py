@@ -1,19 +1,19 @@
 import dbm.dumb
 import json
 import logging
-import random
 import shelve
-import time
 from datetime import date, timedelta
 from enum import Enum, auto
 from itertools import cycle
+from random import random, randint, shuffle
+from time import sleep
 from typing import Final
 
 import requests
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
-from src.utils import Utils, CONFIG
+from src.utils import Utils, CONFIG, makeRequestsSession
 
 
 class RetriesStrategy(Enum):
@@ -60,7 +60,7 @@ class Searches:
         # Function to retrieve Google Trends search terms
         searchTerms: list[str] = []
         i = 0
-        session = Utils.makeRequestsSession()
+        session = makeRequestsSession()
         while len(searchTerms) < wordsCount:
             i += 1
             # Fetching daily trends from Google Trends API
@@ -87,7 +87,7 @@ class Searches:
     def getRelatedTerms(self, term: str) -> list[str]:
         # Function to retrieve related terms from Bing API
         relatedTerms: list[str] = (
-            Utils.makeRequestsSession()
+            makeRequestsSession()
             .get(
                 f"https://api.bing.com/osjson.aspx?query={term}",
                 headers={"User-agent": self.browser.userAgent},
@@ -126,7 +126,7 @@ class Searches:
                     f"google_trends before load = {list(self.googleTrendsShelf.items())}"
                 )
                 trends = self.getGoogleTrends(desktopAndMobileRemaining.getTotal())
-                random.shuffle(trends)
+                shuffle(trends)
                 for trend in trends:
                     self.googleTrendsShelf[trend] = None
                 logging.debug(
@@ -135,7 +135,7 @@ class Searches:
 
             self.bingSearch()
             del self.googleTrendsShelf[list(self.googleTrendsShelf.keys())[0]]
-            time.sleep(random.randint(10, 15))
+            sleep(randint(10, 15))
 
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
@@ -162,12 +162,12 @@ class Searches:
                     sleepTime = baseDelay
                 else:
                     raise AssertionError
-                sleepTime += baseDelay * random.random()  # Add jitter
+                sleepTime += baseDelay * random()  # Add jitter
                 logging.debug(
                     f"[BING] Search attempt not counted {i}/{Searches.maxRetries}, sleeping {sleepTime}"
                     f" seconds..."
                 )
-                time.sleep(sleepTime)
+                sleep(sleepTime)
 
             searchbar = self.browser.utils.waitUntilClickable(
                 By.ID, "sb_form_q", timeToWait=40
@@ -175,13 +175,14 @@ class Searches:
             searchbar.clear()
             term = next(termsCycle)
             logging.debug(f"term={term}")
-            time.sleep(1)
+            sleep(1)
             searchbar.send_keys(term)
-            time.sleep(1)
+            sleep(1)
             searchbar.submit()
 
             pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
+                # sleep(randint(900, 1200))
                 return
 
             # todo

@@ -9,7 +9,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from src.browser import Browser
 from src.constants import REWARDS_URL
-from src.utils import CONFIG, sendNotification
+from src.utils import CONFIG, sendNotification, getAnswerCode
 
 # todo These are US-English specific, maybe there's a good way to internationalize
 ACTIVITY_TITLE_TO_SEARCH = {

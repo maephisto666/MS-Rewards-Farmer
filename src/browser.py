@@ -19,7 +19,7 @@ from selenium.webdriver.common.by import By
 
 from src import Account, RemainingSearches
 from src.userAgentGenerator import GenerateUserAgent
-from src.utils import Utils, CONFIG
+from src.utils import Utils, CONFIG, saveBrowserConfig, getProjectRoot, getBrowserConfig
 
 
 class Browser:
@@ -45,7 +45,7 @@ class Browser:
         elif account.proxy:
             self.proxy = account.proxy
         self.userDataDir = self.setupProfiles()
-        self.browserConfig = Utils.getBrowserConfig(self.userDataDir)
+        self.browserConfig = getBrowserConfig(self.userDataDir)
         (
             self.userAgent,
             self.userAgentMetadata,
@@ -53,7 +53,7 @@ class Browser:
         ) = GenerateUserAgent().userAgent(self.browserConfig, mobile)
         if newBrowserConfig:
             self.browserConfig = newBrowserConfig
-            Utils.saveBrowserConfig(self.userDataDir, self.browserConfig)
+            saveBrowserConfig(self.userDataDir, self.browserConfig)
         self.webdriver = self.browserSetup()
         self.utils = Utils(self.webdriver)
         logging.debug("out __init__")
@@ -151,7 +151,7 @@ class Browser:
                 "height": deviceHeight,
                 "width": deviceWidth,
             }
-            Utils.saveBrowserConfig(self.userDataDir, self.browserConfig)
+            saveBrowserConfig(self.userDataDir, self.browserConfig)
 
         if self.mobile:
             screenHeight = deviceHeight + 146
@@ -211,7 +211,7 @@ class Browser:
         Returns:
             Path
         """
-        sessionsDir = Utils.getProjectRoot() / "sessions"
+        sessionsDir = getProjectRoot() / "sessions"
 
         # Concatenate username and browser type for a plain text session ID
         sessionid = f"{self.username}"

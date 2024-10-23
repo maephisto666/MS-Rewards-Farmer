@@ -13,7 +13,7 @@ import requests
 from selenium.webdriver.common.by import By
 
 from src.browser import Browser
-from src.utils import Utils, CONFIG, makeRequestsSession
+from src.utils import CONFIG, makeRequestsSession, getProjectRoot
 
 
 class RetriesStrategy(Enum):
@@ -47,7 +47,7 @@ class Searches:
         self.browser = browser
         self.webdriver = browser.webdriver
 
-        dumbDbm = dbm.dumb.open((Utils.getProjectRoot() / "google_trends").__str__())
+        dumbDbm = dbm.dumb.open((getProjectRoot() / "google_trends").__str__())
         self.googleTrendsShelf: shelve.Shelf = shelve.Shelf(dumbDbm)
 
     def __enter__(self):

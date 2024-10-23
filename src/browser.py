@@ -102,6 +102,7 @@ class Browser:
         options.add_argument("--disable-features=PrivacySandboxSettings4")
         options.add_argument("--disable-http2")
         options.add_argument("--disable-search-engine-choice-screen")  # 153
+        options.page_load_strategy = 'eager'
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
 

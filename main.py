@@ -22,7 +22,7 @@ from src import (
 from src.activities import Activities
 from src.browser import RemainingSearches
 from src.loggingColoredFormatter import ColoredFormatter
-from src.utils import Utils, CONFIG
+from src.utils import Utils, CONFIG, sendNotification, getProjectRoot, formatNumber
 
 
 def main():
@@ -39,7 +39,7 @@ def main():
             earned_points = executeBot(currentAccount, args)
         except Exception as e1:
             logging.error("", exc_info=True)
-            Utils.sendNotification(
+            sendNotification(
                 f"⚠️ Error executing {currentAccount.username}, please check the log",
                 traceback.format_exc(),
                 e1,
@@ -66,7 +66,7 @@ def main():
 
 
 def log_daily_points_to_csv(earned_points, points_difference):
-    logs_directory = Utils.getProjectRoot() / "logs"
+    logs_directory = getProjectRoot() / "logs"
     csv_filename = logs_directory / "points_data.csv"
 
     # Create a new row with the date, daily points, and points difference
@@ -94,7 +94,7 @@ def setupLogging():
     terminalHandler = logging.StreamHandler(sys.stdout)
     terminalHandler.setFormatter(ColoredFormatter(_format))
 
-    logs_directory = Utils.getProjectRoot() / "logs"
+    logs_directory = getProjectRoot() / "logs"
     logs_directory.mkdir(parents=True, exist_ok=True)
 
     # so only our code is logged if level=logging.DEBUG or finer
@@ -175,7 +175,7 @@ def setupAccounts() -> list[Account]:
         pattern = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
         return bool(re.match(pattern, email))
 
-    accountPath = Utils.getProjectRoot() / "accounts.json"
+    accountPath = getProjectRoot() / "accounts.json"
     if not accountPath.exists():
         accountPath.write_text(
             json.dumps(
@@ -236,7 +236,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
             Login(desktopBrowser, args).login()
             startingPoints = utils.getAccountPoints()
             logging.info(
-                f"[POINTS] You have {utils.formatNumber(startingPoints)} points on your account"
+                f"[POINTS] You have {formatNumber(startingPoints)} points on your account"
             )
             Activities(desktopBrowser).completeActivities()
             PunchCards(desktopBrowser).completePunchCards()
@@ -272,38 +272,36 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
             accountPoints = utils.getAccountPoints()
 
     logging.info(
-        f"[POINTS] You have earned {Utils.formatNumber(accountPoints - startingPoints)} points this run !"
+        f"[POINTS] You have earned {formatNumber(accountPoints - startingPoints)} points this run !"
     )
-    logging.info(
-        f"[POINTS] You are now at {Utils.formatNumber(accountPoints)} points !"
-    )
+    logging.info(f"[POINTS] You are now at {formatNumber(accountPoints)} points !")
     appriseSummary = AppriseSummary[CONFIG.get("apprise").get("summary")]
     if appriseSummary == AppriseSummary.ALWAYS:
         goalStatus = ""
         if goalPoints > 0:
             logging.info(
-                f"[POINTS] You are now at {(Utils.formatNumber((accountPoints / goalPoints) * 100))}% of your "
+                f"[POINTS] You are now at {(formatNumber((accountPoints / goalPoints) * 100))}% of your "
                 f"goal ({goalTitle}) !"
             )
             goalStatus = (
-                f"🎯 Goal reached: {(Utils.formatNumber((accountPoints / goalPoints) * 100))}%"
+                f"🎯 Goal reached: {(formatNumber((accountPoints / goalPoints) * 100))}%"
                 f" ({goalTitle})"
             )
 
-        Utils.sendNotification(
+        sendNotification(
             "Daily Points Update",
             "\n".join(
                 [
                     f"👤 Account: {currentAccount.username}",
-                    f"⭐️ Points earned today: {Utils.formatNumber(accountPoints - startingPoints)}",
-                    f"💰 Total points: {Utils.formatNumber(accountPoints)}",
+                    f"⭐️ Points earned today: {formatNumber(accountPoints - startingPoints)}",
+                    f"💰 Total points: {formatNumber(accountPoints)}",
                     goalStatus,
                 ]
             ),
         )
     elif appriseSummary == AppriseSummary.ON_ERROR:
         if remainingSearches.getTotal() > 0:
-            Utils.sendNotification(
+            sendNotification(
                 "Error: remaining searches",
                 f"account username: {currentAccount.username}, {remainingSearches}",
             )
@@ -314,7 +312,7 @@ def executeBot(currentAccount: Account, args: argparse.Namespace):
 
 
 def export_points_to_csv(points_data):
-    logs_directory = Utils.getProjectRoot() / "logs"
+    logs_directory = getProjectRoot() / "logs"
     csv_filename = logs_directory / "points_data.csv"
     with open(csv_filename, mode="a", newline="") as file:  # Use "a" mode for append
         fieldnames = ["Account", "Earned Points", "Points Difference"]
@@ -331,9 +329,7 @@ def export_points_to_csv(points_data):
 # Define a function to load the previous day's points data from a file in the "logs" folder
 def load_previous_points_data():
     try:
-        with open(
-            Utils.getProjectRoot() / "logs" / "previous_points_data.json", "r"
-        ) as file:
+        with open(getProjectRoot() / "logs" / "previous_points_data.json", "r") as file:
             return json.load(file)
     except FileNotFoundError:
         return {}
@@ -341,7 +337,7 @@ def load_previous_points_data():
 
 # Define a function to save the current day's points data for the next day in the "logs" folder
 def save_previous_points_data(data):
-    logs_directory = Utils.getProjectRoot() / "logs"
+    logs_directory = getProjectRoot() / "logs"
     with open(logs_directory / "previous_points_data.json", "w") as file:
         json.dump(data, file, indent=4)
 
@@ -351,6 +347,6 @@ if __name__ == "__main__":
         main()
     except Exception as e:
         logging.exception("")
-        Utils.sendNotification(
+        sendNotification(
             "⚠️ Error occurred, please check the log", traceback.format_exc(), e
         )

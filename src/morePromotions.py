@@ -9,7 +9,7 @@ from typing_extensions import deprecated
 
 from src.browser import Browser
 from .activities import Activities
-from .utils import Utils, CONFIG
+from .utils import CONFIG, sendNotification
 
 PROMOTION_TITLE_TO_SEARCH = {
     "Search the lyrics of a song": "black sabbath supernaut lyrics",
@@ -110,7 +110,7 @@ class MorePromotions:
                         (promotion["title"], promotion["promotionType"])
                     )
             if incompletePromotions:
-                Utils.sendNotification(
+                sendNotification(
                     f"We found some incomplete promotions for {self.browser.username} to do!",
                     incompletePromotions,
                 )

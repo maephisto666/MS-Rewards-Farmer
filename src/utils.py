@@ -69,56 +69,6 @@ class Utils:
 
         # self.config = self.loadConfig()
 
-    @staticmethod
-    def getProjectRoot() -> Path:
-        return Path(__file__).parent.parent
-
-    @staticmethod
-    def loadYaml(path: Path) -> dict:
-        with open(path, "r") as file:
-            yamlContents = yaml.safe_load(file)
-            if not yamlContents:
-                logging.info(f"{yamlContents} is empty")
-                yamlContents = {}
-            return yamlContents
-
-    @staticmethod
-    def loadConfig(
-        configFilename="config.yaml", defaultConfig=DEFAULT_CONFIG
-    ) -> MappingProxyType:
-        configFile = Utils.getProjectRoot() / configFilename
-        try:
-            return MappingProxyType(defaultConfig | Utils.loadYaml(configFile))
-        except OSError:
-            logging.info(f"{configFile} doesn't exist, returning defaults")
-            return defaultConfig
-
-    @staticmethod
-    def loadPrivateConfig() -> MappingProxyType:
-        return Utils.loadConfig("config-private.yaml", DEFAULT_PRIVATE_CONFIG)
-
-    @staticmethod
-    def sendNotification(title, body, e: Exception = None) -> None:
-        if Utils.args.disable_apprise or (
-            e
-            and not CONFIG.get("apprise")
-            .get("notify")
-            .get("uncaught-exception")
-            .get("enabled")
-        ):
-            return
-        apprise = Apprise()
-        urls: list[str] = (
-            # Utils.loadConfig("config-private.yaml").get("apprise", {}).get("urls", [])
-            PRIVATE_CONFIG.get("apprise").get("urls")
-        )
-        if not urls:
-            logging.debug("No urls found, not sending notification")
-            return
-        for url in urls:
-            apprise.add(url)
-        assert apprise.notify(title=str(title), body=str(body))
-
     def waitUntilVisible(
         self, by: str, selector: str, timeToWait: float = 10
     ) -> WebElement:
@@ -169,12 +119,6 @@ class Utils:
         # assert (
         #     self.webdriver.current_url == SEARCH_URL
         # ), f"{self.webdriver.current_url} {SEARCH_URL}"  # need regex: AssertionError: https://www.bing.com/?toWww=1&redig=A5B72363182B49DEBB7465AD7520FDAA https://bing.com/
-
-    @staticmethod
-    def getAnswerCode(key: str, string: str) -> str:
-        t = sum(ord(string[i]) for i in range(len(string)))
-        t += int(key[-2:], 16)
-        return str(t)
 
     # Prefer getBingInfo if possible
     def getDashboardData(self) -> dict:
@@ -268,34 +212,89 @@ class Utils:
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[0])
         time.sleep(0.5)
 
-    @staticmethod
-    def formatNumber(number, num_decimals=2) -> str:
-        return pylocale.format_string(
-            f"%10.{num_decimals}f", number, grouping=True
-        ).strip()
-
-    @staticmethod
-    def getBrowserConfig(sessionPath: Path) -> dict | None:
-        configFile = sessionPath / "config.json"
-        if not configFile.exists():
-            return
-        with open(configFile, "r") as f:
-            return json.load(f)
-
-    @staticmethod
-    def saveBrowserConfig(sessionPath: Path, config: dict) -> None:
-        configFile = sessionPath / "config.json"
-        with open(configFile, "w") as f:
-            json.dump(config, f)
-
     def click(self, element: WebElement) -> None:
         try:
-            WebDriverWait(self.webdriver, 10).until(expected_conditions.element_to_be_clickable(element))
+            WebDriverWait(self.webdriver, 10).until(
+                expected_conditions.element_to_be_clickable(element)
+            )
             element.click()
         except (ElementClickInterceptedException, ElementNotInteractableException):
             self.tryDismissAllMessages()
-            WebDriverWait(self.webdriver, 10).until(expected_conditions.element_to_be_clickable(element))
+            WebDriverWait(self.webdriver, 10).until(
+                expected_conditions.element_to_be_clickable(element)
+            )
             element.click()
+
+
+def getProjectRoot() -> Path:
+    return Path(__file__).parent.parent
+
+
+def loadYaml(path: Path) -> dict:
+    with open(path, "r") as file:
+        yamlContents = yaml.safe_load(file)
+        if not yamlContents:
+            logging.info(f"{yamlContents} is empty")
+            yamlContents = {}
+        return yamlContents
+
+
+def loadConfig(
+    configFilename="config.yaml", defaultConfig=DEFAULT_CONFIG
+) -> MappingProxyType:
+    configFile = getProjectRoot() / configFilename
+    try:
+        return MappingProxyType(defaultConfig | loadYaml(configFile))
+    except OSError:
+        logging.info(f"{configFile} doesn't exist, returning defaults")
+        return defaultConfig
+
+
+def loadPrivateConfig() -> MappingProxyType:
+    return loadConfig("config-private.yaml", DEFAULT_PRIVATE_CONFIG)
+
+
+def sendNotification(title: str, body: str, e: Exception = None) -> None:
+    if Utils.args.disable_apprise or (
+        e
+        and not CONFIG.get("apprise")
+        .get("notify")
+        .get("uncaught-exception")
+        .get("enabled")
+    ):
+        return
+    apprise = Apprise()
+    urls: list[str] = PRIVATE_CONFIG.get("apprise").get("urls")
+    if not urls:
+        logging.debug("No urls found, not sending notification")
+        return
+    for url in urls:
+        apprise.add(url)
+    assert apprise.notify(title=str(title), body=str(body))
+
+
+def getAnswerCode(key: str, string: str) -> str:
+    t = sum(ord(string[i]) for i in range(len(string)))
+    t += int(key[-2:], 16)
+    return str(t)
+
+
+def formatNumber(number, num_decimals=2) -> str:
+    return pylocale.format_string(f"%10.{num_decimals}f", number, grouping=True).strip()
+
+
+def getBrowserConfig(sessionPath: Path) -> dict | None:
+    configFile = sessionPath / "config.json"
+    if not configFile.exists():
+        return
+    with open(configFile, "r") as f:
+        return json.load(f)
+
+
+def saveBrowserConfig(sessionPath: Path, config: dict) -> None:
+    configFile = sessionPath / "config.json"
+    with open(configFile, "w") as f:
+        json.dump(config, f)
 
 
 def makeRequestsSession(session: Session = requests.session()) -> Session:
@@ -318,5 +317,5 @@ def makeRequestsSession(session: Session = requests.session()) -> Session:
     return session
 
 
-CONFIG = Utils.loadConfig()
-PRIVATE_CONFIG = Utils.loadPrivateConfig()
+CONFIG = loadConfig()
+PRIVATE_CONFIG = loadPrivateConfig()

@@ -9,7 +9,7 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from src.browser import Browser
 from src.constants import REWARDS_URL
-from src.utils import CONFIG, Utils
+from src.utils import CONFIG, sendNotification
 
 # todo These are US-English specific, maybe there's a good way to internationalize
 ACTIVITY_TITLE_TO_SEARCH = {
@@ -174,7 +174,7 @@ class Activities:
         answerTitle = answer.get_attribute("data-option")
         return (
             answer,
-            self.browser.utils.getAnswerCode(answerEncodeKey, answerTitle),
+            getAnswerCode(answerEncodeKey, answerTitle),
         )
 
     def doActivity(self, activity: dict, activities: list[dict]) -> None:
@@ -265,7 +265,7 @@ class Activities:
             ):
                 incompleteActivities.pop("Safeguard your family's info", None)
             if incompleteActivities:
-                Utils.sendNotification(
+                sendNotification(
                     f"We found some incomplete activities for {self.browser.username}",
                     str(incompleteActivities) + "\n" + REWARDS_URL,
                 )

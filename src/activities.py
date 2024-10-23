@@ -177,7 +177,7 @@ class Activities:
 
     def doActivity(self, activity: dict, activities: list[dict]) -> None:
         try:
-            activityTitle = activity["title"].replace("\u200b", "").replace("\xa0", " ")
+            activityTitle = cleanupActivityTitle(activity["title"])
             logging.debug(f"activityTitle={activityTitle}")
             if activity["complete"] is True or activity["pointProgressMax"] == 0:
                 logging.debug("Already done, returning")
@@ -249,7 +249,7 @@ class Activities:
                 + self.browser.utils.getMorePromotions()
             ):  # Have to refresh
                 if activity["pointProgress"] < activity["pointProgressMax"]:
-                    incompleteActivities[activity["title"]] = (
+                    incompleteActivities[cleanupActivityTitle(activity["title"])] = (
                         activity["promotionType"],
                         activity["pointProgress"],
                         activity["pointProgressMax"],
@@ -266,3 +266,7 @@ class Activities:
                     f"We found some incomplete activities for {self.browser.username}",
                     incompleteActivities,
                 )
+
+
+def cleanupActivityTitle(activityTitle: str) -> str:
+    return activityTitle.replace("\u200b", "").replace("\xa0", " ")

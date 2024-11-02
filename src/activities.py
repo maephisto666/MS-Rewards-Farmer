@@ -240,6 +240,7 @@ class Activities:
         logging.info("[MORE PROMOS] Done")
 
         # todo Send one email for all accounts?
+        # fixme This is falsely considering some activities incomplete when complete
         if (
             CONFIG.get("apprise")
             .get("notify")

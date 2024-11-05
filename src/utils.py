@@ -200,7 +200,7 @@ class Utils:
                 By.TAG_NAME, "button"
             ).click()
 
-    def switchToNewTab(self, timeToWait: float = 0, closeTab: bool = False) -> None:
+    def switchToNewTab(self, timeToWait: float = 15, closeTab: bool = False) -> None:
         time.sleep(timeToWait)
         self.webdriver.switch_to.window(window_name=self.webdriver.window_handles[1])
         if closeTab:

@@ -23,12 +23,12 @@ class PunchCards:
                     self.webdriver.find_element(
                         By.XPATH, "//a[@class='offer-cta']/div"
                     ).click()
-                    self.browser.utils.switchToNewTab(random.randint(13, 17), True)
+                    self.browser.utils.switchToNewTab(True)
                 if child["promotionType"] == "quiz":
                     self.webdriver.find_element(
                         By.XPATH, "//a[@class='offer-cta']/div"
                     ).click()
-                    self.browser.utils.switchToNewTab(8)
+                    self.browser.utils.switchToNewTab()
                     counter = str(
                         self.webdriver.find_element(
                             By.XPATH, '//*[@id="QuestionPane0"]/div[2]'
@@ -99,6 +99,6 @@ class PunchCards:
                 self.webdriver.find_element(
                     By.XPATH, '//*[@id="promo-item"]/section/div/div/div/span'
                 ).click()
-                self.browser.utils.switchToNewTab(8, True)
+                self.browser.utils.switchToNewTab(True)
         except Exception:
             logging.debug("", exc_info=True)

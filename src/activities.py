@@ -49,7 +49,7 @@ class Activities:
             f'//*[@id="daily-sets"]/mee-card-group[1]/div/mee-card[{cardId}]/div/card-content/mee-rewards-daily-set-item-content/div/a',
         )
         self.browser.utils.click(element)
-        self.browser.utils.switchToNewTab(timeToWait=8)
+        self.browser.utils.switchToNewTab()
 
     def openMorePromotionsActivity(self, cardId: int):
         cardId += 1
@@ -59,7 +59,7 @@ class Activities:
             f"#more-activities > .m-card-group > .ng-scope:nth-child({cardId}) .ds-card-sec",
         )
         self.browser.utils.click(element)
-        self.browser.utils.switchToNewTab(timeToWait=8)
+        self.browser.utils.switchToNewTab()
 
     def completeSearch(self):
         # Simulate completing a search activity
@@ -192,12 +192,12 @@ class Activities:
             else:
                 self.openMorePromotionsActivity(cardId)
             self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
-            sleep(1)
             with contextlib.suppress(TimeoutException):
                 searchbar = self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 self.browser.utils.click(searchbar)
             if activityTitle in ACTIVITY_TITLE_TO_SEARCH:
                 searchbar.send_keys(ACTIVITY_TITLE_TO_SEARCH[activityTitle])
+                sleep(2)
                 searchbar.submit()
             elif "poll" in activityTitle:
                 logging.info(f"[ACTIVITY] Completing poll of card {cardId}")

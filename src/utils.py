@@ -43,7 +43,7 @@ DEFAULT_CONFIG: MappingProxyType = MappingProxyType(
         "default": {"geolocation": "US"},
         "logging": {"level": "INFO"},
         "retries": {
-            "base_delay_in_seconds": 14.0625,
+            "base_delay_in_seconds": 120,
             "max": 4,
             "strategy": "EXPONENTIAL",
         },

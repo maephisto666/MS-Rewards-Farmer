@@ -140,6 +140,7 @@ class Utils:
     def getMorePromotions(self) -> list[dict]:
         return self.getDashboardData()["morePromotions"]
 
+    # Not reliable
     def getBingInfo(self) -> Any:
         session = makeRequestsSession()
 
@@ -154,7 +155,6 @@ class Utils:
         return response.json()
 
     def isLoggedIn(self) -> bool:
-        # return self.getBingInfo()["isRewardsUser"]  # todo For some reason doesn't work, but doesn't involve changing url so preferred
         if self.getBingInfo()["isRewardsUser"]:  # faster, if it works
             return True
         self.webdriver.get(
@@ -168,7 +168,7 @@ class Utils:
         return False
 
     def getAccountPoints(self) -> int:
-        return self.getBingInfo()["userInfo"]["balance"]
+        return self.getDashboardData()["userStatus"]["availablePoints"]
 
     def getGoalPoints(self) -> int:
         return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]

@@ -185,7 +185,6 @@ class Activities:
                 self.openDailySetActivity(cardId)
             else:
                 self.openMorePromotionsActivity(cardId)
-            self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
             with contextlib.suppress(TimeoutException):
                 searchbar = self.browser.utils.waitUntilClickable(By.ID, "sb_form_q")
                 self.browser.utils.click(searchbar)
@@ -211,8 +210,6 @@ class Activities:
             else:
                 # Default to completing search
                 self.completeSearch()
-            self.browser.webdriver.execute_script("window.scrollTo(0, 1080)")
-            # sleep(randint(5, 10))
         except Exception:
             logging.error(f"[ACTIVITY] Error doing {activityTitle}", exc_info=True)
         # todo Make configurable

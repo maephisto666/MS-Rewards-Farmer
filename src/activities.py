@@ -63,16 +63,12 @@ class Activities:
 
     def completeSearch(self):
         # Simulate completing a search activity
-        sleep(randint(20, 30))
-        # WebDriverWait(self.webdriver, 30).until()
-        self.browser.utils.closeCurrentTab()
+        pass
 
     def completeSurvey(self):
         # Simulate completing a survey activity
         # noinspection SpellCheckingInspection
         self.webdriver.find_element(By.ID, f"btoption{randint(0, 1)}").click()
-        sleep(randint(10, 15))
-        self.browser.utils.closeCurrentTab()
 
     def completeQuiz(self):
         # Simulate completing a quiz activity
@@ -121,7 +117,6 @@ class Activities:
 
                         self.browser.utils.waitUntilQuestionRefresh()
                         break
-        self.browser.utils.closeCurrentTab()
 
     def completeABC(self):
         # Simulate completing an ABC activity
@@ -138,8 +133,6 @@ class Activities:
             element = self.webdriver.find_element(By.ID, f"nextQuestionbtn{question}")
             self.browser.utils.click(element)
             sleep(randint(10, 15))
-        sleep(randint(1, 7))
-        self.browser.utils.closeCurrentTab()
 
     def completeThisOrThat(self):
         # Simulate completing a This or That activity
@@ -164,8 +157,6 @@ class Activities:
             self.browser.utils.click(answerToClick)
             sleep(randint(10, 15))
 
-        sleep(randint(10, 15))
-        self.browser.utils.closeCurrentTab()
 
     def getAnswerAndCode(self, answerId: str) -> tuple[WebElement, str]:
         # Helper function to get answer element and its code
@@ -183,6 +174,9 @@ class Activities:
             logging.debug(f"activityTitle={activityTitle}")
             if activity["complete"] is True or activity["pointProgressMax"] == 0:
                 logging.debug("Already done, returning")
+                return
+            if "Safeguard your family's info" == activityTitle:
+                logging.debug("Skipping Safeguard your family's info")
                 return
             # Open the activity for the activity
             cardId = activities.index(activity)
@@ -221,8 +215,9 @@ class Activities:
             # sleep(randint(5, 10))
         except Exception:
             logging.error(f"[ACTIVITY] Error doing {activityTitle}", exc_info=True)
+        # todo Make configurable
+        sleep(randint(300, 600))
         self.browser.utils.resetTabs()
-        # sleep(randint(900, 1200))
 
     def completeActivities(self):
         logging.info("[DAILY SET] " + "Trying to complete the Daily Set...")

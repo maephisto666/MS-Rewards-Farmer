@@ -182,7 +182,8 @@ class Searches:
 
             pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
-                # sleep(randint(900, 1200))
+                # todo Make configurable
+                sleep(randint(300, 600))
                 return
 
             # todo

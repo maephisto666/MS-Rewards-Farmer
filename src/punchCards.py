@@ -50,7 +50,6 @@ class PunchCards:
                         ).click()
                         time.sleep(random.randint(100, 700) / 100)
                     time.sleep(random.randint(100, 700) / 100)
-                    self.browser.utils.closeCurrentTab()
 
     def completePunchCards(self):
         # Function to complete all punch cards

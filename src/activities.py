@@ -75,7 +75,6 @@ class Activities:
         with contextlib.suppress(TimeoutException):
             startQuiz = self.browser.utils.waitUntilQuizLoads()
             self.browser.utils.click(startQuiz)
-        # this is bugged on Chrome for some reason
         self.browser.utils.waitUntilVisible(By.ID, "overlayPanel", 5)
         currentQuestionNumber: int = self.webdriver.execute_script(
             "return _w.rewardsQuizRenderInfo.currentQuestionNumber"

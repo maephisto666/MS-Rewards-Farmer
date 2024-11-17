@@ -257,6 +257,7 @@ class Activities:
             ):
                 incompleteActivities.pop("Safeguard your family's info", None)
             if incompleteActivities:
+                logging.info(f"incompleteActivities: {incompleteActivities}")
                 sendNotification(
                     f"We found some incomplete activities for {self.browser.username}",
                     str(incompleteActivities) + "\n" + REWARDS_URL,

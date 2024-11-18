@@ -13,7 +13,7 @@ from src.utils import CONFIG, sendNotification, getAnswerCode
 
 # todo These are US-English specific, maybe there's a good way to internationalize
 ACTIVITY_TITLE_TO_SEARCH = {
-    "Discover open job roles": "walmart open job roles",
+    "Discover open job roles": "jobs at microsoft",
     "Expand your vocabulary": "define demure",
     "Find places to stay": "hotels rome italy",
     "Find somewhere new to explore": "directions to new york",

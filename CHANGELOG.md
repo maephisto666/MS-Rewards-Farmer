@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.0.0] - 2026-02-18
+
+### Changed
+
+- **Repository takeover**: The upstream [klept0/MS-Rewards-Farmer](https://github.com/klept0/MS-Rewards-Farmer) was
+  archived in January 2026. This fork continues active development.
+- **Branch consolidation**: Renamed `develop` to `main` and set it as the default branch.
+  The old `master` branch has been deleted. All history is preserved in git.
+- **Deleted stale branches**:
+  - `hotfix/MS-Rewards-Farmer-180` -- 303 commits behind master, referenced code that no longer exists.
+  - `dependabot/pip/develop/apprise-approx-eq-1.9.6` -- superseded by current dependency versions.
+  - `dependabot/pip/develop/psutil-approx-eq-7.2.1` -- superseded by current dependency versions.
+  - `camoufox-test` -- experimental Camoufox browser integration. Captured in [ROADMAP.md](ROADMAP.md) for future
+    consideration.
+- **Kept for reference**: `feat/better-activities` contains activity handling improvements to be evaluated. Captured
+  in [ROADMAP.md](ROADMAP.md).
+- Updated [README.md](README.md) with project history and simplified contributing guidelines.
+
 ## [2.0.0] - 2025-04-08
 
 ### Added

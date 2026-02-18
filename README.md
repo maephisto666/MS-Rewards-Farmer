@@ -4,7 +4,7 @@
 ![MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 ![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)
 ![GitHub contributors](https://img.shields.io/github/contributors/klept0/MS-Rewards-Farmer?style=for-the-badge)
-![GitHub issues](https://img.shields.io/github/issues/klept0/MS-Rewards-Farmer?style=for-the-badge)
+![GitHub issues](https://img.shields.io/github/issues/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 
 
 
@@ -23,9 +23,11 @@
 >
 > Do not redeem more than one reward per day.
 
-#### Group Chat - [Telegram](https://t.me/klept0_MS_Rewards_Farmer/) (pay attention to captchas - helps prevent spam)
+#### Project History
 
-#### Original bot by [@charlesbel](https://github.com/charlesbel) - refactored/updated/maintained by [@klept0](https://github.com/klept0) and a community of volunteers.
+- Originally created by [@charlesbel](https://github.com/charlesbel) as [Microsoft-Rewards-Farmer](https://github.com/charlesbel/Microsoft-Rewards-Farmer).
+- Forked and significantly refactored/maintained by [@klept0](https://github.com/klept0) as [MS-Rewards-Farmer](https://github.com/klept0/MS-Rewards-Farmer), with contributions from a community of volunteers.
+- The [@klept0](https://github.com/klept0) fork was **archived in January 2026**. This repository continues the project with the goal of cleaning up the codebase and expanding its functionality.
 
 #### PULL REQUESTS ARE WELCOME AND APPRECIATED!
 
@@ -226,8 +228,5 @@ You can display this message at any moment using `python main.py -h`.
 
 ## Contributing
 
-Fork this repo and:
-
-* if providing a bugfix, create a pull request into master.
-* if providing a new feature, please create a pull request into develop. Extra points if you
-  update the [CHANGELOG.md](CHANGELOG.md).
+Fork this repo and create a pull request into `main`. Extra points if you update the
+[CHANGELOG.md](CHANGELOG.md).

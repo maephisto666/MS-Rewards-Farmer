@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-02-23
+
+### Changed
+
+- **Migrated to [uv](https://docs.astral.sh/uv/)** as the package manager, replacing pip/venv.
+- Added `pyproject.toml` and `uv.lock` for reproducible dependency management.
+- Added `.python-version` (3.12).
+- Updated Dockerfile to `python:3.12-slim` with uv instead of pip.
+- Updated README.md with uv-based installation instructions.
+- Pinned `setuptools<81` to preserve `pkg_resources` required by `selenium-wire`.
+
+### Removed
+
+- Removed `requirements.txt` and `requirements-dev.txt` (superseded by `pyproject.toml`).
+
 ## [3.0.0] - 2026-02-18
 
 ### Changed

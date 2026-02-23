@@ -446,6 +446,13 @@ def argumentParser() -> Namespace:
         help="Password of the account to run. Only used if an email is given.",
     )
     parser.add_argument(
+        "-totp",
+        "--totp",
+        type=str,
+        default=None,
+        help="TOTP secret for 2FA. Only used if email and password are given.",
+    )
+    parser.add_argument(
         "-p",
         "--proxy",
         type=str,
@@ -514,12 +521,13 @@ def commandLineArgumentsAsConfig(args: Namespace) -> Config:
         config.search = Config()
         config.search.type = args.searchtype
     if args.email and args.password:
-        config.accounts = [
-            Config(
-                email=args.email,
-                password=args.password,
-            )
-        ]
+        account = Config(
+            email=args.email,
+            password=args.password,
+        )
+        if args.totp:
+            account.totp = args.totp
+        config.accounts = [account]
 
     return config
 

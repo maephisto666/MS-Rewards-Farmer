@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.1.0] - 2026-02-23
 
+### Added
+
+- `-totp`/`--totp` CLI parameter to pass a TOTP secret for 2FA (optional, only used with `-em` and `-pw`).
+
 ### Changed
 
 - **Migrated to [uv](https://docs.astral.sh/uv/)** as the package manager, replacing pip/venv.

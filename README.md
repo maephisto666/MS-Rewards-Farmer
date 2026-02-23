@@ -155,7 +155,7 @@ accounts: # The accounts to use. You can put zero, one or an infinite number of 
 
 ```
 usage: main.py [-h] [-c CONFIG] [-C] [-v] [-l LANG] [-g GEO] [-em EMAIL] [-pw PASSWORD]
-               [-p PROXY] [-t {desktop,mobile,both}] [-da] [-d] [-r]
+               [-totp TOTP] [-p PROXY] [-t {desktop,mobile,both}] [-da] [-d] [-r]
 
 A simple bot that uses Selenium to farm M$ Rewards in Python
 
@@ -173,6 +173,8 @@ options:
                         Email address of the account to run. Only used if a password is given.
   -pw PASSWORD, --password PASSWORD
                         Password of the account to run. Only used if an email is given.
+  -totp TOTP, --totp TOTP
+                        TOTP secret for 2FA. Only used if email and password are given.
   -p PROXY, --proxy PROXY
                         Global Proxy, supports http/https/socks4/socks5 (overrides config per-
                         account proxies) `(ex: http://user:pass@host:port)`

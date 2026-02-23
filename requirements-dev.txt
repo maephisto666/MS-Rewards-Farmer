@@ -1,2 +1,0 @@
--r requirements.txt
-parameterized~=0.9.0

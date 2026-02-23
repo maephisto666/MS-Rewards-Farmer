@@ -1,4 +1,6 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 COPY . /app
 
@@ -15,6 +17,6 @@ RUN apt-get update && \
     chmod +x /app/docker.sh && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /etc/cron.*/* && \
-    pip install --no-cache-dir -r requirements.txt
+    uv sync --frozen --no-dev
 
 CMD ["/app/docker.sh"]

@@ -33,67 +33,46 @@
 
 ## Installation
 
-[//]: # (todo - add Docker installation instructions)
+This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 
-1. Create a virtual environment using `venv`:
+1. Install dependencies:
    ```sh
-   python -m venv venv
-   ```
-2. Activate the virtual environment:
-
-   * On Windows:
-
-   ```sh
-   venv\Scripts\activate
+   uv sync --no-dev
    ```
 
-   * On macOS/Linux:
-
+   For development (includes dev dependencies):
    ```sh
-   source venv/bin/activate
+   uv sync
    ```
 
-3. Install requirements with the following command :
-   ```sh
-   pip install -r requirements.txt
-   ```
+2. Make sure you have Chrome installed.
 
-   Or, if developing or running tests, install the dev requirements with:
-   ```sh
-    pip install -r requirements-dev.txt
-   ```
-
-   Upgrade all required with the following command:
-   `pip install --upgrade -r requirements.txt`
-
-4. Make sure you have Chrome installed
-
-5. (Windows Only) Make sure Visual C++ redistributable DLLs are installed
+3. (Windows Only) Make sure Visual C++ redistributable DLLs are installed.
 
    If they're not, install the current "vc_redist.exe" from
    this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170)
-   and reboot your computer
+   and reboot your computer.
 
-6. Run the script with the following arguments:
+4. Generate a configuration file:
    ```sh
-   python main.py -C
+   uv run python main.py -C
    ```
 
-7. Open the generated `config.yaml` file and edit it with your information.
+5. Open the generated `config.yaml` file and edit it with your information.
 
    The "totp" field is not mandatory, only enter your TOTP key if you use it for 2FA (if
-   ommitting, don't keep it as an empty string, remove the line completely).
+   omitting, don't keep it as an empty string, remove the line completely).
 
    The "proxy" field is not mandatory, you can omit it if you don't want to use proxy (don't
    keep it as an empty string, remove the line completely).
 
    You can add or remove accounts according to your will.
 
-   the "apprise.urls" field is not mandatory, you can remove it if you don't want to get notifications.
+   The "apprise.urls" field is not mandatory, you can remove it if you don't want to get notifications.
 
-8. Run the script:
+6. Run the script:
    ```sh
-   python main.py
+   uv run python main.py
    ```
 
    (Windows Only) You can also run the script wrapper that will detect your python installation
@@ -101,7 +80,7 @@
    information). To allow script execution without confirmation, use the following command:
    `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`.
 
-9. (Windows Only) You can set up automatic execution by generating a Task Scheduler XML file.
+7. (Windows Only) You can set up automatic execution by generating a Task Scheduler XML file.
 
    If you are a Windows user, run the `generate_task_xml.py` script to create a `.xml` file.
    After generating the file, import it into Task Scheduler to schedule automatic execution of

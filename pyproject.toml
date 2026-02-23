@@ -1,0 +1,31 @@
+[project]
+name = "ms-rewards-farmer"
+version = "3.1.0"
+description = "A 'simple' python application that uses Selenium to help with your M$ Rewards"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "apprise~=1.9.5",
+    "blinker==1.7.0",
+    "ipapi~=1.0.4",
+    "numpy>=1.22.2",
+    "psutil~=7.1.1",
+    "pyautogui~=0.9.54",
+    "pycountry~=24.6.1",
+    "pyotp~=2.9.0",
+    "pyyaml~=6.0.3",
+    "requests~=2.32.5",
+    "requests-oauthlib~=2.0.0",
+    "selenium>=4.15.2",
+    "selenium-wire~=5.1.0",
+    "setuptools<81",
+    "trendspy~=0.1.6",
+    "undetected-chromedriver==3.5.5",
+    "urllib3>=2.2.2",
+    "zipp>=3.19.1",
+]
+
+[dependency-groups]
+dev = [
+    "parameterized~=0.9.0",
+]

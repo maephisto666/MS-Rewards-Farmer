@@ -9,6 +9,7 @@ import seleniumwire.undetected_chromedriver as webdriver
 import undetected_chromedriver
 from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.webdriver.common.virtual_authenticator import VirtualAuthenticatorOptions, Protocol, Transport
 
 from src import RemainingSearches
 from src.userAgentGenerator import GenerateUserAgent
@@ -166,6 +167,17 @@ class Browser:
                     "enabled": True,
                 },
             )
+
+        # Register a virtual CTAP2 authenticator so that the browser silently
+        # satisfies WebAuthn/passkey requests instead of showing native OS
+        # dialogs (e.g. "Create a passkey" or "Use your security key").
+        virtual_auth_options = VirtualAuthenticatorOptions()
+        virtual_auth_options.protocol = Protocol.CTAP2
+        virtual_auth_options.transport = Transport.INTERNAL
+        virtual_auth_options.has_resident_key = True
+        virtual_auth_options.has_user_verification = True
+        virtual_auth_options.is_user_verified = True
+        driver.add_virtual_authenticator(virtual_auth_options)
 
         driver.execute_cdp_cmd(
             "Emulation.setDeviceMetricsOverride",

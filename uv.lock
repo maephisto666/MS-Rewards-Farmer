@@ -370,7 +370,7 @@ sdist = { url = "https://files.pythonhosted.org/packages/28/fa/b2ba8229b9381e8f6
 
 [[package]]
 name = "ms-rewards-farmer"
-version = "3.1.0"
+version = "3.2.0"
 source = { virtual = "." }
 dependencies = [
     { name = "apprise" },

@@ -1,9 +1,12 @@
+> [!WARNING]
+> **Project Status (February 2026):** This project is currently **not in a working state**. It was already broken in the original [upstream repository](https://github.com/klept0/MS-Rewards-Farmer) (the `master` branch was non-functional, and the `develop` branch was in a better state but still not _fully_ working). I am aware of this and am in the process of migrating several improvements from a separate private repository (I made the mistake of working on these changes in private). I expect to have a fully working version available by **mid-March 2026**. Thank you for your patience.
+
 ### A "simple" python application that uses Selenium to help with your M$ Rewards
 
 ![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
 ![MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)
 ![Maintained](https://img.shields.io/badge/Maintained%3F-yes-green.svg?style=for-the-badge)
-![GitHub contributors](https://img.shields.io/github/contributors/klept0/MS-Rewards-Farmer?style=for-the-badge)
+![GitHub contributors](https://img.shields.io/github/contributors/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 ![GitHub issues](https://img.shields.io/github/issues/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 
 
@@ -28,8 +31,6 @@
 - Originally created by [@charlesbel](https://github.com/charlesbel) as [Microsoft-Rewards-Farmer](https://github.com/charlesbel/Microsoft-Rewards-Farmer).
 - Forked and significantly refactored/maintained by [@klept0](https://github.com/klept0) as [MS-Rewards-Farmer](https://github.com/klept0/MS-Rewards-Farmer), with contributions from a community of volunteers.
 - The [@klept0](https://github.com/klept0) fork was **archived in January 2026**. This repository continues the project with the goal of cleaning up the codebase and expanding its functionality.
-
-#### PULL REQUESTS ARE WELCOME AND APPRECIATED!
 
 ## Installation
 

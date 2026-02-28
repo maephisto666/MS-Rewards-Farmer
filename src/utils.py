@@ -39,7 +39,7 @@ from urllib3 import Retry
 
 from .constants import REWARDS_URL, SEARCH_URL
 
-PREFER_BING_INFO = True
+PREFER_BING_INFO = False
 
 
 class Config(dict):
@@ -674,7 +674,7 @@ def getAnswerCode(key: str, string: str) -> str:
     return str(t)
 
 
-def formatNumber(number, num_decimals=2) -> str:
+def formatNumber(number, num_decimals=0) -> str:
     return pylocale.format_string(f"%10.{num_decimals}f", number, grouping=True).strip()
 
 

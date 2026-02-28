@@ -71,15 +71,13 @@ class Login:
         try:
             if self.utils.isLoggedIn():
                 logging.info("[LOGIN] Already logged-in")
-                self.check_locked_user()
-                self.check_banned_user()
             else:
                 logging.info("[LOGIN] Logging-in...")
                 self.execute_login()
+                assert self.utils.isLoggedIn()
                 logging.info("[LOGIN] Logged-in successfully!")
-                self.check_locked_user()
-                self.check_banned_user()
-            assert self.utils.isLoggedIn()
+            self.check_locked_user()
+            self.check_banned_user()
         except Exception as e:
             logging.error(f"Error during login: {e}")
             self.webdriver.close()

@@ -18,20 +18,36 @@ class PunchCards:
         self.browser = browser
         self.webdriver = browser.webdriver
 
+    def _visit_offer_cta(self):
+        """For urlreward: extract href and navigate directly in the same tab,
+        then navigate back. Avoids new-tab issues."""
+        link = self.webdriver.find_element(By.XPATH, "//a[@class='offer-cta']")
+        href = link.get_attribute("href")
+        if href:
+            current_url = self.webdriver.current_url
+            self.webdriver.get(href)
+            time.sleep(random.randint(3, 5))
+            self.webdriver.get(current_url)
+        else:
+            self.webdriver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
+            link.click()
+
+    def _click_offer_cta_new_tab(self):
+        """For quiz: scroll CTA into view, force target=_blank, then click."""
+        link = self.webdriver.find_element(By.XPATH, "//a[@class='offer-cta']")
+        self.webdriver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
+        self.webdriver.execute_script("arguments[0].setAttribute('target', '_blank');", link)
+        link.click()
+
     def completePunchCard(self, url: str, childPromotions: dict):
         # Function to complete a specific punch card
         self.webdriver.get(url)
         for child in childPromotions:
             if child["complete"] is False:
                 if child["promotionType"] == "urlreward":
-                    self.webdriver.find_element(
-                        By.XPATH, "//a[@class='offer-cta']/div"
-                    ).click()
-                    self.browser.utils.switchToNewTab(True)
+                    self._visit_offer_cta()
                 if child["promotionType"] == "quiz":
-                    self.webdriver.find_element(
-                        By.XPATH, "//a[@class='offer-cta']/div"
-                    ).click()
+                    self._click_offer_cta_new_tab()
                     self.browser.utils.switchToNewTab()
                     counter = str(
                         self.webdriver.find_element(

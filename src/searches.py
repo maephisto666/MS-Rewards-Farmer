@@ -93,14 +93,24 @@ class Searches:
                     f"google_trends after load = {list(self.googleTrendsShelf.items())}"
                 )
 
-            self.bingSearch()
-            sleep(randint(10, 15))
+            result_search_counted = self.bingSearch()
+            if not result_search_counted:
+                logging.info(
+                    f"[BING] Giving up on {self.browser.browserType.capitalize()} Edge Bing searches !"
+                )
+                return
+
+            sleep_between_searches = randint(10, 15)
+            logging.info(
+                f"[BING] Sleeping {sleep_between_searches} seconds between searches !"
+            )
+            sleep(sleep_between_searches)
 
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"
         )
 
-    def bingSearch(self) -> None:
+    def bingSearch(self) -> bool:
         # Function to perform a single Bing search
         pointsBefore = self.browser.utils.getAccountPoints()
 
@@ -126,7 +136,7 @@ class Searches:
                 else:
                     raise AssertionError
                 sleepTime += baseDelay * random()  # Add jitter
-                logging.debug(
+                logging.info(
                     f"[BING] Search attempt not counted {i}/{Searches.maxRetries},"
                     f" sleeping {sleepTime}"
                     f" seconds..."
@@ -149,10 +159,11 @@ class Searches:
             if pointsBefore < pointsAfter:
                 del self.googleTrendsShelf[trend]
                 cooldown()
-                return
+                return True
 
             # todo
             # if i == (maxRetries / 2):
             #     logging.info("[BING] " + "TIMED OUT GETTING NEW PROXY")
             #     self.webdriver.proxy = self.browser.giveMeProxy()
         logging.error("[BING] Reached max search attempt retries")
+        return False

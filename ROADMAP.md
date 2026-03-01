@@ -23,3 +23,21 @@ incorporating:
   `goToSearch()`, `getDashboardData()`, and related methods to skip navigation when already
   on the correct page.
 - **General cleanup** -- remove unused imports and dead code paths.
+
+### Revisit PREFER_BING_INFO and Data Sources
+
+The codebase has two data sources for account info (points, remaining searches, user level):
+
+- **Bing API** (`getBingInfo()`) -- HTTP call to `bing.com/rewards/panelflyout/getuserinfo`.
+  Faster (no page navigation), but undocumented and its schema has broken (e.g. `PCSearch`
+  key no longer exists). Currently disabled via `PREFER_BING_INFO = False`.
+- **Dashboard scraping** (`getDashboardData()`) -- Navigates to `rewards.bing.com` and
+  extracts the `dashboard` JavaScript object. Slower (page load + 5s wait), but reliable.
+
+The `PREFER_BING_INFO` flag and all its `if/else` branches throughout `browser.py` and
+`utils.py` are a leftover from the upstream repo where it was always `True` and never
+exposed as a configuration option. Now that it's `False`, the API code paths are dead code.
+
+This needs revisiting: understand if the Bing API can still be used reliably (possibly with
+updated key names), or if the dashboard scraping approach should be the sole data source.
+Either way, the dual-path branching should be cleaned up.

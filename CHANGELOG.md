@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.3.0] - 2026-03-01
+
+### Changed
+
+- **Login flow rewrite**: Replaced sequential try/except blocks with `EC.any_of` for faster,
+  locale-independent detection across all login steps (email, password, 2FA, post-login dialogs).
+- **Post-login dialog handling**: New `_handle_post_login_dialogs` loop (up to 5 attempts)
+  handles HTTP errors, passkey enrollment, "Keep me signed in", "Stay signed in?", and
+  "Is your security info still accurate?" dialogs automatically.
+- **Dynamic OTP field lookup**: Finds the TOTP input by CSS selector inside `OneTimeCodeViewForm`
+  instead of hardcoding a dynamic element ID.
+- **Search effectiveness tracking**: `bingSearch()` now returns a bool; `bingSearches()` gives
+  up early when searches stop being counted instead of looping indefinitely.
+- **ReadToEarn stuck detection**: OAuth login wait loop now raises after 10 seconds instead of
+  looping forever.
+- **PunchCards CTA reliability**: New `_visit_offer_cta()` navigates directly via href for
+  urlreward (same tab, avoids new-tab issues). New `_click_offer_cta_new_tab()` scrolls CTA
+  into view and forces `target="_blank"` for quizzes.
+- Switched to dashboard data source (`PREFER_BING_INFO=False`) to fix `KeyError: 'PCSearch'`
+  from unreliable Bing API endpoint.
+- Default `formatNumber` decimals changed from 2 to 0 (points are whole numbers).
+- Login cleanup: deduplicated `check_locked_user`/`check_banned_user` calls, moved assert
+  after `execute_login()` only.
+
+### Removed
+
+- Removed passwordless login flow (unused).
+- Removed `contextlib` import from `login.py`.
+- Removed `.idea` directory from version control.
+
 ## [3.2.0] - 2026-02-25
 
 ### Added

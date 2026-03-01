@@ -57,6 +57,17 @@ class Searches:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.googleTrendsShelf.__exit__(None, None, None)
 
+    def _loadTrends(self, count: int = 20) -> None:
+        logging.debug(
+            f"google_trends before load = {list(self.googleTrendsShelf.items())}"
+        )
+        trends = Trends().trending_now(geo=COUNTRY)[:count]
+        for trend in trends:
+            self.googleTrendsShelf[trend.keyword] = trend
+        logging.debug(
+            f"google_trends after load = {list(self.googleTrendsShelf.items())}"
+        )
+
     def bingSearches(self) -> None:
         # Function to perform Bing searches
         logging.info(
@@ -80,18 +91,7 @@ class Searches:
                 break
 
             if desktopAndMobileRemaining.getTotal() > len(self.googleTrendsShelf):
-                logging.debug(
-                    f"google_trends before load = {list(self.googleTrendsShelf.items())}"
-                )
-                trends = Trends()
-                trends = trends.trending_now(geo=COUNTRY)[
-                    : desktopAndMobileRemaining.getTotal()
-                ]
-                for trend in trends:
-                    self.googleTrendsShelf[trend.keyword] = trend
-                logging.debug(
-                    f"google_trends after load = {list(self.googleTrendsShelf.items())}"
-                )
+                self._loadTrends(desktopAndMobileRemaining.getTotal())
 
             result_search_counted = self.bingSearch()
             if not result_search_counted:
@@ -125,17 +125,21 @@ class Searches:
                 if not trendKeywords:
                     del self.googleTrendsShelf[trend]
 
+                    if not self.googleTrendsShelf:
+                        logging.info("[BING] Trend shelf empty, reloading...")
+                        self._loadTrends()
+
                     trend = list(self.googleTrendsShelf.keys())[0]
                     trendKeywords = self.googleTrendsShelf[trend].trend_keywords
 
-                sleepTime: float
+                sleepTime: int
                 if Searches.retriesStrategy == Searches.retriesStrategy.EXPONENTIAL:
                     sleepTime = baseDelay * 2 ** (i - 1)
                 elif Searches.retriesStrategy == Searches.retriesStrategy.CONSTANT:
                     sleepTime = baseDelay
                 else:
                     raise AssertionError
-                sleepTime += baseDelay * random()  # Add jitter
+                sleepTime = round(sleepTime + baseDelay * random())
                 logging.info(
                     f"[BING] Search attempt not counted {i}/{Searches.maxRetries},"
                     f" sleeping {sleepTime}"

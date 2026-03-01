@@ -2,7 +2,7 @@ import dbm.dumb
 import logging
 import shelve
 from enum import Enum, auto
-from random import random, randint
+from random import random
 from time import sleep
 from typing import Final
 
@@ -99,12 +99,6 @@ class Searches:
                     f"[BING] Giving up on {self.browser.browserType.capitalize()} Edge Bing searches !"
                 )
                 return
-
-            sleep_between_searches = randint(10, 15)
-            logging.info(
-                f"[BING] Sleeping {sleep_between_searches} seconds between searches !"
-            )
-            sleep(sleep_between_searches)
 
         logging.info(
             f"[BING] Finished {self.browser.browserType.capitalize()} Edge Bing searches !"

@@ -310,7 +310,7 @@ class Utils:
         if self.getBingInfo()["isRewardsUser"]:  # faster, if it works
             return True
         self.webdriver.get(
-            "https://rewards.bing.com/Signin/"
+            "https://rewards.bing.com/"
         )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
         with contextlib.suppress(TimeoutException):
             self.waitUntilVisible(

@@ -1,6 +1,3 @@
-> [!WARNING]
-> **Project Status (February 2026):** This project is currently **not in a working state**. It was already broken in the original [upstream repository](https://github.com/klept0/MS-Rewards-Farmer) (the `master` branch was non-functional, and the `develop` branch was in a better state but still not _fully_ working). I am aware of this and am in the process of migrating several improvements from a separate private repository (I made the mistake of working on these changes in private). I expect to have a fully working version available by **mid-March 2026**. Thank you for your patience.
-
 ### A "simple" python application that uses Selenium to help with your M$ Rewards
 
 ![Static Badge](https://img.shields.io/badge/Made_in-python-violet?style=for-the-badge)
@@ -9,13 +6,9 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 ![GitHub issues](https://img.shields.io/github/issues/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 
-
-
 > [!IMPORTANT]
-> If you are multi-accounting and abusing the service for which this is intended - *
-*_DO NOT COMPLAIN ABOUT BANS!!!_**
-
-
+> If you are multi-accounting and abusing the service for which this is intended -
+**_DO NOT COMPLAIN ABOUT BANS!!!_**
 
 > [!CAUTION]
 > Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
@@ -26,11 +19,12 @@
 >
 > Do not redeem more than one reward per day.
 
-#### Project History
+## Project History
 
 - Originally created by [@charlesbel](https://github.com/charlesbel) as [Microsoft-Rewards-Farmer](https://github.com/charlesbel/Microsoft-Rewards-Farmer).
 - Forked and significantly refactored/maintained by [@klept0](https://github.com/klept0) as [MS-Rewards-Farmer](https://github.com/klept0/MS-Rewards-Farmer), with contributions from a community of volunteers.
-- The [@klept0](https://github.com/klept0) fork was **archived in January 2026**. This repository continues the project with the goal of cleaning up the codebase and expanding its functionality.
+- The [@klept0](https://github.com/klept0) fork was **archived in January 2026**. At that point, the upstream `master` branch was non-functional, and the `develop` branch was in a better state but still not fully working. This repository was created in February 2026 to continue the project, incorporating a series of fixes and improvements that had been developed independently to overcome the limitations of the upstream version.
+- As of March 2026, this fork is in a **working state**. It has been tested for over 2 weeks with consistent results. The script may occasionally fail due to browser timeouts or transient issues -- running it in a loop with a short delay (e.g. 5 minutes) between executions works well in practice.
 
 ## Installation
 
@@ -61,15 +55,21 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 
 5. Open the generated `config.yaml` file and edit it with your information.
 
-   The "totp" field is not mandatory, only enter your TOTP key if you use it for 2FA (if
+   The generated config contains sensible defaults that have been proven working in testing.
+   You should only need to fill in your account credentials.
+
+   > [!WARNING]
+   > The `browser.language` setting must be `en-US`. Changing it to a different language will
+   > break the login flow, as some steps rely on English labels in the absence of better
+   > selectors. You can change `browser.geolocation` to your country code.
+
+   The `totp` field is not mandatory, only enter your TOTP key if you use it for 2FA (if
    omitting, don't keep it as an empty string, remove the line completely).
 
-   The "proxy" field is not mandatory, you can omit it if you don't want to use proxy (don't
+   The `proxy` field is not mandatory, you can omit it if you don't want to use proxy (don't
    keep it as an empty string, remove the line completely).
 
    You can add or remove accounts according to your will.
-
-   The "apprise.urls" field is not mandatory, you can remove it if you don't want to get notifications.
 
 6. Run the script:
    ```sh

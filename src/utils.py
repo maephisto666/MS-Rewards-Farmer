@@ -580,7 +580,6 @@ def createEmptyConfig(configPath: Path, config: Config) -> None:
 
     emptyConfig = Config(
         {
-            "apprise": {"urls": ["discord://{WebhookID}/{WebhookToken}"]},
             "accounts": [
                 {
                     "email": "Your Email 1",
@@ -595,6 +594,19 @@ def createEmptyConfig(configPath: Path, config: Config) -> None:
                     "proxy": "http://user:pass@host2:port",
                 },
             ],
+            "cooldown": {
+                "min": 5,
+                "max": 30,
+            },
+            "browser": {
+                "language": "en-US",
+                "geolocation": "US",
+            },
+            "retries": {
+                "backoff-factor": 20,
+                "max": 4,
+                "strategy": "CONSTANT",
+            },
         }
     )
     with open(configPath, "w", encoding="utf-8") as configFile:

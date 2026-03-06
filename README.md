@@ -1,5 +1,5 @@
-> [!WARNING]
-> **Project Status (February 2026):** This project is currently **not in a working state**. It was already broken in the original [upstream repository](https://github.com/klept0/MS-Rewards-Farmer) (the `master` branch was non-functional, and the `develop` branch was in a better state but still not _fully_ working). I am aware of this and am in the process of migrating several improvements from a separate private repository (I made the mistake of working on these changes in private). I expect to have a fully working version available by **mid-March 2026**. Thank you for your patience.
+> [!NOTE]
+> **Project Status (March 2026):** This project is now in a **working state**. It has been tested for over 2 weeks with consistent results. The login flow, search automation, punch cards, activities, and read-to-earn features are all functional. The script may occasionally fail due to browser timeouts or transient issues -- running it in a loop with a short delay (e.g. 5 minutes) between executions works well in practice.
 
 ### A "simple" python application that uses Selenium to help with your M$ Rewards
 

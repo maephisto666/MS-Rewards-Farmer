@@ -316,7 +316,8 @@ class Utils:
             self.waitUntilVisible(
                 By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
             )
-            return True
+
+            return self.webdriver.current_url != "https://rewards.bing.com/welcome?idru=%2F"
         return False
 
     def getAccountPoints(self) -> int:

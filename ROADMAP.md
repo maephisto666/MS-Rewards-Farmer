@@ -1,5 +1,11 @@
 # Roadmap
 
+## Must Have
+
+### Clean dirty sessions
+
+Sometimes, due to errors during login, dirty sessions are created. As a consequence, in subsequent executions opening Chrome is not possible anymore.
+
 ## Nice to Have
 
 ### Alternative Browser Backend (Camoufox)

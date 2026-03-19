@@ -219,6 +219,7 @@ class Browser:
         Returns:
             Path
         """
+        import json
         sessionsDir = getProjectRoot() / "sessions"
 
         # Concatenate email and browser type for a plain text session ID
@@ -226,6 +227,33 @@ class Browser:
 
         sessionsDir = sessionsDir / sessionid
         sessionsDir.mkdir(parents=True, exist_ok=True)
+
+        # Set Chrome language preferences by modifying the Preferences file
+        default_profile = sessionsDir / "Default"
+        default_profile.mkdir(parents=True, exist_ok=True)
+        prefs_file = default_profile / "Preferences"
+
+        # Load existing preferences or create new
+        if prefs_file.exists():
+            try:
+                with open(prefs_file, 'r', encoding='utf-8') as f:
+                    prefs = json.load(f)
+            except (json.JSONDecodeError, IOError):
+                prefs = {}
+        else:
+            prefs = {}
+
+        # Set the language preferences
+        if "intl" not in prefs:
+            prefs["intl"] = {}
+        prefs["intl"]["accept_languages"] = self.localeLang
+        prefs["intl"]["selected_language"] = self.localeLang.split("-")[0]
+
+        # Write back the preferences
+        with open(prefs_file, 'w', encoding='utf-8') as f:
+            json.dump(prefs, f, indent=2, ensure_ascii=False)
+
+        logging.info(f"Set Chrome language preference to {self.localeLang}")
         return sessionsDir
 
     @staticmethod

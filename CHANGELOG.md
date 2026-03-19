@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.2] - 2026-03-19
+
+### Fixed
+
+- Browser language and geolocation are now independent settings. The `-l` flag accepts any language code (`en`, `de`, `en-US`, `de-DE`, etc.) and is applied directly to Chrome's language preferences, without being concatenated with the geolocation. This allows combinations like English language in Netherlands (`-l en -g NL`).
+
 ## [3.4.1] - 2026-03-10
 
 ### Fixed

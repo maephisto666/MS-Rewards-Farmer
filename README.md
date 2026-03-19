@@ -58,10 +58,10 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
    The generated config contains sensible defaults that have been proven working in testing.
    You should only need to fill in your account credentials.
 
-   > [!WARNING]
-   > The `browser.language` setting must be `en-US`. Changing it to a different language will
-   > break the login flow, as some steps rely on English labels in the absence of better
-   > selectors. You can change `browser.geolocation` to your country code.
+> [!WARNING]
+> The `browser.language` setting must be `en-US`. Changing it to a different language will
+> break the login flow, as some steps rely on English labels in the absence of better
+> selectors. You can change `browser.geolocation` to your country code.
 
    The `totp` field is not mandatory, only enter your TOTP key if you use it for 2FA (if
    omitting, don't keep it as an empty string, remove the line completely).

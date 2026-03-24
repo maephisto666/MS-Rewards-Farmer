@@ -214,9 +214,9 @@ class Login:
         self.utils.waitUntilClickable(By.CSS_SELECTOR, "[data-testid='primaryButton']").click()
 
         # =====================================================================
-        # STEP 4: Post-password 2FA - navigate to TOTP entry
+        # STEP 4: Post-password - 2FA or direct post-login
         #
-        # After password submission, different 2FA screens may appear:
+        # After password submission, different screens may appear:
         #
         #   Flow A: TOTP screen directly (OneTimeCodeViewForm)
         #     -> proceed to enter OTP
@@ -226,29 +226,43 @@ class Login:
         #     -> click "Enter a code from an authenticator app"
         #     -> TOTP screen (OneTimeCodeViewForm)
         #
+        #   Flow C: No 2FA - straight to post-login dialogs
+        #     -> "Stay signed in?" (primaryButton), kmsiForm, or RewardsPortal
+        #
         # The "Approve sign-in request" screen has a 1-minute timeout,
         # so we must detect it quickly and not waste time on sequential waits.
         # =====================================================================
         logging.info("[LOGIN] Checking for 2FA...")
+        requires_2fa = True
         result = wait.until(
             EC.any_of(
                 EC.visibility_of_element_located((By.NAME, "OneTimeCodeViewForm")),
                 EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Other ways to sign in')]")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='primaryButton']")),
+                EC.visibility_of_element_located((By.NAME, "kmsiForm")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]')),
             )
         )
 
-        if result.get_attribute("name") != "OneTimeCodeViewForm":
+        result_name = result.get_attribute("name") or ""
+        result_tag = result.tag_name or ""
+        result_data_role = result.get_attribute("data-role-name") or ""
+
+        if result_name == "OneTimeCodeViewForm":
+            pass  # Flow A: already on TOTP screen
+        elif result_tag == "button" and "Other ways" in (result.text or ""):
             # Flow B: "Approve sign-in request" -> navigate to TOTP
             logging.debug("[LOGIN] 'Approve sign-in request' detected, navigating to TOTP...")
             result.click()
-            # The "Almost there" page shows auth options as cards in a
-            # data-testid="tileList". Each card is a div[data-testid="tile"]
-            # with an aria-label. Click the first tile (authenticator app).
             auth_app_option = wait.until(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='tileList'] [data-testid='tile'] span[role='button']"))
             )
             auth_app_option.click()
             self.utils.waitUntilVisible(By.NAME, "OneTimeCodeViewForm", 10)
+        else:
+            # Flow C: no 2FA, landed on a post-login dialog or RewardsPortal
+            logging.info("[LOGIN] No 2FA required, proceeding to post-login dialogs...")
+            requires_2fa = False
 
         # =====================================================================
         # STEP 5: TOTP entry
@@ -258,20 +272,21 @@ class Login:
         # hardcoding an ID, we find the visible text input inside the
         # OneTimeCodeViewForm.
         # =====================================================================
-        if self.browser.totp is not None:
-            logging.info("[LOGIN] Entering OTP...")
-            otp = TOTP(self.browser.totp.replace(" ", "")).now()
-            otp_form = self.utils.waitUntilVisible(By.NAME, "OneTimeCodeViewForm", 10)
-            otpField = otp_form.find_element(By.CSS_SELECTOR, "input[type='text']")
-            otpField.send_keys(otp)
-            assert otpField.get_attribute("value") == otp
-            self.utils.waitUntilClickable(By.CSS_SELECTOR, "[data-testid='primaryButton']").click()
-        else:
-            assert CONFIG.browser.visible, (
-                "[LOGIN] 2FA detected, provide TOTP token or run in visible mode to handle login."
-            )
-            print("[LOGIN] 2FA detected, handle prompts and press enter when done.")
-            input()
+        if requires_2fa:
+            if self.browser.totp is not None:
+                logging.info("[LOGIN] Entering OTP...")
+                otp = TOTP(self.browser.totp.replace(" ", "")).now()
+                otp_form = self.utils.waitUntilVisible(By.NAME, "OneTimeCodeViewForm", 10)
+                otpField = otp_form.find_element(By.CSS_SELECTOR, "input[type='text']")
+                otpField.send_keys(otp)
+                assert otpField.get_attribute("value") == otp
+                self.utils.waitUntilClickable(By.CSS_SELECTOR, "[data-testid='primaryButton']").click()
+            else:
+                assert CONFIG.browser.visible, (
+                    "[LOGIN] 2FA detected, provide TOTP token or run in visible mode to handle login."
+                )
+                print("[LOGIN] 2FA detected, handle prompts and press enter when done.")
+                input()
 
         # =====================================================================
         # STEP 6: Post-login dialogs

@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.4.4] - 2026-03-25
+
+### Fixed
+
+- Fixed `TypeError: 'NoneType' object is not subscriptable` in punch cards when `promotionalItem` is null ([#17](https://github.com/maephisto666/MS-Rewards-Farmer/issues/17)).
+
 ## [3.4.3] - 2026-03-24
 
 ### Fixed

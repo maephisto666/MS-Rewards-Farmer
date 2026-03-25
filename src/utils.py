@@ -386,7 +386,11 @@ class Utils:
                 WebDriverWait(self.webdriver, 10).until(
                     expected_conditions.element_to_be_clickable(element)
                 )
-            element.click()
+            try:
+                element.click()
+            except ElementClickInterceptedException:
+                logging.debug("[CLICK] Element intercepted, using JavaScript click")
+                self.webdriver.execute_script("arguments[0].click();", element)
 
 
 def argumentParser() -> Namespace:

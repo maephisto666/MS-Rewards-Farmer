@@ -102,6 +102,8 @@ class PunchCards:
         # Function to complete promotional items
         try:
             item = self.browser.utils.getDashboardData()["promotionalItem"]
+            if item is None:
+                return
             self.browser.utils.goToRewards()
             destUrl = urllib.parse.urlparse(item["destinationUrl"])
             baseUrl = urllib.parse.urlparse(REWARDS_URL)

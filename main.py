@@ -19,7 +19,6 @@ from src.browser import RemainingSearches
 from src.loggingColoredFormatter import ColoredFormatter
 from src.utils import CONFIG, APPRISE, getProjectRoot, formatNumber
 
-
 def main():
     setupLogging()
 

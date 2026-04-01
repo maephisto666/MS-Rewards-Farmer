@@ -257,6 +257,28 @@ class Utils:
         assert (
             self.webdriver.current_url == REWARDS_URL
         ), f"{self.webdriver.current_url} {REWARDS_URL}"
+        self.dismissCookieBanner()
+
+    def dismissCookieBanner(self) -> None:
+        """Dismiss the cookie consent banner if present."""
+        selectors = [
+            (By.CSS_SELECTOR, "#wcpConsentBannerCtrl button:first-child"),
+            (By.CSS_SELECTOR, "#cookieConsentContainer button:first-child"),
+            (By.ID, "bnp_btn_accept"),
+        ]
+        for by, value in selectors:
+            try:
+                buttons = self.webdriver.find_elements(by=by, value=value)
+                if buttons:
+                    logging.debug(f"[COOKIE BANNER] Found banner element with selector: {value}")
+                    buttons[0].click()
+                    logging.info("[COOKIE BANNER] Successfully dismissed cookie banner")
+                    return
+            except (ElementNotInteractableException, ElementClickInterceptedException) as e:
+                logging.warning(f"[COOKIE BANNER] Found banner but failed to dismiss: {e}")
+            except (NoSuchElementException, TimeoutException):
+                pass
+        logging.debug("[COOKIE BANNER] No cookie banner found")
 
     def goToSearch(self) -> None:
         self.webdriver.get(SEARCH_URL)
@@ -386,7 +408,11 @@ class Utils:
                 WebDriverWait(self.webdriver, 10).until(
                     expected_conditions.element_to_be_clickable(element)
                 )
-            element.click()
+            try:
+                element.click()
+            except ElementClickInterceptedException:
+                logging.debug("[CLICK] Element intercepted, using JavaScript click")
+                self.webdriver.execute_script("arguments[0].click();", element)
 
 
 def argumentParser() -> Namespace:

@@ -240,6 +240,24 @@ class Login:
 
         if post_password_state == "totp":
             requires_2fa = True
+        elif post_password_state == "password_required":
+            logging.info("[LOGIN] Password-required page detected, retrying password entry...")
+            retry_password_field = wait.until(EC.any_of(
+                EC.element_to_be_clickable((By.NAME, "passwd")),
+                EC.element_to_be_clickable((By.ID, "passwordEntry")),
+                EC.element_to_be_clickable((By.ID, "i0118")),
+            ))
+            retry_password_field.click()
+            retry_password_field.clear()
+            retry_password_field.send_keys(self.browser.password)
+            submit_btn = wait.until(EC.any_of(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='primaryButton']")),
+                EC.element_to_be_clickable((By.ID, "idSIButton9")),
+            ))
+            submit_btn.click()
+            post_password_state = self._detect_post_password_state(wait, retry_password_field)
+            if post_password_state == "totp":
+                requires_2fa = True
         elif post_password_state == "other_ways":
             # Flow B: "Approve sign-in request" -> navigate to TOTP
             logging.debug("[LOGIN] 'Approve sign-in request' detected, navigating to TOTP...")
@@ -314,8 +332,13 @@ class Login:
                 (By.NAME, "OneTimeCodeViewForm"),
                 (By.CSS_SELECTOR, "input[name='otc']"),
                 (By.ID, "idTxtBx_SAOTCC_OTC"),
+                (By.CSS_SELECTOR, "input[id*='SAOTCC']"),
                 (By.CSS_SELECTOR, "input[id*='OTC']"),
                 (By.CSS_SELECTOR, "input[aria-label='Code']"),
+                (By.CSS_SELECTOR, "input[placeholder='Code']"),
+                (By.CSS_SELECTOR, "input[autocomplete='one-time-code']"),
+                (By.CSS_SELECTOR, "input[inputmode='numeric']"),
+                (By.CSS_SELECTOR, "input[type='tel']"),
             ]):
                 return "totp"
 
@@ -332,27 +355,53 @@ class Login:
             ):
                 return "post_login"
 
+            page_text = self.webdriver.page_source
+            if (
+                "sErrorCode\":\"80041032" in page_text
+                or "Please enter the password for your Microsoft account." in page_text
+            ):
+                return "password_required"
+
             return False
 
         return wait.until(detector)
 
     def _wait_for_otp_input(self, wait, timeout: int = 10):
         custom_wait = WebDriverWait(self.webdriver, timeout)
-        return custom_wait.until(
-            EC.any_of(
+        try:
+            return custom_wait.until(EC.any_of(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='otc']")),
                 EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[id*='SAOTCC']")),
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "input[id*='OTC']")),
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "input[aria-label='Code']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[placeholder='Code']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[autocomplete='one-time-code']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[inputmode='numeric']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='tel']")),
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "form[name='OneTimeCodeViewForm'] input[type='text']")),
-            )
-        )
+            ))
+        except TimeoutException:
+            return custom_wait.until(EC.any_of(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[name='otc']")),
+                EC.visibility_of_element_located((By.ID, "idTxtBx_SAOTCC_OTC")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[id*='SAOTCC']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[id*='OTC']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[aria-label='Code']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[placeholder='Code']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[autocomplete='one-time-code']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[inputmode='numeric']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='tel']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "form[name='OneTimeCodeViewForm'] input[type='text']")),
+            ))
 
     def _submit_otp(self) -> None:
         for by, selector in (
             (By.ID, "idSubmit_SAOTCC_Continue"),
+            (By.ID, "idSIButton9"),
             (By.CSS_SELECTOR, "[data-testid='primaryButton']"),
             (By.XPATH, "//button[contains(., 'Verify') or contains(., 'Next')]"),
+            (By.XPATH, "//input[@value='Verify' or @value='Next']"),
             (By.CSS_SELECTOR, "button[type='submit']"),
             (By.CSS_SELECTOR, "input[type='submit']"),
         ):

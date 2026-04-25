@@ -183,6 +183,8 @@ class Login:
                 EC.any_of(
                     EC.element_to_be_clickable((By.CSS_SELECTOR, '[aria-label="Use your password"]')),
                     EC.element_to_be_clickable((By.XPATH, "//span[@role='button' and contains(text(), 'Use your password')]")),
+                    EC.element_to_be_clickable((By.NAME, "passwd")),
+                    EC.visibility_of_element_located((By.ID, "passwordEntry")),
                 )
             )
             use_password.click()
@@ -233,36 +235,51 @@ class Login:
         # so we must detect it quickly and not waste time on sequential waits.
         # =====================================================================
         logging.info("[LOGIN] Checking for 2FA...")
-        requires_2fa = True
-        result = wait.until(
-            EC.any_of(
-                EC.visibility_of_element_located((By.NAME, "OneTimeCodeViewForm")),
-                EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Other ways to sign in')]")),
+        requires_2fa = False
+        post_password_state = self._detect_post_password_state(wait, passwordField)
+
+        if post_password_state == "totp":
+            requires_2fa = True
+        elif post_password_state == "password_required":
+            logging.info("[LOGIN] Password-required page detected, retrying password entry...")
+            retry_password_field = wait.until(EC.any_of(
+                EC.element_to_be_clickable((By.NAME, "passwd")),
+                EC.element_to_be_clickable((By.ID, "passwordEntry")),
+                EC.element_to_be_clickable((By.ID, "i0118")),
+            ))
+            retry_password_field.click()
+            retry_password_field.clear()
+            retry_password_field.send_keys(self.browser.password)
+            submit_btn = wait.until(EC.any_of(
                 EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='primaryButton']")),
-                EC.visibility_of_element_located((By.NAME, "kmsiForm")),
-                EC.visibility_of_element_located((By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]')),
-            )
-        )
-
-        result_name = result.get_attribute("name") or ""
-        result_tag = result.tag_name or ""
-        result_data_role = result.get_attribute("data-role-name") or ""
-
-        if result_name == "OneTimeCodeViewForm":
-            pass  # Flow A: already on TOTP screen
-        elif result_tag == "button" and "Other ways" in (result.text or ""):
+                EC.element_to_be_clickable((By.ID, "idSIButton9")),
+            ))
+            submit_btn.click()
+            post_password_state = self._detect_post_password_state(wait, retry_password_field)
+            if post_password_state == "totp":
+                requires_2fa = True
+        elif post_password_state == "other_ways":
             # Flow B: "Approve sign-in request" -> navigate to TOTP
             logging.debug("[LOGIN] 'Approve sign-in request' detected, navigating to TOTP...")
-            result.click()
+            self.utils.waitUntilClickable(
+                By.XPATH,
+                "//button[contains(., 'Other ways to sign in') "
+                "or contains(., 'other ways to sign in')]",
+                10,
+            ).click()
             auth_app_option = wait.until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='tileList'] [data-testid='tile'] span[role='button']"))
+                EC.any_of(
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-testid='tileList'] [data-testid='tile'] span[role='button']")),
+                    EC.element_to_be_clickable((By.CSS_SELECTOR, "[data-value='PhoneAppOTP']")),
+                    EC.element_to_be_clickable((By.XPATH, "//*[contains(., 'authenticator app') or contains(., 'Authenticator app')]")),
+                )
             )
             auth_app_option.click()
-            self.utils.waitUntilVisible(By.NAME, "OneTimeCodeViewForm", 10)
+            self._wait_for_otp_input(wait, 10)
+            requires_2fa = True
         else:
             # Flow C: no 2FA, landed on a post-login dialog or RewardsPortal
             logging.info("[LOGIN] No 2FA required, proceeding to post-login dialogs...")
-            requires_2fa = False
 
         # =====================================================================
         # STEP 5: TOTP entry
@@ -276,11 +293,11 @@ class Login:
             if self.browser.totp is not None:
                 logging.info("[LOGIN] Entering OTP...")
                 otp = TOTP(self.browser.totp.replace(" ", "")).now()
-                otp_form = self.utils.waitUntilVisible(By.NAME, "OneTimeCodeViewForm", 10)
-                otpField = otp_form.find_element(By.CSS_SELECTOR, "input[type='text']")
+                otpField = self._wait_for_otp_input(wait, 10)
+                otpField.clear()
                 otpField.send_keys(otp)
                 assert otpField.get_attribute("value") == otp
-                self.utils.waitUntilClickable(By.CSS_SELECTOR, "[data-testid='primaryButton']").click()
+                self._submit_otp()
             else:
                 assert CONFIG.browser.visible, (
                     "[LOGIN] 2FA detected, provide TOTP token or run in visible mode to handle login."
@@ -303,6 +320,108 @@ class Login:
         # =====================================================================
         logging.info("[LOGIN] Handling post-login dialogs...")
         self._handle_post_login_dialogs(wait)
+
+    def _detect_post_password_state(self, wait, passwordField) -> str:
+        try:
+            wait.until(EC.staleness_of(passwordField))
+        except TimeoutException:
+            logging.debug("[LOGIN] Password field did not go stale quickly after submit.")
+
+        def detector(_):
+            if self._find_first_visible([
+                (By.NAME, "OneTimeCodeViewForm"),
+                (By.CSS_SELECTOR, "input[name='otc']"),
+                (By.ID, "idTxtBx_SAOTCC_OTC"),
+                (By.CSS_SELECTOR, "input[id*='SAOTCC']"),
+                (By.CSS_SELECTOR, "input[id*='OTC']"),
+                (By.CSS_SELECTOR, "input[aria-label='Code']"),
+                (By.CSS_SELECTOR, "input[placeholder='Code']"),
+                (By.CSS_SELECTOR, "input[autocomplete='one-time-code']"),
+                (By.CSS_SELECTOR, "input[inputmode='numeric']"),
+                (By.CSS_SELECTOR, "input[type='tel']"),
+            ]):
+                return "totp"
+
+            if self._find_first_visible([
+                (By.XPATH, "//button[contains(., 'Other ways to sign in') or contains(., 'other ways to sign in')]"),
+            ]):
+                return "other_ways"
+
+            if (
+                "passkey/enroll" in self.webdriver.current_url
+                or self._find_first_visible([(By.NAME, "kmsiForm")])
+                or self._find_first_visible([(By.ID, "iPageTitle")])
+                or self._find_first_visible([(By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]')])
+            ):
+                return "post_login"
+
+            page_text = self.webdriver.page_source
+            if (
+                "sErrorCode\":\"80041032" in page_text
+                or "Please enter the password for your Microsoft account." in page_text
+            ):
+                return "password_required"
+
+            return False
+
+        return wait.until(detector)
+
+    def _wait_for_otp_input(self, wait, timeout: int = 10):
+        custom_wait = WebDriverWait(self.webdriver, timeout)
+        try:
+            return custom_wait.until(EC.any_of(
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[name='otc']")),
+                EC.element_to_be_clickable((By.ID, "idTxtBx_SAOTCC_OTC")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[id*='SAOTCC']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[id*='OTC']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[aria-label='Code']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[placeholder='Code']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[autocomplete='one-time-code']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[inputmode='numeric']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "input[type='tel']")),
+                EC.element_to_be_clickable((By.CSS_SELECTOR, "form[name='OneTimeCodeViewForm'] input[type='text']")),
+            ))
+        except TimeoutException:
+            return custom_wait.until(EC.any_of(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[name='otc']")),
+                EC.visibility_of_element_located((By.ID, "idTxtBx_SAOTCC_OTC")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[id*='SAOTCC']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[id*='OTC']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[aria-label='Code']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[placeholder='Code']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[autocomplete='one-time-code']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[inputmode='numeric']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='tel']")),
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "form[name='OneTimeCodeViewForm'] input[type='text']")),
+            ))
+
+    def _submit_otp(self) -> None:
+        for by, selector in (
+            (By.ID, "idSubmit_SAOTCC_Continue"),
+            (By.ID, "idSIButton9"),
+            (By.CSS_SELECTOR, "[data-testid='primaryButton']"),
+            (By.XPATH, "//button[contains(., 'Verify') or contains(., 'Next')]"),
+            (By.XPATH, "//input[@value='Verify' or @value='Next']"),
+            (By.CSS_SELECTOR, "button[type='submit']"),
+            (By.CSS_SELECTOR, "input[type='submit']"),
+        ):
+            try:
+                self.utils.waitUntilClickable(by, selector, 3).click()
+                return
+            except TimeoutException:
+                continue
+        raise TimeoutException("[LOGIN] Could not find OTP submit button.")
+
+    def _find_first_visible(self, selectors):
+        for by, selector in selectors:
+            elements = self.webdriver.find_elements(by, selector)
+            for element in elements:
+                try:
+                    if element.is_displayed():
+                        return element
+                except Exception:
+                    continue
+        return None
 
     def _handle_post_login_dialogs(self, wait) -> None:
         self.check_locked_user()

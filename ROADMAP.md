@@ -30,6 +30,21 @@ incorporating:
   on the correct page.
 - **General cleanup** -- remove unused imports and dead code paths.
 
+### Activity Completion Bugs (Issues #19, #21)
+
+Two related bugs in `completeActivity()`:
+
+- **Unnecessary cooldown for unmapped activities (#21)** -- when an activity title (e.g.
+  "Talk, text, save", "Glow up") has no search query mapped in the localized activities
+  config, the bot still opens the activity, does nothing useful, then applies a full
+  cooldown (300-500 seconds). The fix should skip the cooldown when no meaningful work was
+  done. Kobi-wan's suggestion to use the `isExploreOnBingTask` attribute to detect
+  search-based activities and return early if unmapped is worth evaluating.
+- **Search activity not registered as completed (#19)** -- after typing the search query
+  and submitting, the script only waits 2 seconds (`sleep(2)`) before moving on. The
+  activity isn't registered as completed in time. The `sleep` should be replaced with a
+  proper Selenium explicit wait that confirms the activity was actually marked as completed.
+
 ### Revisit PREFER_BING_INFO and Data Sources
 
 The codebase has two data sources for account info (points, remaining searches, user level):

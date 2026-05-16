@@ -6,6 +6,8 @@ from time import sleep
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
 from src.browser import Browser
 from src.constants import REWARDS_URL
@@ -27,6 +29,7 @@ class Activities:
     def __init__(self, browser: Browser):
         self.browser = browser
         self.webdriver = browser.webdriver
+        self.unmapped_activities: list[str] = []
 
     def completeSearch(self):
         # Simulate completing a search activity
@@ -141,35 +144,34 @@ class Activities:
         )
 
     def completeActivity(self, activity: dict) -> None:
+        activityTitle = cleanupActivityTitle(activity["title"])
+        logging.debug(f"activityTitle={activityTitle}")
+        logging.debug(f"activity attributes: {list(activity.get('attributes', {}).keys())}")
+
+        if activity["complete"] or activity["pointProgressMax"] == 0:
+            logging.debug("Already done, returning")
+            return
+        if activityTitle in IGNORED_ACTIVITIES:
+            logging.debug(f"Ignoring {activityTitle}")
+            return
+        if "puzzle" in activityTitle.lower() or "Windows search" == activityTitle:
+            logging.info(f"[ACTIVITY] Skipping '{activityTitle}' because it's not supported")
+            return
+
+        # Check if this is a search-based activity without a mapped query.
+        # The isExploreOnBingTask attribute indicates a Bing search activity.
+        is_search_activity = "isExploreOnBingTask" in activity.get("attributes", {})
+        if is_search_activity and activityTitle not in ACTIVITY_TITLES_TO_QUERIES:
+            logging.info(f"[ACTIVITY] No search query mapped for '{activityTitle}', skipping")
+            if activityTitle not in self.unmapped_activities:
+                self.unmapped_activities.append(activityTitle)
+            return
+
+        if activity["attributes"].get("is_unlocked", "True") != "True":
+            logging.debug("Activity locked, returning")
+            return
+
         try:
-            activityTitle = cleanupActivityTitle(activity["title"])
-            logging.debug(f"activityTitle={activityTitle}")
-            if activity["complete"] or activity["pointProgressMax"] == 0:
-                logging.debug("Already done, returning")
-                return
-            if activity["attributes"].get("is_unlocked", "True") != "True":
-                logging.debug("Activity locked, returning")
-                if activityTitle not in ACTIVITY_TITLES_TO_QUERIES:
-                    logging.warning(
-                        f"Add activity title '{activityTitle}' to search mapping in relevant language file in localized_activities")
-                return
-            if activityTitle in IGNORED_ACTIVITIES:
-                logging.debug(f"Ignoring {activityTitle}")
-                return
-            # Open the activity for the activity
-            if "puzzle" in activityTitle.lower():
-                logging.info(f"Skipping {activityTitle} because it's not supported")
-                return
-            if "Windows search" == activityTitle:
-                # for search in {"what time is it in dublin", "what is the weather"}:
-                #     pyautogui.press("win")
-                #     sleep(1)
-                #     pyautogui.write(search)
-                #     sleep(5)
-                #     pyautogui.press("enter")
-                #     sleep(5)
-                # pyautogui.hotkey("alt", "f4") # Close Edge
-                return
             activityElement = self.browser.utils.waitUntilClickable(
                 By.XPATH, f'//*[contains(text(), "{activity["title"]}")]', timeToWait=20
             )
@@ -183,16 +185,16 @@ class Activities:
                 searchbar.clear()
             if activityTitle in ACTIVITY_TITLES_TO_QUERIES:
                 searchbar.send_keys(ACTIVITY_TITLES_TO_QUERIES[activityTitle])
-                sleep(2)
                 searchbar.submit()
+                WebDriverWait(self.webdriver, 10).until(
+                    EC.presence_of_element_located((By.ID, "b_results"))
+                )
+                logging.info(f"[ACTIVITY] Search submitted and results loaded for '{activityTitle}'")
             elif "poll" in activityTitle:
-                # Complete survey for a specific scenario
                 self.completeSurvey()
             elif activity["promotionType"] == "urlreward":
-                # Complete search for URL reward
                 self.completeSearch()
             elif activity["promotionType"] == "quiz":
-                # Complete different types of quizzes based on point progress max
                 if activity["pointProgressMax"] == 10:
                     self.completeABC()
                 elif activity["pointProgressMax"] in [30, 40]:
@@ -200,11 +202,10 @@ class Activities:
                 elif activity["pointProgressMax"] == 50:
                     self.completeThisOrThat()
             else:
-                # Default to completing search
                 self.completeSearch()
             logging.debug("Done")
         except Exception:
-            logging.error(f"[ACTIVITY] Error doing {activityTitle}", exc_info=True)
+            logging.error(f"[ACTIVITY] Error doing '{activityTitle}'", exc_info=True)
             logging.debug(f"activity={activity}")
             return
         finally:
@@ -216,6 +217,11 @@ class Activities:
         activities = self.browser.utils.getActivities()
         for activity in activities:
             self.completeActivity(activity)
+        if self.unmapped_activities:
+            logging.warning(
+                f"[ACTIVITIES] Unmapped search activities (add queries to config): "
+                f"{', '.join(repr(t) for t in self.unmapped_activities)}"
+            )
         logging.info("[ACTIVITIES] " + "Done")
 
         # todo Send one email for all accounts?

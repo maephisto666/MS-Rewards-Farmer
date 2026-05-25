@@ -1,5 +1,6 @@
 import contextlib
 import logging
+import random
 from random import randint
 from time import sleep
 
@@ -158,14 +159,9 @@ class Activities:
             logging.info(f"[ACTIVITY] Skipping '{activityTitle}' because it's not supported")
             return
 
-        # Check if this is a search-based activity without a mapped query.
-        # The isExploreOnBingTask attribute indicates a Bing search activity.
-        is_search_activity = "isExploreOnBingTask" in activity.get("attributes", {})
-        if is_search_activity and activityTitle not in ACTIVITY_TITLES_TO_QUERIES:
-            logging.info(f"[ACTIVITY] No search query mapped for '{activityTitle}', skipping")
+        if activityTitle not in ACTIVITY_TITLES_TO_QUERIES:
             if activityTitle not in self.unmapped_activities:
                 self.unmapped_activities.append(activityTitle)
-            return
 
         if activity["attributes"].get("is_unlocked", "True") != "True":
             logging.debug("Activity locked, returning")
@@ -184,12 +180,14 @@ class Activities:
                 self.browser.utils.click(searchbar)
                 searchbar.clear()
             if activityTitle in ACTIVITY_TITLES_TO_QUERIES:
-                searchbar.send_keys(ACTIVITY_TITLES_TO_QUERIES[activityTitle])
+                queries = ACTIVITY_TITLES_TO_QUERIES[activityTitle]
+                query = random.choice(queries)
+                searchbar.send_keys(query)
                 searchbar.submit()
                 WebDriverWait(self.webdriver, 10).until(
                     EC.presence_of_element_located((By.ID, "b_results"))
                 )
-                logging.info(f"[ACTIVITY] Search submitted and results loaded for '{activityTitle}'")
+                logging.info(f"[ACTIVITY] Search submitted for '{activityTitle}' with query '{query}'")
             elif "poll" in activityTitle:
                 self.completeSurvey()
             elif activity["promotionType"] == "urlreward":
@@ -202,7 +200,12 @@ class Activities:
                 elif activity["pointProgressMax"] == 50:
                     self.completeThisOrThat()
             else:
-                self.completeSearch()
+                searchbar.send_keys(activityTitle)
+                searchbar.submit()
+                WebDriverWait(self.webdriver, 10).until(
+                    EC.presence_of_element_located((By.ID, "b_results"))
+                )
+                logging.info(f"[ACTIVITY] No mapped query, used title as fallback for '{activityTitle}'")
             logging.debug("Done")
         except Exception:
             logging.error(f"[ACTIVITY] Error doing '{activityTitle}'", exc_info=True)
@@ -218,8 +221,8 @@ class Activities:
         for activity in activities:
             self.completeActivity(activity)
         if self.unmapped_activities:
-            logging.warning(
-                f"[ACTIVITIES] Unmapped search activities (add queries to config): "
+            logging.info(
+                f"[ACTIVITIES] Activities with no mapped query (title used as fallback): "
                 f"{', '.join(repr(t) for t in self.unmapped_activities)}"
             )
         logging.info("[ACTIVITIES] " + "Done")

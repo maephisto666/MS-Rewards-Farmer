@@ -39,6 +39,10 @@ test/                    # Unit tests (unittest + parameterized)
 - Always create a separate branch for code changes (e.g. `fix/`, `feat/`).
 - Exceptions: documentation updates and version bumps can be committed directly to `main`.
 
+## Release checklist
+
+- Every version bump in `pyproject.toml` **must** have a corresponding entry in `CHANGELOG.md` in the same commit or PR.
+
 ## Key conventions
 
 - Configuration is loaded from `config.yaml` via the `Config` dict subclass in `src/utils.py`. `CONFIG` and `APPRISE` are module-level singletons.

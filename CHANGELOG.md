@@ -5,11 +5,43 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.5.0] - 2026-05-25
+
+### Added
+
+- **Multiple queries per activity**: Each activity title in localized activity files now maps to a list of query variants (3 per entry). A random query is picked on each run for variety ([#25](https://github.com/maephisto666/MS-Rewards-Farmer/issues/25), [#26](https://github.com/maephisto666/MS-Rewards-Farmer/pull/26)).
+- **Title fallback for unmapped activities**: When an activity has no mapped query, the activity title itself is used as the search query instead of skipping it. No points are lost for unmapped activities.
+
+### Changed
+
+- Localized activity files (`en.py`, `es.py`, `fr.py`, `it.py`) converted from `str` to `list[str]` values.
+
+## [3.4.8] - 2026-05-17
+
+### Fixed
+
+- Skip cooldown for unmapped search activities that have the `isExploreOnBingTask` attribute, avoiding wasted time on activities without a mapped query ([#21](https://github.com/maephisto666/MS-Rewards-Farmer/issues/21), [#24](https://github.com/maephisto666/MS-Rewards-Farmer/pull/24)).
+- Replaced `sleep(2)` before search submission with an explicit `WebDriverWait` for the `b_results` element, making activity completion more reliable regardless of network conditions ([#19](https://github.com/maephisto666/MS-Rewards-Farmer/issues/19)).
+- Added debug logging for activity attribute keys and summary log of unmapped activities at end of run.
+
 ## [3.4.7] - 2026-04-25
 
 ### Fixed
 
 - Login flow now handles both OTP page variants (black and white) reported by users on different machines, including the `80041032` "password required" error and a wider set of OTP input/submit selectors ([#22](https://github.com/maephisto666/MS-Rewards-Farmer/pull/22)).
+
+## [3.4.6] - 2026-04-03
+
+### Changed
+
+- Added explicit PyPI registry for Python dependencies in `pyproject.toml`.
+
+## [3.4.5] - 2026-04-01
+
+### Fixed
+
+- Proactively dismiss cookie consent banner on rewards page before interacting with dashboard elements.
+- Use JavaScript click as fallback when element click is intercepted ([#18](https://github.com/maephisto666/MS-Rewards-Farmer/pull/18)).
 
 ## [3.4.4] - 2026-03-25
 

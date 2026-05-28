@@ -8,6 +8,7 @@ from enum import Enum, auto
 from logging import handlers
 
 from src import (
+    BonusPoints,
     Browser,
     Login,
     PunchCards,
@@ -154,6 +155,7 @@ def executeBot(currentAccount):
             logging.info(
                 f"[POINTS] You have {formatNumber(startingPoints)} points on your account"
             )
+            BonusPoints(desktopBrowser).claimBonusPoints()
             Activities(desktopBrowser).completeActivities()
             PunchCards(desktopBrowser).completePunchCards()
             # VersusGame(desktopBrowser).completeVersusGame()

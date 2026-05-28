@@ -11,8 +11,8 @@ Sometimes, due to errors during login, dirty sessions are created. As a conseque
 ### Alternative Browser Backend (Camoufox)
 
 The `camoufox-test` branch (now deleted) explored integrating
-[Camoufox](https://github.com/nicholasgasior/camoufox), an anti-detection Firefox-based
-browser, as an alternative to undetected-chromedriver. This could improve resilience against
+[Camoufox](https://github.com/daijro/camoufox) ([camoufox.com](https://camoufox.com/)),
+an anti-detection Firefox-based browser, as an alternative to undetected-chromedriver. This could improve resilience against
 bot detection. Revisiting this as a fresh feature once the codebase is stable would be
 worthwhile.
 

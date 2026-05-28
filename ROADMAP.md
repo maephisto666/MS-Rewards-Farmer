@@ -30,21 +30,6 @@ incorporating:
   on the correct page.
 - **General cleanup** -- remove unused imports and dead code paths.
 
-### Activity Completion Bugs (Issues #19, #21)
-
-Two related bugs in `completeActivity()`:
-
-- **Unnecessary cooldown for unmapped activities (#21)** -- when an activity title (e.g.
-  "Talk, text, save", "Glow up") has no search query mapped in the localized activities
-  config, the bot still opens the activity, does nothing useful, then applies a full
-  cooldown (300-500 seconds). The fix should skip the cooldown when no meaningful work was
-  done. Kobi-wan's suggestion to use the `isExploreOnBingTask` attribute to detect
-  search-based activities and return early if unmapped is worth evaluating.
-- **Search activity not registered as completed (#19)** -- after typing the search query
-  and submitting, the script only waits 2 seconds (`sleep(2)`) before moving on. The
-  activity isn't registered as completed in time. The `sleep` should be replaced with a
-  proper Selenium explicit wait that confirms the activity was actually marked as completed.
-
 ### Revisit PREFER_BING_INFO and Data Sources
 
 The codebase has two data sources for account info (points, remaining searches, user level):
@@ -169,15 +154,19 @@ Key ideas:
 
 #### Incremental migration plan (4 non-breaking PRs)
 
-| PR  | Scope                                                                                | Released as |
-|-----|--------------------------------------------------------------------------------------|-------------|
-| 1   | Add `DebugRecorder`, `Locator`/`Match`/`ResilientFinder`, `LoginDriver` protocol,    | 3.5.0       |
-|     | evidence bundle, typed exceptions. No behaviour change.                              |             |
-| 2   | Extract selectors into `locators.py`. Replace inline `EC.any_of` lists. Pure         | 3.5.1       |
-|     | deletion diff.                                                                       |             |
-| 3   | Add `descriptors.py`, `pages.py`, `flow.py` behind `login.use_state_machine: false`. | 3.6.0       |
-|     | Parity tests per variant. Dog-food on maintainer accounts.                           |             |
-| 4   | Flip default to state machine, delete legacy `execute_login`, promote `--diagnose`.  | 4.0.0       |
+| PR  | Scope                                                                                | Released as   |
+|-----|--------------------------------------------------------------------------------------|---------------|
+| 1   | Add `DebugRecorder`, `Locator`/`Match`/`ResilientFinder`, `LoginDriver` protocol,    | next minor    |
+|     | evidence bundle, typed exceptions. No behaviour change.                              |               |
+| 2   | Extract selectors into `locators.py`. Replace inline `EC.any_of` lists. Pure         | next patch    |
+|     | deletion diff.                                                                       |               |
+| 3   | Add `descriptors.py`, `pages.py`, `flow.py` behind `login.use_state_machine: false`. | next minor    |
+|     | Parity tests per variant. Dog-food on maintainer accounts.                           |               |
+| 4   | Flip default to state machine, delete legacy `execute_login`, promote `--diagnose`.  | next major    |
+
+> **Note**: This plan was originally written when the project was at version 3.4.x. The
+> version numbers have since been used for other features. The relative ordering and scope
+> of each PR still applies.
 
 Safety net during migration: the new flow falls back to the legacy `execute_login` when it
 cannot match a descriptor (and dumps evidence), so a missing variant never blocks the user.

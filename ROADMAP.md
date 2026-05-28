@@ -48,6 +48,29 @@ This needs revisiting: understand if the Bing API can still be used reliably (po
 updated key names), or if the dashboard scraping approach should be the sole data source.
 Either way, the dual-path branching should be cleaned up.
 
+### Drop `selenium-wire` or Migrate to Playwright
+
+The `selenium-wire` package forces a `setuptools<81` pin because it depends on the
+deprecated `pkg_resources` module. It is only used in `src/browser.py` for two things:
+SSL verification bypass and proxy support — both achievable without it.
+
+**Option A: Drop `selenium-wire`, keep Selenium** — Replace `seleniumwire.undetected_chromedriver`
+with plain `undetected-chromedriver`. Proxy support can be configured via Chrome launch args
+(`--proxy-server`). SSL verification bypass via Chrome flags or `mitmproxy` if request
+interception is needed. This approach has already been validated in another project, where
+replacing `selenium-wire` with `mitmproxy>=11.0.2` alongside plain Selenium allowed
+unpinning `setuptools` entirely.
+
+**Option B: Migrate to Playwright** — A larger change that eliminates both `selenium-wire`
+and `undetected-chromedriver`. Playwright has built-in auto-waiting, native multi-browser
+support, and better stability. However, it would require rewriting all Selenium selectors
+and wait patterns across the entire codebase, and finding a Playwright-compatible
+anti-detection solution (e.g. [playwright-stealth](https://github.com/nicholasgasior/playwright-stealth)
+or Camoufox's Playwright integration).
+
+Option A is lower risk and can be done incrementally. Option B is a longer-term goal that
+could be combined with the login flow refactor.
+
 ### Login Flow Refactor (`src/login.py`)
 
 Three parallel analyses (complexity, debuggability, robustness) converged on the same

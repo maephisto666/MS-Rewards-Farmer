@@ -48,6 +48,28 @@ This needs revisiting: understand if the Bing API can still be used reliably (po
 updated key names), or if the dashboard scraping approach should be the sole data source.
 Either way, the dual-path branching should be cleaned up.
 
+### Developer Tooling and SDLC Cleanup
+
+The project inherited several tooling config files from the upstream repo that are not
+actively used or maintained: `.pylintrc` (22KB, default-generated), `.flake8`, `.trunk/`
+(Trunk.io config), `.vscode/` (VS Code settings, launch configs, extension recommendations).
+
+This should be consolidated into a modern, minimal setup:
+
+- **Audit and remove unused config files** -- `.pylintrc`, `.trunk/`, `.vscode/` are
+  upstream leftovers. Remove what's not actively used.
+- **Consolidate linting** -- consider replacing `.flake8` + `.pylintrc` with
+  [Ruff](https://docs.astral.sh/ruff/), which covers both and is significantly faster.
+  Configuration can live in `pyproject.toml`.
+- **Add pre-commit hooks** -- set up [pre-commit](https://pre-commit.com/) with hooks for
+  linting, formatting, and basic checks (trailing whitespace, YAML validation, etc.).
+- **Formatting** -- adopt a consistent formatter (e.g. Black or Ruff's formatter) and
+  enforce it via pre-commit.
+- **Type checking** -- evaluate adding `mypy` or `pyright` for gradual type checking, at
+  least for new code.
+- **CI pipeline** -- if not already in place, add a GitHub Actions workflow for lint, format
+  check, and tests on PRs.
+
 ### Drop `selenium-wire` or Migrate to Playwright
 
 The `selenium-wire` package forces a `setuptools<81` pin because it depends on the

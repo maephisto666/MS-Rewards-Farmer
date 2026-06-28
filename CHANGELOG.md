@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.7.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/3.6.0...3.7.0) (2026-06-28)
+
+
+### Added
+
+* register Windows scheduled task via PowerShell instead of XML ([#30](https://github.com/maephisto666/MS-Rewards-Farmer/issues/30)) ([c965a29](https://github.com/maephisto666/MS-Rewards-Farmer/commit/c965a29b0f964d257e32e6bc07ee3a32578006ae))
+
 ## [3.6.0] - 2026-05-28
 
 ### Added

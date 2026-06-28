@@ -38,6 +38,11 @@ test/                    # Unit tests (unittest + parameterized)
 
 - Always create a separate branch for code changes (e.g. `fix/`, `feat/`).
 - Exceptions: documentation updates and version bumps can be committed directly to `main`.
+- **Cleanup after merge**: PRs are **squash-merged**, and the remote branch is deleted
+  automatically (`delete_branch_on_merge`). The local branch is left behind and, because
+  squash-merging rewrites history, `git branch --merged` will **not** list it — so delete it
+  with `git branch -D <branch>` (force), not `-d`. Then `git fetch --prune` to drop stale
+  remote-tracking refs. Never delete `origin/feat/better-activities` (a kept reference branch).
 
 ## GitHub and pull requests
 

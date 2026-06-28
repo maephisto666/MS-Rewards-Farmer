@@ -39,6 +39,25 @@ test/                    # Unit tests (unittest + parameterized)
 - Always create a separate branch for code changes (e.g. `fix/`, `feat/`).
 - Exceptions: documentation updates and version bumps can be committed directly to `main`.
 
+## GitHub and pull requests
+
+- The GitHub remote for this project is `git@github.com:maephisto666/MS-Rewards-Farmer.git`
+  (the `origin` remote). Use the `gh` CLI to interact with it (issues, PRs, releases, tags).
+- **This repository is a fork** of the archived upstream `klept0/MS-Rewards-Farmer`. Because
+  of that, `gh` commands default to the *upstream parent*, not this fork.
+- When opening a pull request, the branch **must merge into `main` on
+  `maephisto666/MS-Rewards-Farmer`** — never the upstream parent. Always pass the repo and
+  base explicitly so the PR is not accidentally opened against `klept0`:
+
+  ```sh
+  gh pr create --repo maephisto666/MS-Rewards-Farmer \
+    --base main --head maephisto666:<branch> --title "..." --body "..."
+  ```
+
+- Likewise, scope read commands to this fork explicitly when ambiguity matters, e.g.
+  `gh issue list --repo maephisto666/MS-Rewards-Farmer`. Git tags are visible via `git tag`
+  or `gh api repos/maephisto666/MS-Rewards-Farmer/tags`; GitHub Releases via `gh release list`.
+
 ## Release checklist
 
 - Every version bump in `pyproject.toml` **must** have a corresponding entry in `CHANGELOG.md` in the same commit or PR.

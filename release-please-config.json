@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "include-component-in-tag": false,
+  "include-v-in-tag": false,
+  "bump-minor-pre-major": false,
+  "bump-patch-for-minor-pre-major": false,
+  "draft": false,
+  "prerelease": false,
+  "separate-pull-requests": false,
+  "changelog-type": "default",
+  "changelog-sections": [
+    { "type": "feat",     "section": "Added" },
+    { "type": "fix",      "section": "Fixed" },
+    { "type": "perf",     "section": "Changed" },
+    { "type": "refactor", "section": "Changed" },
+    { "type": "revert",   "section": "Removed" },
+    { "type": "deps",     "section": "Changed" },
+    { "type": "build",    "section": "Changed", "hidden": true },
+    { "type": "ci",       "section": "Changed", "hidden": true },
+    { "type": "chore",    "section": "Changed", "hidden": true },
+    { "type": "docs",     "section": "Changed", "hidden": true },
+    { "type": "style",    "section": "Changed", "hidden": true },
+    { "type": "test",     "section": "Changed", "hidden": true }
+  ],
+  "packages": {
+    ".": {
+      "release-type": "python",
+      "package-name": "ms-rewards-farmer",
+      "extra-files": [
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name == 'ms-rewards-farmer')].version"
+        }
+      ]
+    }
+  }
+}

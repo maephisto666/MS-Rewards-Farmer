@@ -44,11 +44,13 @@
     absolute path. Default: "run.ps1".
 
 .PARAMETER ScriptArgs
-    Arguments passed to the target script. Default: "-r <Retries>". Pass a single space
-    (" ") to launch the target with no arguments.
+    Arguments passed to the target script. When omitted, defaults to "-r <Retries>" for
+    run.ps1 and to nothing for any other target (so a custom launcher is not handed run.ps1's
+    flags). Pass explicitly to override; pass a single space (" ") to force no arguments.
 
 .PARAMETER Retries
-    Convenience value used to build the default -ScriptArgs ("-r <Retries>"). Default: 3.
+    Convenience value used to build the default -ScriptArgs ("-r <Retries>") when the target
+    is run.ps1. Default: 3.
 
 .PARAMETER RunLevel
     Privilege level: "Limited" (default) or "Highest" (elevated). run.ps1 does not need
@@ -98,6 +100,8 @@ $target = if ([System.IO.Path]::IsPathRooted($TargetScript)) {
 if (-not (Test-Path $target)) {
     throw "Could not find target script at '$target'. Run register_task.ps1 from the repository root, or pass -TargetScript."
 }
+# Canonicalise (collapses ".\", "..", mixed separators) for a clean task action.
+$target = (Resolve-Path -LiteralPath $target).Path
 
 # --- Warn (do not block) if not elevated ----------------------------------------
 $isAdmin = ([Security.Principal.WindowsPrincipal] `
@@ -119,7 +123,19 @@ if ([string]::IsNullOrEmpty($plainPass)) {
 }
 
 # --- Build the action ------------------------------------------------------------
-$argLine = if ([string]::IsNullOrWhiteSpace($ScriptArgs)) { "-r $Retries" } else { $ScriptArgs.Trim() }
+# Argument precedence:
+#   1. explicit -ScriptArgs always wins (pass " " for no args)
+#   2. otherwise default to "-r <Retries>" ONLY for run.ps1
+#   3. any other target gets no args (its flags are not run.ps1's)
+$targetIsRunPs1 = (Split-Path -Leaf $target) -ieq "run.ps1"
+if ($PSBoundParameters.ContainsKey('ScriptArgs')) {
+    $argLine = $ScriptArgs.Trim()
+} elseif ($targetIsRunPs1) {
+    $argLine = "-r $Retries"
+} else {
+    $argLine = ""
+}
+
 $psArgs = "-NoProfile -ExecutionPolicy Bypass -File `"$target`""
 if ($argLine) { $psArgs += " $argLine" }
 

@@ -146,6 +146,9 @@ $settings = New-ScheduledTaskSettingsSet `
     -ExecutionTimeLimit ([TimeSpan]::Zero)   # no time limit
 
 try {
+    # -ErrorAction Stop is required: Register-ScheduledTask is a CIM cmdlet and reports a
+    # bad password as a *non-terminating* error, which $ErrorActionPreference does not always
+    # promote. Without this, a failed registration would fall through to the success message.
     Register-ScheduledTask `
         -TaskName $TaskName `
         -Action $action `
@@ -155,26 +158,33 @@ try {
         -Password $plainPass `
         -RunLevel $RunLevel `
         -Description "MS-Rewards-Farmer: runs Bing searches and daily activities to farm Microsoft Rewards points." `
-        -Force | Out-Null
+        -Force `
+        -ErrorAction Stop | Out-Null
+
+    $when = switch ($Schedule) {
+        "Daily" { "daily at $RunAt" }
+        "Startup" { "at startup (+$StartupDelay)" }
+    }
+
+    Write-Host ""
+    Write-Host "Scheduled task '$TaskName' registered." -ForegroundColor Green
+    Write-Host "  Runs    : $when"
+    Write-Host "  As user : $fullUser (whether or not you are logged on)"
+    Write-Host "  Level   : $RunLevel"
+    Write-Host "  Action  : $(Split-Path -Leaf $target) $argLine"
+    Write-Host ""
+    Write-Host "Note: because the task runs in a non-interactive session, keep MS-Rewards-Farmer"
+    Write-Host "in headless mode (browser.visible: false). To remove the task later, run:"
+    Write-Host "  Unregister-ScheduledTask -TaskName '$TaskName' -Confirm:`$false"
+}
+catch {
+    Write-Host ""
+    Write-Error "Failed to register scheduled task '$TaskName': $($_.Exception.Message)"
+    Write-Host "Nothing was scheduled. Fix the issue (e.g. re-enter the correct Windows password) and run again; -Force will overwrite any partial task." -ForegroundColor Yellow
+    exit 1
 }
 finally {
     # Scrub the plaintext password from memory regardless of success/failure.
     $plainPass = $null
     [System.GC]::Collect()
 }
-
-$when = switch ($Schedule) {
-    "Daily" { "daily at $RunAt" }
-    "Startup" { "at startup (+$StartupDelay)" }
-}
-
-Write-Host ""
-Write-Host "Scheduled task '$TaskName' registered." -ForegroundColor Green
-Write-Host "  Runs    : $when"
-Write-Host "  As user : $fullUser (whether or not you are logged on)"
-Write-Host "  Level   : $RunLevel"
-Write-Host "  Action  : $(Split-Path -Leaf $target) $argLine"
-Write-Host ""
-Write-Host "Note: because the task runs in a non-interactive session, keep MS-Rewards-Farmer"
-Write-Host "in headless mode (browser.visible: false). To remove the task later, run:"
-Write-Host "  Unregister-ScheduledTask -TaskName '$TaskName' -Confirm:`$false"

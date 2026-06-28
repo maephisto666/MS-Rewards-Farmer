@@ -344,4 +344,6 @@ sessions/
 logs/
 /google_trends.*
 config.yaml
-MsReward.xml
+
+# Personal, uncommitted launcher (e.g. an elevated forever-loop wrapper)
+/start.ps1

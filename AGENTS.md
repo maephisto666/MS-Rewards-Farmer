@@ -58,9 +58,24 @@ test/                    # Unit tests (unittest + parameterized)
   `gh issue list --repo maephisto666/MS-Rewards-Farmer`. Git tags are visible via `git tag`
   or `gh api repos/maephisto666/MS-Rewards-Farmer/tags`; GitHub Releases via `gh release list`.
 
-## Release checklist
+## Releases (automated via release-please)
 
-- Every version bump in `pyproject.toml` **must** have a corresponding entry in `CHANGELOG.md` in the same commit or PR.
+Versioning, `CHANGELOG.md`, version bumps (`pyproject.toml`, `uv.lock`), git tags, and GitHub
+Releases are all managed automatically by [release-please](https://github.com/googleapis/release-please)
+(`.github/workflows/release-please.yml`). **Do not** edit `CHANGELOG.md` or bump versions by
+hand — release-please derives them from [Conventional Commit](https://www.conventionalcommits.org/)
+history.
+
+How it works:
+
+- On every push to `main`, release-please maintains a standing **release PR** that accumulates
+  the next version bump and changelog. Merging that PR cuts the tag and GitHub Release.
+- The version is derived from commit types since the last release: `feat:` → minor, `fix:` →
+  patch, `feat!:`/`BREAKING CHANGE` → major. `docs:`/`chore:`/`ci:`/etc. are hidden and do not
+  trigger a release.
+- **The repo is squash-merge only**, so a merged PR becomes a single commit whose subject is the
+  **PR title**. That means the PR title's conventional prefix is what determines the release —
+  keep PR titles conventional (e.g. `feat: ...`, `fix: ...`).
 
 ## Key conventions
 

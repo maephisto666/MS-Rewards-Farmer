@@ -81,15 +81,55 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
    information). To allow script execution without confirmation, use the following command:
    `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`.
 
-7. (Windows Only) You can set up automatic execution by generating a Task Scheduler XML file.
+7. (Windows Only) You can set up automatic execution with Windows Task Scheduler.
 
-   If you are a Windows user, run the `generate_task_xml.py` script to create a `.xml` file.
-   After generating the file, import it into Task Scheduler to schedule automatic execution of
-   the script. This will allow the script to run at the specified time without manual
-   intervention.
+   Run the `register_task.ps1` script from an **elevated** (Administrator) PowerShell in the
+   repository root. It creates the scheduled task directly -- no manual import step:
 
-   To import the XML file into Task Scheduler,
-   see [this guide](https://superuser.com/a/485565/709704).
+   ```powershell
+   .\register_task.ps1
+   ```
+
+   By default the task runs `run.ps1` daily at 03:00. You can override the time, task name,
+   account, or retry count:
+
+   ```powershell
+   .\register_task.ps1 -RunAt "07:30" -Retries 5
+   ```
+
+   To run the script **as soon as the computer is on** instead of at a fixed time, use
+   `-Schedule Startup`:
+
+   ```powershell
+   .\register_task.ps1 -Schedule Startup
+   ```
+
+   The startup trigger waits a short delay (default `-StartupDelay PT5M`, i.e. 5 minutes) so
+   the network is up before the run.
+
+   > [!CAUTION]
+   > Use a single trigger (`Daily` **or** `Startup`, not both). Two runs in close succession
+   > have no mutual exclusion and would overload the Microsoft endpoints, which can get the
+   > activity flagged as suspicious.
+
+   The script registers the task to run **whether or not you are logged on**, so it will
+   prompt for your Windows password (required by Windows to store the credentials). Re-running
+   the script updates the existing task in place.
+
+   Advanced: `-TargetScript <path>` launches a different wrapper instead of `run.ps1`, and
+   `-RunLevel Highest` registers the task elevated (only needed if your wrapper requires
+   admin; `run.ps1` does not).
+
+   > [!NOTE]
+   > Because a logged-off task runs in a non-interactive session, keep MS-Rewards-Farmer in
+   > headless mode (`browser.visible: false`, the default). Visible-mode runs require an
+   > interactive logon and will not work from a logged-off scheduled task.
+
+   To remove the task later:
+
+   ```powershell
+   Unregister-ScheduledTask -TaskName "MS-Rewards-Farmer" -Confirm:$false
+   ```
 
 ## Configuration file
 

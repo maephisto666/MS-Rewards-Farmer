@@ -7,6 +7,7 @@
   "draft": false,
   "prerelease": false,
   "separate-pull-requests": false,
+  "pull-request-title-pattern": "chore: release ${version}",
   "changelog-type": "default",
   "changelog-sections": [
     { "type": "feat",     "section": "Added" },
@@ -25,14 +26,7 @@
   "packages": {
     ".": {
       "release-type": "python",
-      "package-name": "ms-rewards-farmer",
-      "extra-files": [
-        {
-          "type": "toml",
-          "path": "uv.lock",
-          "jsonpath": "$.package[?(@.name == 'ms-rewards-farmer')].version"
-        }
-      ]
+      "package-name": "ms-rewards-farmer"
     }
   }
 }

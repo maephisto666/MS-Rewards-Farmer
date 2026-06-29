@@ -42,11 +42,13 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
 
 2. Make sure you have Chrome installed.
 
+
 3. (Windows Only) Make sure Visual C++ redistributable DLLs are installed.
 
    If they're not, install the current "vc_redist.exe" from
    this [link](https://learn.microsoft.com/en-GB/cpp/windows/latest-supported-vc-redist?view=msvc-170)
    and reboot your computer.
+
 
 4. Generate a configuration file:
    ```sh
@@ -58,10 +60,10 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
    The generated config contains sensible defaults that have been proven working in testing.
    You should only need to fill in your account credentials.
 
-> [!WARNING]
-> The `browser.language` setting must be `en-US`. Changing it to a different language will
-> break the login flow, as some steps rely on English labels in the absence of better
-> selectors. You can change `browser.geolocation` to your country code.
+   > [!WARNING]
+   > The `browser.language` setting must be `en-US`. Changing it to a different language will
+   > break the login flow, as some steps rely on English labels in the absence of better
+   > selectors. You can change `browser.geolocation` to your country code.
 
    The `totp` field is not mandatory, only enter your TOTP key if you use it for 2FA (if
    omitting, don't keep it as an empty string, remove the line completely).
@@ -70,6 +72,7 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
    keep it as an empty string, remove the line completely).
 
    You can add or remove accounts according to your will.
+
 
 6. Run the script:
    ```sh
@@ -80,6 +83,7 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
    and re-run the script if it crashes using `.\run.ps1` (`.\run.ps1 -help` for more
    information). To allow script execution without confirmation, use the following command:
    `Set-ExecutionPolicy RemoteSigned -Scope CurrentUser`.
+
 
 7. (Windows Only) You can set up automatic execution with Windows Task Scheduler.
 

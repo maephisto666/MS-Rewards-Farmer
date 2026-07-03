@@ -6,6 +6,12 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 ![GitHub issues](https://img.shields.io/github/issues/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 
+> [!WARNING]
+> **As of July 2026, this project is not working.** Microsoft has rolled out a significant
+> redesign of the Rewards page that breaks the current automation. I am actively working to
+> adapt the code to the new page structure. Do not expect the script to complete activities
+> reliably until a fix is released.
+
 > [!IMPORTANT]
 > If you are multi-accounting and abusing the service for which this is intended -
 **_DO NOT COMPLAIN ABOUT BANS!!!_**
@@ -25,6 +31,7 @@
 - Forked and significantly refactored/maintained by [@klept0](https://github.com/klept0) as [MS-Rewards-Farmer](https://github.com/klept0/MS-Rewards-Farmer), with contributions from a community of volunteers.
 - The [@klept0](https://github.com/klept0) fork was **archived in January 2026**. At that point, the upstream `master` branch was non-functional, and the `develop` branch was in a better state but still not fully working. This repository was created in February 2026 to continue the project, incorporating a series of fixes and improvements that had been developed independently to overcome the limitations of the upstream version.
 - As of March 2026, this fork is in a **working state**. It has been tested for over 2 weeks with consistent results. The script may occasionally fail due to browser timeouts or transient issues -- running it in a loop with a short delay (e.g. 5 minutes) between executions works well in practice.
+- In **July 2026**, Microsoft rolled out a major redesign of the Rewards page, breaking this automation. The new Rewards experience is a React single-page application with a substantially different DOM structure, rendering the existing Selenium selectors ineffective. Additionally, Microsoft appears to have reduced the total number of points earnable per day, which has drawn widespread complaints from the Rewards community on Reddit and similar platforms. Mobile search points also appear to no longer be collectable through browser automation. Work is underway to adapt the code to the new page structure.
 
 ## Installation
 

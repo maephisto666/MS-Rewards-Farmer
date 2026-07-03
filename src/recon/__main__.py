@@ -150,15 +150,19 @@ def _probe_url(driver, url: str, out_dir: Path) -> dict:
 
 
 @click.command()
-@click.option("--email",    "-e",  default=None, help="Account email (overrides config.yaml)")
-@click.option("--password", "-p",  default=None, help="Account password (overrides config.yaml)")
-@click.option("--totp",            default=None, help="TOTP secret for 2FA")
-@click.option("--visible",  "-v",  is_flag=True, help="Show browser window (recommended)")
-@click.option("--out",             default=None, help="Output directory (default: logs/recon/<ts>)")
-@click.option("--config",   "-c",  default=None, help="config.yaml path")
-@click.option("--debug",    "-d",  is_flag=True, help="Enable debug logging")
+@click.option("--email",         "-e",  default=None, help="Account email (overrides config.yaml)")
+@click.option("--password",      "-p",  default=None, help="Account password (overrides config.yaml)")
+@click.option("--totp",                 default=None, help="TOTP secret for 2FA")
+@click.option("--visible",       "-v",  is_flag=True, help="Show browser window (recommended)")
+@click.option("--out",                  default=None, help="Output directory (default: logs/recon/<ts>)")
+@click.option("--config",        "-c",  default=None, help="config.yaml path")
+@click.option("--debug",         "-d",  is_flag=True, help="Enable debug logging")
+@click.option("--reset-session", "-r",  is_flag=True,
+              help="Delete the cached Chrome session for this account before running, "
+                   "forcing a fresh login.")
 def main(email: str | None, password: str | None, totp: str | None,
-         visible: bool, out: str | None, config: str | None, debug: bool) -> None:
+         visible: bool, out: str | None, config: str | None, debug: bool,
+         reset_session: bool) -> None:
     """Log in to Microsoft Rewards and capture evidence about the current page structure."""
     _setup_logging(debug)
 
@@ -194,6 +198,16 @@ def main(email: str | None, password: str | None, totp: str | None,
 
     if visible:
         CONFIG.browser.visible = True
+
+    if reset_session:
+        import shutil
+        from src.utils import getProjectRoot
+        session_dir = getProjectRoot() / "sessions" / account.email
+        if session_dir.exists():
+            shutil.rmtree(session_dir)
+            logging.info(f"Deleted cached session for {account.email} ({session_dir})")
+        else:
+            logging.info(f"No cached session found for {account.email} (nothing to delete)")
 
     out_dir = _out_dir(out)
     logging.info(f"Starting recon for {account.email}")

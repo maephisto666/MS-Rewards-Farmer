@@ -7,16 +7,13 @@ from datetime import datetime
 from enum import Enum, auto
 from logging import handlers
 
-from src import (
-    BonusPoints,
-    Browser,
-    Login,
-    PunchCards,
-    Searches,
-    ReadToEarn,
-)
+from src.bonusPoints import BonusPoints
+from src.browser import Browser, RemainingSearches
+from src.login import Login
+from src.punchCards import PunchCards
+from src.searches import Searches
+from src.readToEarn import ReadToEarn
 from src.activities import Activities
-from src.browser import RemainingSearches
 from src.loggingColoredFormatter import ColoredFormatter
 from src.utils import CONFIG, APPRISE, getProjectRoot, formatNumber
 

@@ -74,10 +74,11 @@ class PunchCards:
                     time.sleep(random.randint(100, 700) / 100)
 
     def completePunchCards(self):
-        # Function to complete all punch cards
-        logging.info("[PUNCH CARDS] " + "Trying to complete the Punch Cards...")
-        self.completePromotionalItems()
-        punchCards = self.browser.utils.getDashboardData()["punchCards"]
+        # Punch cards are not exposed in the new Next.js RSC data model (July 2026
+        # redesign). Skip until a new extraction path is identified.
+        logging.info("[PUNCH CARDS] Skipped — punch card data not available in new dashboard")
+        return
+        punchCards = []
         self.browser.utils.goToRewards()
         for punchCard in punchCards:
             try:
@@ -99,7 +100,8 @@ class PunchCards:
         logging.info("[PUNCH CARDS] Exiting")
 
     def completePromotionalItems(self):
-        # Function to complete promotional items
+        # Promotional items are not exposed in the new Next.js RSC data model.
+        return
         try:
             item = self.browser.utils.getDashboardData()["promotionalItem"]
             if item is None:

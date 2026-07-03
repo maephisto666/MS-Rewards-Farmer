@@ -317,7 +317,14 @@ class Utils:
                 assert (
                     response.status_code == requests.codes.ok
                 )  # pylint: disable=no-member
-                return response.json()
+                data = response.json()
+                logging.debug(
+                    "getBingInfo: isRewardsUser=%s userInfo.balance=%s flyoutResult.userStatus.availablePoints=%s",
+                    data.get("isRewardsUser"),
+                    data.get("userInfo", {}).get("balance"),
+                    data.get("flyoutResult", {}).get("userStatus", {}).get("availablePoints"),
+                )
+                return data
             except (JSONDecodeError, AssertionError) as e:
                 logging.info(f"Attempt {attempt + 1} failed: {e}")
                 if attempt < retries - 1:
@@ -344,19 +351,21 @@ class Utils:
         return "/dashboard" in self.webdriver.current_url
 
     def getAccountPoints(self) -> int:
-        if PREFER_BING_INFO:
-            return self.getBingInfo()["userInfo"]["balance"]
-        return self.getDashboardData()["userStatus"]["availablePoints"]
+        # RSC balance is always accurate; getBingInfo may return 0 in some regions.
+        # getDashboardData() navigates to /dashboard and parses the RSC payload.
+        return self.getDashboardData().balance
 
     def getGoalPoints(self) -> int:
-        if PREFER_BING_INFO:
+        try:
             return self.getBingInfo()["flyoutResult"]["userGoal"]["price"]
-        return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]
+        except (KeyError, TypeError):
+            return 0
 
     def getGoalTitle(self) -> str:
-        if PREFER_BING_INFO:
+        try:
             return self.getBingInfo()["flyoutResult"]["userGoal"]["title"]
-        return self.getDashboardData()["userStatus"]["redeemGoal"]["title"]
+        except (KeyError, TypeError):
+            return ""
 
     def tryDismissAllMessages(self) -> None:
         byValues = [

@@ -25,6 +25,17 @@ _PUSH_RE = re.compile(
 )
 
 
+def _rsc_bool(val, default: bool = False) -> bool:
+    """
+    Coerce an RSC value to bool.
+    The RSC wire format encodes JavaScript `undefined` as the string '$undefined'.
+    Treat it (and None) as the given default rather than as truthy.
+    """
+    if val is None or val == "$undefined":
+        return default
+    return bool(val)
+
+
 @dataclass
 class DailySetItem:
     offer_id: str
@@ -42,12 +53,12 @@ class DailySetItem:
         return cls(
             offer_id=d.get("offerId", ""),
             points=d.get("points", 0),
-            is_completed=bool(d.get("isCompleted", False)),
+            is_completed=_rsc_bool(d.get("isCompleted"), default=False),
             destination=d.get("destination", ""),
             title=d.get("title", ""),
             description=d.get("description", ""),
             date=d.get("date", ""),
-            is_locked=bool(d.get("isLocked", False)),
+            is_locked=_rsc_bool(d.get("isLocked"), default=False),
             image_url=d.get("imageUrl", ""),
         )
 

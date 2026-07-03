@@ -91,6 +91,8 @@ class Browser:
             options.add_argument("--disable-dev-shm-usage")
             options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-default-browser-check")
         options.add_argument("--disable-extensions")
         options.add_argument("--dns-prefetch-disable")
         options.add_argument("--disable-gpu")
@@ -120,16 +122,16 @@ class Browser:
                 driver_executable_path="/usr/bin/chromedriver",
             )
         else:
-            # Obtain webdriver chrome driver version
             version = self.getChromeVersion()
             major = int(version.split(".")[0])
-
+            logging.debug(f"browserSetup: launching UC Chrome {major} with profile {self.userDataDir}")
             driver = webdriver.Chrome(
                 options=options,
                 seleniumwire_options=seleniumwireOptions,
                 user_data_dir=self.userDataDir.as_posix(),
                 version_main=major,
             )
+            logging.debug("browserSetup: UC Chrome launched")
 
         seleniumLogger = logging.getLogger("seleniumwire")
         seleniumLogger.setLevel(logging.ERROR)
@@ -258,16 +260,18 @@ class Browser:
 
     @staticmethod
     def getChromeVersion() -> str:
+        logging.debug("getChromeVersion: starting temporary headless Chrome")
         chrome_options = ChromeOptions()
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--no-first-run")
+        chrome_options.add_argument("--no-default-browser-check")
+        chrome_options.add_argument("--disable-default-apps")
         driver = WebDriver(options=chrome_options)
         version = driver.capabilities["browserVersion"]
-
+        logging.debug(f"getChromeVersion: detected Chrome {version}")
         driver.close()
         driver.quit()
-        # driver.__exit__(None, None, None)
-
         return version
 
     def getRemainingSearches(

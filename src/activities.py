@@ -12,6 +12,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from src.browser import Browser
 from src.constants import REWARDS_URL
+from src.rsc import DailySetItem
 from src.utils import (
     CONFIG,
     APPRISE,
@@ -144,108 +145,136 @@ class Activities:
             getAnswerCode(answerEncodeKey, answerTitle),
         )
 
-    def completeActivity(self, activity: dict) -> None:
-        activityTitle = cleanupActivityTitle(activity["title"])
-        logging.debug(f"activityTitle={activityTitle}")
-        logging.debug(f"activity attributes: {list(activity.get('attributes', {}).keys())}")
+    def completeActivity(self, item: DailySetItem) -> None:
+        title = cleanupActivityTitle(item.title)
+        logging.debug("completeActivity: title=%r destination=%r points=%d", title, item.destination, item.points)
 
-        if activity["complete"] or activity["pointProgressMax"] == 0:
-            logging.debug("Already done, returning")
+        if item.is_completed:
+            logging.debug("Already completed, skipping")
             return
-        if activityTitle in IGNORED_ACTIVITIES:
-            logging.debug(f"Ignoring {activityTitle}")
+        if item.is_locked:
+            logging.debug("Locked, skipping")
             return
-        if "puzzle" in activityTitle.lower() or "Windows search" == activityTitle:
-            logging.info(f"[ACTIVITY] Skipping '{activityTitle}' because it's not supported")
+        if item.points == 0:
+            logging.debug("Zero points, skipping")
+            return
+        if title in IGNORED_ACTIVITIES:
+            logging.debug("Ignored activity, skipping: %r", title)
+            return
+        if "puzzle" in title.lower() or title == "Windows search":
+            logging.info("[ACTIVITY] Skipping '%s' (not supported)", title)
             return
 
-        if activityTitle not in ACTIVITY_TITLES_TO_QUERIES:
-            if activityTitle not in self.unmapped_activities:
-                self.unmapped_activities.append(activityTitle)
+        if title not in ACTIVITY_TITLES_TO_QUERIES and title not in self.unmapped_activities:
+            self.unmapped_activities.append(title)
 
-        if activity["attributes"].get("is_unlocked", "True") != "True":
-            logging.debug("Activity locked, returning")
+        if not item.destination:
+            logging.warning("[ACTIVITY] No destination URL for '%s', skipping", title)
             return
 
         try:
-            activityElement = self.browser.utils.waitUntilClickable(
-                By.XPATH, f'//*[contains(text(), "{activity["title"]}")]', timeToWait=20
-            )
-            self.browser.utils.click(activityElement)
-            self.browser.utils.switchToNewTab()
-            with contextlib.suppress(TimeoutException):
-                searchbar = self.browser.utils.waitUntilClickable(
-                    By.ID, "sb_form_q", timeToWait=30
+            logging.info("[ACTIVITY] Starting '%s' → %s", title, item.destination)
+            self.webdriver.get(item.destination)
+
+            # Wait for the destination page to settle
+            sleep(3)
+
+            # Detect page type by what's present on the destination page
+            # and handle accordingly.
+
+            # Quiz page (rewardsQuizRenderInfo global present)
+            try:
+                max_questions = self.webdriver.execute_script(
+                    "return typeof _w !== 'undefined' && _w.rewardsQuizRenderInfo "
+                    "? _w.rewardsQuizRenderInfo.maxQuestions : null"
                 )
+                num_options = self.webdriver.execute_script(
+                    "return typeof _w !== 'undefined' && _w.rewardsQuizRenderInfo "
+                    "? _w.rewardsQuizRenderInfo.numberOfOptions : null"
+                )
+                if max_questions is not None:
+                    logging.info("[ACTIVITY] Quiz detected (maxQuestions=%s options=%s)", max_questions, num_options)
+                    if num_options == 8 or num_options in [2, 3, 4]:
+                        self.completeQuiz()
+                    else:
+                        self.completeThisOrThat()
+                    return
+            except Exception:
+                pass
+
+            # Poll / survey page (btoption elements)
+            with contextlib.suppress(Exception):
+                if self.webdriver.find_elements(By.ID, "btoption0"):
+                    logging.info("[ACTIVITY] Poll detected")
+                    self.completeSurvey()
+                    return
+
+            # ABC-style quiz (QuestionPane0 present)
+            with contextlib.suppress(Exception):
+                if self.webdriver.find_elements(By.XPATH, '//*[@id="QuestionPane0"]'):
+                    logging.info("[ACTIVITY] ABC quiz detected")
+                    self.completeABC()
+                    return
+
+            # Search / URL-reward: try to interact with the searchbar if present,
+            # otherwise just navigating to the destination URL is sufficient.
+            searchbar = None
+            with contextlib.suppress(TimeoutException):
+                searchbar = self.browser.utils.waitUntilClickable(By.ID, "sb_form_q", timeToWait=10)
+
+            if searchbar is not None:
                 self.browser.utils.click(searchbar)
                 searchbar.clear()
-            if activityTitle in ACTIVITY_TITLES_TO_QUERIES:
-                queries = ACTIVITY_TITLES_TO_QUERIES[activityTitle]
-                query = random.choice(queries)
+                if title in ACTIVITY_TITLES_TO_QUERIES:
+                    query = random.choice(ACTIVITY_TITLES_TO_QUERIES[title])
+                else:
+                    # Use the search term already embedded in the destination URL if possible
+                    import urllib.parse
+                    qs = urllib.parse.urlparse(item.destination).query
+                    params = urllib.parse.parse_qs(qs)
+                    query = (params.get("q") or params.get("query") or [title])[0]
                 searchbar.send_keys(query)
                 searchbar.submit()
-                WebDriverWait(self.webdriver, 10).until(
-                    EC.presence_of_element_located((By.ID, "b_results"))
-                )
-                logging.info(f"[ACTIVITY] Search submitted for '{activityTitle}' with query '{query}'")
-            elif "poll" in activityTitle:
-                self.completeSurvey()
-            elif activity["promotionType"] == "urlreward":
-                self.completeSearch()
-            elif activity["promotionType"] == "quiz":
-                if activity["pointProgressMax"] == 10:
-                    self.completeABC()
-                elif activity["pointProgressMax"] in [30, 40]:
-                    self.completeQuiz()
-                elif activity["pointProgressMax"] == 50:
-                    self.completeThisOrThat()
+                with contextlib.suppress(TimeoutException):
+                    WebDriverWait(self.webdriver, 10).until(
+                        EC.presence_of_element_located((By.ID, "b_results"))
+                    )
+                logging.info("[ACTIVITY] Search submitted for '%s' with query '%s'", title, query)
             else:
-                searchbar.send_keys(activityTitle)
-                searchbar.submit()
-                WebDriverWait(self.webdriver, 10).until(
-                    EC.presence_of_element_located((By.ID, "b_results"))
-                )
-                logging.info(f"[ACTIVITY] No mapped query, used title as fallback for '{activityTitle}'")
-            logging.debug("Done")
+                # Pure URL-reward: navigation to destination is the activity.
+                logging.info("[ACTIVITY] URL-reward navigation complete for '%s'", title)
+
         except Exception:
-            logging.error(f"[ACTIVITY] Error doing '{activityTitle}'", exc_info=True)
-            logging.debug(f"activity={activity}")
+            logging.error("[ACTIVITY] Error completing '%s'", title, exc_info=True)
             return
         finally:
             self.browser.utils.resetTabs()
         cooldown()
 
     def completeActivities(self):
-        logging.info("[ACTIVITIES] " + "Trying to complete all activities...")
-        activities = self.browser.utils.getActivities()
-        for activity in activities:
-            self.completeActivity(activity)
+        logging.info("[ACTIVITIES] Trying to complete all activities...")
+        items = self.browser.utils.getActivities()
+        for item in items:
+            self.completeActivity(item)
         if self.unmapped_activities:
             logging.info(
-                f"[ACTIVITIES] Activities with no mapped query (title used as fallback): "
-                f"{', '.join(repr(t) for t in self.unmapped_activities)}"
+                "[ACTIVITIES] Activities with no mapped query (destination URL used as fallback): %s",
+                ", ".join(repr(t) for t in self.unmapped_activities),
             )
-        logging.info("[ACTIVITIES] " + "Done")
+        logging.info("[ACTIVITIES] Done")
 
-        # todo Send one email for all accounts?
-        if CONFIG.get("apprise.notify.incomplete-activity"):  # todo Use fancy new way
-            incompleteActivities: list[str] = []
-            activitiesBefore = activities
-            activitiesAfter = [activity for activity in self.browser.utils.getActivities() if activity in activitiesBefore]
-
-            for activity in activitiesAfter:
-                activityTitle = cleanupActivityTitle(activity["title"])
-                if (
-                    activityTitle not in IGNORED_ACTIVITIES
-                    and activity["pointProgress"] < activity["pointProgressMax"]
-                    and activity["attributes"].get("is_unlocked", "True") == "True"
-                    # todo Add check whether activity was in original set, in case added in between
-                ):
-                    incompleteActivities.append(activityTitle)
-            if incompleteActivities:
-                logging.info(f"incompleteActivities: {incompleteActivities}")
+        if CONFIG.get("apprise.notify.incomplete-activity"):
+            items_after = self.browser.utils.getActivities()
+            incomplete = [
+                cleanupActivityTitle(i.title)
+                for i in items_after
+                if not i.is_completed and not i.is_locked
+                and cleanupActivityTitle(i.title) not in IGNORED_ACTIVITIES
+            ]
+            if incomplete:
+                logging.info("incompleteActivities: %s", incomplete)
                 APPRISE.notify(
-                    '"' + '", "'.join(incompleteActivities) + '"\n' + REWARDS_URL,
+                    '"' + '", "'.join(incomplete) + '"\n' + REWARDS_URL,
                     f"We found some incomplete activities for {self.browser.email}",
                 )
 

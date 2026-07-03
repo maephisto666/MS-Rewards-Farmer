@@ -39,7 +39,7 @@ from urllib3 import Retry
 
 from .constants import REWARDS_URL, SEARCH_URL
 
-PREFER_BING_INFO = False
+PREFER_BING_INFO = True
 
 
 class Config(dict):
@@ -254,9 +254,10 @@ class Utils:
 
     def goToRewards(self) -> None:
         self.webdriver.get(REWARDS_URL)
-        assert (
-            self.webdriver.current_url == REWARDS_URL
-        ), f"{self.webdriver.current_url} {REWARDS_URL}"
+        # The page may redirect: rewards.bing.com/ → rewards.bing.com/dashboard
+        assert self.webdriver.current_url.startswith(
+            "https://rewards.bing.com/"
+        ), f"Unexpected URL after navigating to Rewards: {self.webdriver.current_url}"
         self.dismissCookieBanner()
 
     def dismissCookieBanner(self) -> None:
@@ -283,22 +284,22 @@ class Utils:
     def goToSearch(self) -> None:
         self.webdriver.get(SEARCH_URL)
 
-    # Prefer getBingInfo if possible
-    def getDashboardData(self) -> dict:
+    def getDashboardData(self):
+        """
+        Navigate to the Rewards dashboard and parse the RSC wire-format payload
+        embedded in the page HTML. Returns a DashboardData object.
+
+        The old window.dashboard global is gone as of the July 2026 Next.js
+        App Router redesign. All data now arrives server-rendered in
+        self.__next_f.push() inline scripts.
+        """
+        from src.rsc import parse_dashboard, DashboardData  # local import: avoids circular deps
         self.goToRewards()
-        time.sleep(5)  # fixme Avoid busy wait (if this works)
-        return self.webdriver.execute_script("return dashboard")
+        return parse_dashboard(self.webdriver.page_source)
 
-    def getDailySetPromotions(self) -> list[dict]:
-        return self.getDashboardData()["dailySetPromotions"][
-            date.today().strftime("%m/%d/%Y")
-        ]
-
-    def getMorePromotions(self) -> list[dict]:
-        return self.getDashboardData()["morePromotions"]
-
-    def getActivities(self) -> list[dict]:
-        return self.getDailySetPromotions() + self.getMorePromotions()
+    def getActivities(self):
+        """Return the list of today's daily-set items from the RSC dashboard."""
+        return self.getDashboardData().daily_set_items
 
     def getBingInfo(self) -> Any:
         session = makeRequestsSession()
@@ -329,18 +330,18 @@ class Utils:
                     raise
 
     def isLoggedIn(self) -> bool:
-        if self.getBingInfo()["isRewardsUser"]:  # faster, if it works
-            return True
-        self.webdriver.get(
-            "https://rewards.bing.com/"
-        )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
+        try:
+            if self.getBingInfo()["isRewardsUser"]:
+                return True
+        except Exception:
+            pass
+        # Fallback: navigate and check for dashboard redirect
+        self.webdriver.get("https://rewards.bing.com/")
         with contextlib.suppress(TimeoutException):
-            self.waitUntilVisible(
-                By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
+            WebDriverWait(self.webdriver, 10).until(
+                lambda d: "/dashboard" in d.current_url or "welcome" in d.current_url
             )
-
-            return self.webdriver.current_url != "https://rewards.bing.com/welcome?idru=%2F"
-        return False
+        return "/dashboard" in self.webdriver.current_url
 
     def getAccountPoints(self) -> int:
         if PREFER_BING_INFO:

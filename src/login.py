@@ -350,10 +350,10 @@ class Login:
                 return "other_ways"
 
             if (
-                "passkey/enroll" in self.webdriver.current_url
+                "/dashboard" in self.webdriver.current_url
+                or "passkey/enroll" in self.webdriver.current_url
                 or self._find_first_visible([(By.NAME, "kmsiForm")])
                 or self._find_first_visible([(By.ID, "iPageTitle")])
-                or self._find_first_visible([(By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]')])
             ):
                 return "post_login"
 
@@ -430,9 +430,11 @@ class Login:
         self.check_banned_user()
 
         for _ in range(5):
+            if "/dashboard" in self.webdriver.current_url:
+                return
             try:
-                self.utils.waitUntilVisible(
-                    By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 5
+                WebDriverWait(self.webdriver, 5).until(
+                    lambda d: "/dashboard" in d.current_url
                 )
                 return
             except TimeoutException:
@@ -504,6 +506,6 @@ class Login:
             print("Account protection detected, handle prompts and press enter when on rewards page")
             input()
 
-        self.utils.waitUntilVisible(
-            By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]'
+        WebDriverWait(self.webdriver, 30).until(
+            lambda d: "/dashboard" in d.current_url,
         )

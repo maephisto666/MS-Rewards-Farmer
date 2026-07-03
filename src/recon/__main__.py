@@ -59,6 +59,29 @@ def _out_dir(base: str | None) -> Path:
     return getProjectRoot() / "logs" / "recon" / ts
 
 
+def _save_login_failure(driver, out_dir: Path) -> None:
+    """Capture page state at the moment of login failure for diagnosis."""
+    failure_dir = out_dir / "login_failure"
+    failure_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        png = driver.get_screenshot_as_png()
+        (failure_dir / "screenshot.png").write_bytes(png)
+        logging.info(f"Login-failure screenshot saved to {failure_dir}/screenshot.png")
+    except Exception as exc:
+        logging.warning(f"Could not take login-failure screenshot: {exc}")
+    try:
+        source = driver.page_source or ""
+        (failure_dir / "page_source.html").write_text(source[:500_000], encoding="utf-8")
+    except Exception as exc:
+        logging.warning(f"Could not capture login-failure page source: {exc}")
+    try:
+        url = driver.current_url
+        (failure_dir / "url.txt").write_text(url, encoding="utf-8")
+        logging.info(f"Login failure URL: {url}")
+    except Exception:
+        pass
+
+
 def _probe_url(driver, url: str, out_dir: Path) -> dict:
     """Navigate to url, wait for the SPA, and capture all evidence."""
     from src.recon.capture import JS_FINGERPRINT, process_network_requests, write_evidence
@@ -180,13 +203,23 @@ def main(email: str | None, password: str | None, totp: str | None,
         driver = browser.webdriver
 
         logging.info("Running login flow ...")
+        login_ok = False
         try:
             Login(browser).login()
-        except LoginError as exc:
-            logging.error(f"Login failed: {exc}")
-            raise SystemExit(1)
+            login_ok = True
+        except Exception as exc:
+            # The driver is still alive (login.py no longer closes it on error).
+            # Capture a screenshot now so we can see exactly what state the page is in,
+            # then continue with URL probes — we may actually be authenticated even if
+            # the post-login verification selector is gone (e.g. after the July 2026 redesign).
+            logging.warning(f"Login raised an exception: {exc}")
+            logging.warning("Capturing login-failure screenshot and continuing with URL probes ...")
+            _save_login_failure(driver, out_dir)
 
-        logging.info("Login complete. Starting URL probes ...")
+        if not login_ok:
+            logging.info("Attempting URL probes despite login exception (may still be authenticated) ...")
+
+        logging.info("Starting URL probes ...")
 
         results = []
         for url in PROBE_URLS:

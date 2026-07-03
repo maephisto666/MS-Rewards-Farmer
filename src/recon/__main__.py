@@ -166,16 +166,23 @@ def main(email: str | None, password: str | None, totp: str | None,
     """Log in to Microsoft Rewards and capture evidence about the current page structure."""
     _setup_logging(debug)
 
-    # All src imports happen here — after click has parsed its args
+    # Rebuild sys.argv with only the args the main bot's parser understands.
+    # This must happen BEFORE any src import, because src.utils.loadConfig() calls
+    # argumentParser().parse_args() at module level and will error on unknown flags.
+    _main_argv = [sys.argv[0]]
+    if visible: _main_argv += ["-v"]
+    if email:   _main_argv += ["-em", email]
+    if password: _main_argv += ["-pw", password]
+    if totp:    _main_argv += ["-totp", totp]
+    if config:  _main_argv += ["-c", config]
+    if debug:   _main_argv += ["-d"]
+    sys.argv = _main_argv
+
+    # All src imports happen here — after click has parsed its args and sys.argv is clean
     from src.browser import Browser
     from src.login import Login, LoginError
     from src.recon.capture import print_summary
     from src.utils import CONFIG
-
-    # Override config path if given
-    if config:
-        import os
-        os.environ["MSRF_CONFIG"] = config  # not used yet; placeholder for future
 
     # Build a minimal account-like object from CLI args or fall back to config
     account = None

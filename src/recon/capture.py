@@ -236,6 +236,101 @@ def _network_summary(reqs: list[dict]) -> dict:
 # Terminal summary
 # ---------------------------------------------------------------------------
 
+def write_recon_summary_md(
+    path: Path,
+    account_email: str,
+    login_ok: bool,
+    results: list[dict],
+    rsc_data,           # DashboardData | None  (avoid importing src.rsc here)
+    rsc_errors: list[str],
+) -> None:
+    """Write a human-readable SUMMARY.md to path."""
+    from datetime import datetime, timezone
+
+    lines: list[str] = []
+    ts = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+
+    lines += [
+        "# MS Rewards Recon Summary",
+        "",
+        f"**Date:** {ts}  ",
+        f"**Account:** {account_email}  ",
+        f"**Login:** {'OK' if login_ok else 'FAILED'}  ",
+        "",
+    ]
+
+    # --- Framework fingerprint from first probed URL ---
+    first = next((r for r in results if r.get("fingerprint")), None)
+    if first:
+        fp = first["fingerprint"]
+        lines += ["## Framework", ""]
+        lines += ["| | |", "|---|---|"]
+        r_info = fp.get("react", {})
+        nj_info = fp.get("next_js", {})
+        dg_info = fp.get("dashboard_global", {})
+        lines.append(f"| React | {'YES' if r_info.get('detected') else 'NO'} (v{r_info.get('version') or '?'}) |")
+        lines.append(f"| Next.js | {'YES' if nj_info.get('detected') else 'NO'} (v{nj_info.get('version') or '?'}) |")
+        lines.append(f"| window.dashboard | {'YES' if dg_info.get('exists') else 'NO'} |")
+        interesting = fp.get("interesting_globals", [])
+        if interesting:
+            lines.append(f"| Interesting globals | `{'`, `'.join(interesting[:10])}` |")
+        lines.append(f"| Page title | {fp.get('page_title', '')} |")
+        lines.append(f"| Final URL | {first['final_url']} |")
+        lines.append("")
+
+    # --- RSC Dashboard data ---
+    lines += ["## Dashboard (RSC)", ""]
+    if rsc_errors:
+        for err in rsc_errors:
+            lines.append(f"> ⚠️ {err}")
+        lines.append("")
+        lines.append("Check `page_source.html` in the evidence directory for the raw HTML.")
+        lines.append("")
+    if rsc_data is not None:
+        lines += ["| Field | Value |", "|---|---|"]
+        lines.append(f"| Balance | {rsc_data.balance:,} pts |")
+        lines.append(f"| Level | {rsc_data.level} |")
+        lines.append(
+            f"| Activities | {rsc_data.activities_remaining} remaining "
+            f"/ {rsc_data.activities_requirement} required "
+            f"(progress: {rsc_data.activities_progress}) |"
+        )
+        lines.append("")
+
+        if rsc_data.daily_set_items:
+            lines += ["## Daily Set Items", ""]
+            lines += ["| # | Title | Points | Done | Locked | Destination |", "|---|---|---|---|---|---|"]
+            for i, item in enumerate(rsc_data.daily_set_items, 1):
+                done = "✓" if item.is_completed else ""
+                locked = "🔒" if item.is_locked else ""
+                dest = item.destination[:80] + "…" if len(item.destination) > 80 else item.destination
+                title = item.title or item.offer_id or f"item-{i}"
+                lines.append(f"| {i} | {title} | {item.points} | {done} | {locked} | {dest} |")
+            lines.append("")
+        else:
+            lines += ["## Daily Set Items", "", "_No items parsed._", ""]
+
+    # --- URL probes ---
+    lines += ["## URL Probes", ""]
+    for r in results:
+        arrow = f" → {r['final_url']}" if r.get("redirected") else ""
+        lines.append(f"- `{r['probed_url']}`{arrow}")
+    lines.append("")
+
+    # --- Issues ---
+    issues: list[str] = []
+    if not login_ok:
+        issues.append("Login failed — evidence captured at login_failure/")
+    issues.extend(rsc_errors)
+    if issues:
+        lines += ["## Issues", ""]
+        for issue in issues:
+            lines.append(f"- {issue}")
+        lines.append("")
+
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def print_summary(url: str, fingerprint: dict | None, network_requests: list[dict], out_dir: Path) -> None:
     def _yn(v: bool) -> str:
         return "YES" if v else "NO"

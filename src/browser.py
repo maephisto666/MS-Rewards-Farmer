@@ -291,7 +291,7 @@ class Browser:
             pointProgressMax: int = pcSearch["pointProgressMax"]
 
             searchPoints: int = 1
-            if pointProgressMax in [30, 90, 102]:
+            if pointProgressMax in [30, 60, 90, 102]:
                 searchPoints = 3
             elif pointProgressMax in [50, 150] or pointProgressMax >= 170:
                 searchPoints = 5

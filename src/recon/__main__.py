@@ -146,6 +146,7 @@ def _probe_url(driver, url: str, out_dir: Path) -> dict:
         "fingerprint": fingerprint,
         "network": network,
         "evidence_dir": evidence_dir,
+        "page_source": page_source,
     }
 
 
@@ -181,22 +182,23 @@ def main(email: str | None, password: str | None, totp: str | None,
     # All src imports happen here — after click has parsed its args and sys.argv is clean
     from src.browser import Browser
     from src.login import Login, LoginError
-    from src.recon.capture import print_summary
+    from src.recon.capture import print_summary, write_recon_summary_md
+    from src.rsc import parse_dashboard
     from src.utils import CONFIG
 
     # Build a minimal account-like object from CLI args or fall back to config
-    account = None
+    selected_account = None
     if email and password:
         from src.utils import Config
-        account = Config({"email": email, "password": password})
+        selected_account = Config({"email": email, "password": password})
         if totp:
-            account.totp = totp
+            selected_account.totp = totp
     else:
         accounts = getattr(CONFIG, "accounts", []) or []
         if accounts:
-            account = accounts[0]
+            selected_account = accounts[0]
 
-    if account is None:
+    if selected_account is None:
         click.echo(
             "No account found. Provide --email/--password or add an account to config.yaml.",
             err=True,
@@ -209,18 +211,18 @@ def main(email: str | None, password: str | None, totp: str | None,
     if reset_session:
         import shutil
         from src.utils import getProjectRoot
-        session_dir = getProjectRoot() / "sessions" / account.email
+        session_dir = getProjectRoot() / "sessions" / selected_account.email
         if session_dir.exists():
             shutil.rmtree(session_dir)
-            logging.info(f"Deleted cached session for {account.email} ({session_dir})")
+            logging.info(f"Deleted cached session for {selected_account.email} ({session_dir})")
         else:
-            logging.info(f"No cached session found for {account.email} (nothing to delete)")
+            logging.info(f"No cached session found for {selected_account.email} (nothing to delete)")
 
     out_dir = _out_dir(out)
-    logging.info(f"Starting recon for {account.email}")
+    logging.info(f"Starting recon for {selected_account.email}")
     logging.info(f"Output directory: {out_dir}")
 
-    with Browser(mobile=False, account=account) as browser:
+    with Browser(mobile=False, account=selected_account) as browser:
         driver = browser.webdriver
 
         logging.info("Running login flow ...")
@@ -249,6 +251,38 @@ def main(email: str | None, password: str | None, totp: str | None,
                 results.append(findings)
             except Exception as exc:
                 logging.error(f"Probe of {url} failed: {exc}")
+
+        # Parse RSC dashboard data from the rewards page (first result that landed on /dashboard)
+        rsc_data = None
+        rsc_errors: list[str] = []
+        rewards_result = next(
+            (r for r in results if "rewards" in r.get("final_url", "")), None
+        )
+        if rewards_result and rewards_result.get("page_source"):
+            try:
+                rsc_data = parse_dashboard(rewards_result["page_source"])
+                if rsc_data.balance == 0 and not rsc_data.daily_set_items:
+                    rsc_errors.append(
+                        "RSC parser returned zeros and no daily set items — "
+                        "page structure may have changed or login failed."
+                    )
+            except Exception as exc:
+                rsc_errors.append(f"RSC parse_dashboard raised: {exc}")
+        else:
+            rsc_errors.append("No rewards page source captured — login may have failed.")
+
+        # Write markdown summary
+        summary_path = out_dir / "SUMMARY.md"
+        write_recon_summary_md(
+            path=summary_path,
+            account_email=selected_account.email,
+            login_ok=login_ok,
+            results=results,
+            rsc_data=rsc_data,
+            rsc_errors=rsc_errors,
+        )
+        logging.info(f"Summary written → {summary_path}")
+        print(f"\n  Summary MD: {summary_path}\n")
 
         for r in results:
             print_summary(

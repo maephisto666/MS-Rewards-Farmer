@@ -127,11 +127,11 @@ class AppriseSummary(Enum):
     """
     ON_ERROR = auto()
     """
-    only sends email if for some reason there's remaining searches 
+    only sends email if for some reason there's remaining searches
     """
     NEVER = auto()
     """
-    never send summary 
+    never send summary
     """
 
 

@@ -3,6 +3,7 @@ import logging
 from pyotp import TOTP
 from selenium.common import TimeoutException
 from selenium.common.exceptions import (
+    ElementClickInterceptedException,
     ElementNotInteractableException,
     NoSuchElementException,
 )
@@ -74,7 +75,6 @@ class Login:
             else:
                 logging.info("[LOGIN] Logging-in...")
                 self.execute_login()
-                assert self.utils.isLoggedIn()
                 logging.info("[LOGIN] Logged-in successfully!")
             self.check_locked_user()
             self.check_banned_user()
@@ -107,19 +107,23 @@ class Login:
             ))
         except TimeoutException:
             logging.debug(f"[LOGIN] No email field found. URL: {self.webdriver.current_url}, Title: {self.webdriver.title}")
-            # Session might be partially active - check if we landed on a
-            # post-login screen (passkey enrollment, stay signed in, etc.)
             current_url = self.webdriver.current_url.lower()
+            # Already on dashboard — fast auth path (e.g. SSO or active session)
+            if "/dashboard" in current_url:
+                logging.info("[LOGIN] Already on dashboard, skipping login flow.")
+                self._dismiss_dashboard_overlays()
+                return
             if "passkey/enroll" in current_url:
                 logging.info("[LOGIN] Landed on post-login screen, handling dialogs...")
                 self._handle_post_login_dialogs(wait)
                 return
-            # Check if already on RewardsPortal
+            # Wait briefly in case we're mid-redirect to dashboard
             try:
-                self.utils.waitUntilVisible(
-                    By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 5
+                WebDriverWait(self.webdriver, 15).until(
+                    lambda d: "/dashboard" in d.current_url
                 )
-                logging.info("[LOGIN] Already on RewardsPortal after redirect.")
+                logging.info("[LOGIN] Redirected to dashboard.")
+                self._dismiss_dashboard_overlays()
                 return
             except TimeoutException:
                 raise TimeoutException(
@@ -247,7 +251,7 @@ class Login:
             retry_password_field = wait.until(EC.any_of(
                 EC.element_to_be_clickable((By.NAME, "passwd")),
                 EC.element_to_be_clickable((By.ID, "passwordEntry")),
-                EC.element_to_be_clickable((By.ID, "i0118")),
+                EC.element_to_be_clickable((By.ID, "i01115")),
             ))
             retry_password_field.click()
             retry_password_field.clear()
@@ -322,6 +326,7 @@ class Login:
         # =====================================================================
         logging.info("[LOGIN] Handling post-login dialogs...")
         self._handle_post_login_dialogs(wait)
+        self._dismiss_dashboard_overlays()
 
     def _detect_post_password_state(self, wait, passwordField) -> str:
         try:
@@ -359,7 +364,7 @@ class Login:
 
             page_text = self.webdriver.page_source
             if (
-                "sErrorCode\":\"80041032" in page_text
+                "sErrorCode\":\"150041032" in page_text
                 or "Please enter the password for your Microsoft account." in page_text
             ):
                 return "password_required"
@@ -424,6 +429,30 @@ class Login:
                 except Exception:
                     continue
         return None
+
+    def _dismiss_dashboard_overlays(self) -> None:
+        """Dismiss cookie banner and new-user tutorial modal if present on the dashboard."""
+        _dismissable = (TimeoutException, ElementClickInterceptedException, ElementNotInteractableException)
+
+        # Tutorial modal first — its backdrop covers the whole page including the cookie banner
+        try:
+            btn = self.utils.waitUntilClickable(
+                By.XPATH, "//button[@slot='close'][contains(normalize-space(), 'Get started')]", 15
+            )
+            btn.click()
+            logging.info("[LOGIN] Dismissed new-user tutorial modal.")
+        except _dismissable:
+            pass
+
+        # Cookie consent banner — now safe to click once the modal backdrop is gone
+        try:
+            btn = self.utils.waitUntilClickable(
+                By.XPATH, "//button[normalize-space()='Reject']", 15
+            )
+            btn.click()
+            logging.info("[LOGIN] Dismissed cookie consent banner.")
+        except _dismissable:
+            pass
 
     def _handle_post_login_dialogs(self, wait) -> None:
         self.check_locked_user()

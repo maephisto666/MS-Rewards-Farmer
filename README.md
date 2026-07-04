@@ -26,7 +26,6 @@
 - [Configuration file](#configuration-file)
 - [Usage](#usage)
 - [Features](#features)
-- [Contributing](#contributing)
 
 ## Project History
 
@@ -268,7 +267,3 @@ You can display this message at any moment using `python main.py -h`.
 > Mobile searches are no longer automated. After Microsoft's July 2026 Rewards redesign,
 > mobile searches do not yield points through browser automation.
 
-## Contributing
-
-Fork this repo and create a pull request into `main`. Extra points if you update the
-[CHANGELOG.md](CHANGELOG.md).

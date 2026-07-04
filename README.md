@@ -11,13 +11,22 @@
 **_DO NOT COMPLAIN ABOUT BANS!!!_**
 
 > [!CAUTION]
-> Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
+> Use it at your own risk, M$ may ban your account (and I would not be responsible for it).
 >
-> Do not run more than one account at a time.
+> Based on signals from the community, the following practices appear to reduce ban risk:
 >
-> Do not use more than one phone number per 5 accounts.
->
-> Do not redeem more than one reward per day.
+> - Do not run more than one account at a time.
+> - Do not use more than one phone number per 5 accounts.
+> - Do not redeem more than one reward per day.
+
+## Table of Contents
+
+- [Project History](#project-history)
+- [Installation](#installation)
+- [Configuration file](#configuration-file)
+- [Usage](#usage)
+- [Features](#features)
+- [Contributing](#contributing)
 
 ## Project History
 
@@ -241,7 +250,7 @@ You can display this message at any moment using `python main.py -h`.
 
 ## Features
 
-- Bing searches (Desktop and Mobile) with current User-Agents
+- Bing desktop searches with current User-Agents
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
@@ -254,6 +263,10 @@ You can display this message at any moment using `python main.py -h`.
   Telegram or Discord
 - Proxy Support (3.0) - they need to be **high quality** proxies
 - Logs to CSV file for point tracking
+
+> [!NOTE]
+> Mobile searches are no longer automated. After Microsoft's July 2026 Rewards redesign,
+> mobile searches do not yield points through browser automation.
 
 ## Contributing
 

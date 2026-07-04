@@ -72,6 +72,7 @@ Rules:
 - `BREAKING CHANGE: <description>` footer (or `!` suffix) triggers a major version bump.
 - `docs:` / `chore:` / `ci:` / `test:` / `refactor:` commits are hidden in the CHANGELOG and
   do **not** trigger a release by themselves.
+- **Never commit or push unless explicitly asked.** Wait for the user to say "commit" or "push".
 
 ## Branching rules
 

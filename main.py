@@ -163,9 +163,12 @@ def executeBot(currentAccount):
             goalPoints = utils.getGoalPoints()
             goalTitle = utils.getGoalTitle()
 
-            remainingSearches = desktopBrowser.getRemainingSearches(
-                desktopAndMobile=True
-            )
+            try:
+                remainingSearches = desktopBrowser.getRemainingSearches(
+                    desktopAndMobile=True
+                )
+            except Exception:
+                logging.exception("[POINTS] getRemainingSearches failed on desktop browser")
             accountPoints = utils.getAccountPoints()
 
     if CONFIG.search.type in ("mobile", "both", None):
@@ -184,9 +187,12 @@ def executeBot(currentAccount):
             goalPoints = utils.getGoalPoints()
             goalTitle = utils.getGoalTitle()
 
-            remainingSearches = mobileBrowser.getRemainingSearches(
-                desktopAndMobile=True
-            )
+            try:
+                remainingSearches = mobileBrowser.getRemainingSearches(
+                    desktopAndMobile=True
+                )
+            except Exception:
+                logging.exception("[POINTS] getRemainingSearches failed on mobile browser")
             accountPoints = utils.getAccountPoints()
 
     logging.info(

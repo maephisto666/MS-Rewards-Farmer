@@ -232,12 +232,6 @@ class Utils:
         text_found = re.search(text, self.webdriver.page_source)
         return text_found is not None
 
-    def waitUntilQuestionRefresh(self) -> WebElement:
-        return self.waitUntilVisible(By.CLASS_NAME, "rqECredits", timeToWait=20)
-
-    def waitUntilQuizLoads(self) -> WebElement:
-        return self.waitUntilVisible(By.XPATH, '//*[@id="rqStartQuiz"]')
-
     def resetTabs(self) -> None:
         curr = self.webdriver.current_window_handle
 
@@ -719,12 +713,6 @@ def initApprise() -> Apprise:
 
     apprise.add(urls)
     return apprise
-
-
-def getAnswerCode(key: str, string: str) -> str:
-    t = sum(ord(string[i]) for i in range(len(string)))
-    t += int(key[-2:], 16)
-    return str(t)
 
 
 def formatNumber(number, num_decimals=0) -> str:

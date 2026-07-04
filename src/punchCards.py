@@ -1,12 +1,6 @@
 import logging
-import random
-import time
-import urllib.parse
-
-from selenium.webdriver.common.by import By
 
 from src.browser import Browser
-from .constants import REWARDS_URL
 
 
 class PunchCards:
@@ -16,114 +10,12 @@ class PunchCards:
 
     def __init__(self, browser: Browser):
         self.browser = browser
-        self.webdriver = browser.webdriver
-
-    def _visit_offer_cta(self):
-        """For urlreward: extract href and navigate directly in the same tab,
-        then navigate back. Avoids new-tab issues."""
-        link = self.webdriver.find_element(By.XPATH, "//a[@class='offer-cta']")
-        href = link.get_attribute("href")
-        if href:
-            current_url = self.webdriver.current_url
-            self.webdriver.get(href)
-            time.sleep(random.randint(3, 5))
-            self.webdriver.get(current_url)
-        else:
-            self.webdriver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
-            link.click()
-
-    def _click_offer_cta_new_tab(self):
-        """For quiz: scroll CTA into view, force target=_blank, then click."""
-        link = self.webdriver.find_element(By.XPATH, "//a[@class='offer-cta']")
-        self.webdriver.execute_script("arguments[0].scrollIntoView({block: 'center'});", link)
-        self.webdriver.execute_script("arguments[0].setAttribute('target', '_blank');", link)
-        link.click()
-
-    def completePunchCard(self, url: str, childPromotions: dict):
-        # Function to complete a specific punch card
-        self.webdriver.get(url)
-        for child in childPromotions:
-            if child["complete"] is False:
-                if child["promotionType"] == "urlreward":
-                    self._visit_offer_cta()
-                if child["promotionType"] == "quiz":
-                    self._click_offer_cta_new_tab()
-                    self.browser.utils.switchToNewTab()
-                    counter = str(
-                        self.webdriver.find_element(
-                            By.XPATH, '//*[@id="QuestionPane0"]/div[2]'
-                        ).get_attribute("innerHTML")
-                    )[:-1][1:]
-                    numberOfQuestions = max(
-                        int(s) for s in counter.split() if s.isdigit()
-                    )
-                    for question in range(numberOfQuestions):
-                        # Answer random quiz questions
-                        self.webdriver.find_element(
-                            By.XPATH,
-                            f'//*[@id="QuestionPane{question}"]/div[1]/div[2]'
-                            f'/a[{random.randint(1, 3)}]/div',
-                        ).click()
-                        time.sleep(random.randint(100, 700) / 100)
-                        self.webdriver.find_element(
-                            By.XPATH,
-                            f'//*[@id="AnswerPane{question}"]/div[1]/div[2]'
-                            f'/div[4]/a/div/span/input',
-                        ).click()
-                        time.sleep(random.randint(100, 700) / 100)
-                    time.sleep(random.randint(100, 700) / 100)
 
     def completePunchCards(self):
         # Punch cards are not exposed in the new Next.js RSC data model (July 2026
         # redesign). Skip until a new extraction path is identified.
         logging.info("[PUNCH CARDS] Skipped — punch card data not available in new dashboard")
-        return
-        punchCards = []
-        self.browser.utils.goToRewards()
-        for punchCard in punchCards:
-            try:
-                if (
-                    punchCard["parentPromotion"]
-                    and punchCard["childPromotions"]
-                    and not punchCard["parentPromotion"]["complete"]
-                    and punchCard["parentPromotion"]["pointProgressMax"] != 0
-                ):
-                    # Complete each punch card
-                    self.completePunchCard(
-                        punchCard["parentPromotion"]["attributes"]["destination"],
-                        punchCard["childPromotions"],
-                    )
-            except Exception:
-                logging.error("[PUNCH CARDS] Error Punch Cards", exc_info=True)
-                self.browser.utils.resetTabs()
-                continue
-        logging.info("[PUNCH CARDS] Exiting")
 
     def completePromotionalItems(self):
         # Promotional items are not exposed in the new Next.js RSC data model.
-        return
-        try:
-            item = self.browser.utils.getDashboardData()["promotionalItem"]
-            if item is None:
-                return
-            self.browser.utils.goToRewards()
-            destUrl = urllib.parse.urlparse(item["destinationUrl"])
-            baseUrl = urllib.parse.urlparse(REWARDS_URL)
-            if (
-                (item["pointProgressMax"] in [100, 200, 500])
-                and not item["complete"]
-                and (
-                    (
-                        destUrl.hostname == baseUrl.hostname
-                        and destUrl.path == baseUrl.path
-                    )
-                    or destUrl.hostname == "www.bing.com"
-                )
-            ):
-                # Click on promotional item and visit new tab
-                self.webdriver.find_element(
-                    By.XPATH, '//*[@id="promo-item"]/section/div/div/div/span'
-                ).click()
-                self.browser.utils.switchToNewTab(True)
-        except Exception:
-            logging.debug("", exc_info=True)
+        pass

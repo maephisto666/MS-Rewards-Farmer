@@ -70,8 +70,15 @@ class Browser:
             f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}"
         )
         # turns out close is needed for undetected_chromedriver
-        self.webdriver.close()
-        self.webdriver.quit()
+        # Suppress session errors: Chrome may have already crashed before we get here
+        try:
+            self.webdriver.close()
+        except Exception:
+            logging.debug("browser.__exit__: close() failed (session already gone)")
+        try:
+            self.webdriver.quit()
+        except Exception:
+            logging.debug("browser.__exit__: quit() failed (session already gone)")
 
     def browserSetup(
         self,

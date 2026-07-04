@@ -137,6 +137,7 @@ class DashboardData:
     activities_remaining: int = 0
     activities_requirement: int = 0
     activities_progress: int = 0
+    point_claim_points: int = 0  # streak bonus points ready to claim (0 = nothing claimable)
 
     def todays_daily_set(self) -> list[DailySetItem]:
         """Return only the daily set items whose date matches today (local date).
@@ -240,6 +241,12 @@ def parse_dashboard(html: str) -> DashboardData:
 
     if not data.daily_set_items:
         logger.warning("RSC: dailySetItems empty or not found in RSC payload")
+
+    # pointsclaim block: "type":"pointsclaim","model":{"pointClaim":{"points":<n>,...}}
+    m = re.search(r'"type"\s*:\s*"pointsclaim".*?"points"\s*:\s*(\d+)', rsc_text, re.DOTALL)
+    if m:
+        data.point_claim_points = int(m.group(1))
+        logger.info("RSC: point_claim_points=%d", data.point_claim_points)
 
     logger.info(
         "RSC: balance=%d level=%d daily_set_items=%d activities_remaining=%d/%d",

@@ -1,6 +1,4 @@
 import logging
-from time import sleep
-
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -42,7 +40,13 @@ class Activities:
         self.webdriver.execute_script(
             "arguments[0].scrollIntoView({block:'center'});", anchor
         )
-        sleep(1)
+        WebDriverWait(self.webdriver, 5).until(
+            lambda d: d.execute_script(
+                "var r=arguments[0].getBoundingClientRect();"
+                "return r.top>=0 && r.bottom<=window.innerHeight;",
+                anchor,
+            )
+        )
         self.webdriver.execute_script("arguments[0].click();", anchor)
         logging.info(
             "[ACTIVITY] [%s] Clicked '%s'",

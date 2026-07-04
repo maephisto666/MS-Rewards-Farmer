@@ -295,6 +295,8 @@ def write_recon_summary_md(
             f"/ {rsc_data.activities_requirement} required "
             f"(progress: {rsc_data.activities_progress}) |"
         )
+        claim_cell = f"**{rsc_data.point_claim_points} pts — ready to claim**" if rsc_data.point_claim_points else "none"
+        lines.append(f"| Streak bonus | {claim_cell} |")
         lines.append("")
 
         if rsc_data.daily_set_items:

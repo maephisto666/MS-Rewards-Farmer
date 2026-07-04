@@ -173,13 +173,11 @@ apprise: # 'apprise' is the name of the service used for notifications https://g
 browser:
   geolocation: US # Replace with your country code https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
   # Detected by default, can be overridden with command-line arguments.
-  language: en # Replace with your language code https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes.
+  language: en-US # Replace with your language code https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes.
   # Detected by default, can be overridden with command-line arguments.
   visible: false # set it to true to show the browser window, can be overridden with command-line arguments.
   proxy: null # set the global proxy using the 'http://user:pass@host:port' syntax.
   # Override per-account proxies. Can be overridden with command-line arguments.
-rtfr: true # If true, display the "read the readme" message at the start of the script and prevent the script
-# from running. Default is false.
 logging:
   level: INFO # Set to DEBUG, WARNING, ERROR or CRITICAL to change the level of displayed information in the terminal
   # See https://docs.python.org/3/library/logging.html#logging-levels. Can be overridden with command-line arguments.
@@ -264,6 +262,7 @@ You can display this message at any moment using `python main.py -h`.
 - Logs to CSV file for point tracking
 
 > [!NOTE]
-> Mobile searches are no longer automated. After Microsoft's July 2026 Rewards redesign,
-> mobile searches do not yield points through browser automation.
+> Mobile searches are no longer automated. With the new Rewards experience, mobile searches
+> do not yield points through browser automation. The mobile browser session is still used
+> for Read to Earn tasks.
 

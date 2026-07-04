@@ -189,7 +189,6 @@ DEFAULT_CONFIG: Config = Config(
             "visible": False,
             "proxy": None,
         },
-        "rtfr": False,
         "logging": {
             "format": "%(asctime)s [%(levelname)s] %(message)s",
             "level": "INFO",
@@ -283,8 +282,8 @@ class Utils:
         Navigate to the Rewards dashboard and parse the RSC wire-format payload
         embedded in the page HTML. Returns a DashboardData object.
 
-        The old window.dashboard global is gone as of the July 2026 Next.js
-        App Router redesign. All data now arrives server-rendered in
+        The old window.dashboard global is gone as of the 2026 revamp (Next.js
+        App Router). All data now arrives server-rendered in
         self.__next_f.push() inline scripts.
         """
         from src.rsc import parse_dashboard, DashboardData  # local import: avoids circular deps
@@ -694,10 +693,6 @@ def loadConfig(configFilename="config.yaml") -> Config:
         resetBot()
 
     config = DEFAULT_CONFIG | Config.fromYaml(configFile) | args_config
-
-    if config.rtfr:
-        print("Please read the README.md file before using this script. Exiting.")
-        sys.exit()
 
     return config
 

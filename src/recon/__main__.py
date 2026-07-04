@@ -234,7 +234,7 @@ def main(email: str | None, password: str | None, totp: str | None,
             # The driver is still alive (login.py no longer closes it on error).
             # Capture a screenshot now so we can see exactly what state the page is in,
             # then continue with URL probes — we may actually be authenticated even if
-            # the post-login verification selector is gone (e.g. after the July 2026 redesign).
+            # the post-login verification selector is gone (e.g. after the 2026 revamp).
             logging.warning(f"Login raised an exception: {exc}")
             logging.warning("Capturing login-failure screenshot and continuing with URL probes ...")
             _save_login_failure(driver, out_dir)

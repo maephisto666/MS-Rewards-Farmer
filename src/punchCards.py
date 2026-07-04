@@ -12,8 +12,8 @@ class PunchCards:
         self.browser = browser
 
     def completePunchCards(self):
-        # Punch cards are not exposed in the new Next.js RSC data model (July 2026
-        # redesign). Skip until a new extraction path is identified.
+        # Punch cards are not exposed in the new Next.js RSC data model (2026 revamp).
+        # Skip until a new extraction path is identified.
         logging.info("[PUNCH CARDS] Skipped — punch card data not available in new dashboard")
 
     def completePromotionalItems(self):

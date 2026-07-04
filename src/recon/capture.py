@@ -299,13 +299,29 @@ def write_recon_summary_md(
 
         if rsc_data.daily_set_items:
             lines += ["## Daily Set Items", ""]
-            lines += ["| # | Title | Points | Done | Locked | Destination |", "|---|---|---|---|---|---|"]
+            from datetime import date as _date
+            today_str = _date.today().strftime("%m/%d/%Y")
+            lines += [
+                "| # | Date | Type | Title | Pts | Done | Locked | Notes |",
+                "|---|---|---|---|---|---|---|---|",
+            ]
             for i, item in enumerate(rsc_data.daily_set_items, 1):
                 done = "✓" if item.is_completed else ""
                 locked = "🔒" if item.is_locked else ""
-                dest = item.destination[:80] + "…" if len(item.destination) > 80 else item.destination
                 title = item.title or item.offer_id or f"item-{i}"
-                lines.append(f"| {i} | {title} | {item.points} | {done} | {locked} | {dest} |")
+                atype = item.activity_type
+                date_cell = item.date
+                if item.date == today_str:
+                    date_cell = f"**{item.date}** ← today"
+                if atype == "BING_QUIZ":
+                    notes = f"`{item.quiz_key}`" if item.quiz_key else f"form={item.form_code}"
+                elif atype == "REFERRAL":
+                    notes = "skip — no automation"
+                else:
+                    notes = f"form=`{item.form_code}`" if item.form_code else ""
+                lines.append(
+                    f"| {i} | {date_cell} | {atype} | {title} | {item.points} | {done} | {locked} | {notes} |"
+                )
             lines.append("")
         else:
             lines += ["## Daily Set Items", "", "_No items parsed._", ""]

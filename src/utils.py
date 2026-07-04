@@ -298,8 +298,12 @@ class Utils:
         return parse_dashboard(self.webdriver.page_source)
 
     def getActivities(self):
-        """Return the list of today's daily-set items from the RSC dashboard."""
-        return self.getDashboardData().daily_set_items
+        """Return today's daily-set items from the RSC dashboard.
+
+        Only today's items have clickable anchors; future days are in the RSC
+        payload but not rendered as links until their date arrives.
+        """
+        return self.getDashboardData().todays_daily_set()
 
     def getBingInfo(self) -> Any:
         session = makeRequestsSession()

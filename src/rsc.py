@@ -15,6 +15,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
+from urllib.parse import parse_qs, unquote_plus, urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,71 @@ class DailySetItem:
             image_url=d.get("imageUrl", ""),
         )
 
+    @property
+    def activity_type(self) -> str:
+        """
+        Infer the activity type from the destination URL.
+
+        Types:
+          BING_QUIZ      — Copilot-based quiz (form=dsetqu, IsConversation=True)
+          URL_OFFER      — Navigate-to-earn (BTEPOKey=REWARDSQUIZ_DailySet_UrlOffer)
+          TRAVEL_REWARD  — Travel search reward (FORM=tgrew*)
+          REFERRAL       — Referral link (rewards.bing.com/referandearn)
+          UNKNOWN        — Anything else
+        """
+        dest = self.destination
+        if not dest:
+            return "UNKNOWN"
+        if "referandearn" in dest:
+            return "REFERRAL"
+        qs = parse_qs(urlparse(dest).query)
+        filters = unquote_plus(" ".join(qs.get("filters", [])))
+        form = (qs.get("form") or qs.get("FORM") or [""])[0].lower()
+        if "IsConversation" in filters and "True" in filters:
+            return "BING_QUIZ"
+        if "UrlOffer" in filters:
+            return "URL_OFFER"
+        if form.startswith("tgrew"):
+            return "TRAVEL_REWARD"
+        if form.startswith("ml2"):
+            return "URL_OFFER"
+        # Catch-all: any bing.com destination is a navigate-to-earn offer
+        if "bing.com" in urlparse(dest).netloc:
+            return "URL_OFFER"
+        return "UNKNOWN"
+
+    @property
+    def quiz_key(self) -> str | None:
+        """WQOskey value for BING_QUIZ items (e.g. 'Mount_Fuji_quiz_202607')."""
+        if self.activity_type != "BING_QUIZ":
+            return None
+        qs = parse_qs(urlparse(self.destination).query)
+        filters = unquote_plus(" ".join(qs.get("filters", [])))
+        m = re.search(r'WQOskey:"([^"]+)"', filters)
+        return m.group(1) if m else None
+
+    @property
+    def form_code(self) -> str:
+        """The form= or FORM= tracking code from the destination URL."""
+        qs = parse_qs(urlparse(self.destination).query)
+        return (qs.get("form") or qs.get("FORM") or [""])[0]
+
+    @property
+    def url_selector_token(self) -> str:
+        """
+        A URL fragment unique enough to identify this item's <a> in the DOM.
+
+        form= codes like 'tgrew4' and 'dsetqu' are shared across multiple items,
+        so we prefer the q= parameter value (still URL-encoded with +, as it
+        appears in href attributes).  This is always unique per activity because
+        each activity has a distinct search query or quiz topic.
+        """
+        dest = self.destination
+        m = re.search(r'[?&](?:q|Q)=([^&]+)', dest)
+        if m:
+            return m.group(1)  # already +-encoded, matches href attribute as-is
+        return self.form_code
+
 
 @dataclass
 class DashboardData:
@@ -71,6 +137,16 @@ class DashboardData:
     activities_remaining: int = 0
     activities_requirement: int = 0
     activities_progress: int = 0
+
+    def todays_daily_set(self) -> list[DailySetItem]:
+        """Return only the daily set items whose date matches today (local date).
+
+        The RSC payload always contains 3 days of items (today, tomorrow, day after).
+        Only today's items have clickable anchors on the dashboard.
+        """
+        from datetime import date
+        today = date.today().strftime("%m/%d/%Y")
+        return [i for i in self.daily_set_items if i.date == today]
 
 
 def _collect_rsc_text(html: str) -> str:

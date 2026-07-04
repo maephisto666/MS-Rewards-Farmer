@@ -7,10 +7,14 @@
 ![GitHub issues](https://img.shields.io/github/issues/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 
 > [!WARNING]
-> **As of July 2026, this project is not working.** Microsoft has rolled out a significant
-> redesign of the Rewards page that breaks the current automation. I am actively working to
-> adapt the code to the new page structure. Do not expect the script to complete activities
-> reliably until a fix is released.
+> **The `main` branch is currently broken** due to Microsoft's July 2026 redesign of the
+> Rewards page. The new experience is a Next.js application with a substantially different
+> structure that renders the existing automation ineffective.
+>
+> An experimental branch [`feat/rewards-redesign-v4`](../../tree/feat/rewards-redesign-v4)
+> contains a full rewrite adapted to the new page structure. It has been tested internally
+> and is working reliably for searches, daily set activities, and bonus point claiming.
+> It will be merged into `main` once it has had more real-world testing.
 
 > [!IMPORTANT]
 > If you are multi-accounting and abusing the service for which this is intended -

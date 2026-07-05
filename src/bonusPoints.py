@@ -45,7 +45,7 @@ class BonusPoints:
         """
         dashboard = self.browser.utils.getDashboardData()
         if not dashboard.point_claim_points:
-            logging.info("[BONUS POINTS] No streak bonus available")
+            logging.info("[BONUS POINTS] No bonus points to claim today")
             return
 
         logging.info(

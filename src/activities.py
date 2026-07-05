@@ -125,9 +125,6 @@ class Activities:
                 continue
             if title in IGNORED_ACTIVITIES:
                 continue
-            if atype == "REFERRAL":
-                logging.info("[ACTIVITY] Skipping '%s' (REFERRAL)", title)
-                continue
             if not item.destination:
                 logging.warning("[ACTIVITY] No destination for '%s', skipping", title)
                 continue

@@ -94,14 +94,19 @@ class BonusPoints:
             logging.warning("[BONUS POINTS] Side panel did not open")
             return
 
-        # Find the 'Claim points' button inside the panel and wait until clickable
+        # Find the 'Claim points' button inside the panel and wait until clickable.
+        # Use contains() so minor text differences (casing, whitespace) don't break the match.
         try:
             claim_btn = WebDriverWait(self.webdriver, 10).until(
                 EC.element_to_be_clickable(
-                    (By.XPATH, "//button[.//span[text()='Claim points']]")
+                    (By.XPATH, "//button[.//span[contains(., 'Claim')]]")
                 )
             )
         except TimeoutException:
+            visible_btns = [
+                b.text[:60] for b in self.webdriver.find_elements(By.TAG_NAME, "button") if b.text
+            ]
+            logging.debug("[BONUS POINTS] Buttons visible when claim not found: %s", visible_btns[:10])
             logging.warning("[BONUS POINTS] 'Claim points' button not found in panel")
             return
 

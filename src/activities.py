@@ -34,6 +34,13 @@ class Activities:
             By.XPATH, f"//a[contains(@href, '{token}')]"
         )
         if not anchors:
+            sample = [
+                a.get_attribute("href")[:80]
+                for a in self.webdriver.find_elements(
+                    By.XPATH, "//a[contains(@href, 'bing.com/search')]"
+                )[:5]
+            ]
+            logging.debug("[ACTIVITY] No anchor for token %r; bing search hrefs in DOM: %s", token, sample)
             return False
 
         # Retry once: if the anchor has no size on first load, reload the dashboard
@@ -133,7 +140,22 @@ class Activities:
 
         logging.info("[ACTIVITIES] %d items to complete today", len(todo))
 
-        # All today's cards are on the first (visible) slide — no carousel navigation needed.
+        # Wait up to 10 s for the first expected anchor to appear in the DOM.
+        # React hydration can lag the initial HTML on slower machines, so anchors
+        # that are present in the RSC payload may not yet be in the live DOM.
+        first_token = todo[0].url_selector_token
+        try:
+            WebDriverWait(self.webdriver, 10).until(
+                lambda d: d.find_elements(
+                    By.XPATH, f"//a[contains(@href, '{first_token}')]"
+                )
+            )
+        except TimeoutException:
+            logging.info(
+                "[ACTIVITIES] Anchors not in DOM after 10 s — reloading dashboard once"
+            )
+            self.browser.utils.goToRewards()
+
         for item in todo:
             clicked = self._click_activity_anchor(item)
             if not clicked:

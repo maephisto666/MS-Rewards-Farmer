@@ -242,11 +242,18 @@ def parse_dashboard(html: str) -> DashboardData:
     if not data.daily_set_items:
         logger.warning("RSC: dailySetItems empty or not found in RSC payload")
 
-    # pointsclaim block: "type":"pointsclaim","model":{"pointClaim":{"points":<n>,...}}
-    m = re.search(r'"type"\s*:\s*"pointsclaim".*?"points"\s*:\s*(\d+)', rsc_text, re.DOTALL)
-    if m:
-        data.point_claim_points = int(m.group(1))
-        logger.info("RSC: point_claim_points=%d", data.point_claim_points)
+    # pointsclaim block: "type":"pointsclaim","model":{"pointClaim":{...} or null}
+    # Two-step: first find the pointClaim value position, then check it is an object
+    # (not null) before extracting points. A greedy search over the whole RSC text
+    # would cross object boundaries and produce false positives when pointClaim is null.
+    pc_m = re.search(r'"type"\s*:\s*"pointsclaim".*?"pointClaim"\s*:\s*', rsc_text, re.DOTALL)
+    if pc_m:
+        rest = rsc_text[pc_m.end():]
+        if not rest.startswith("null"):
+            pts_m = re.search(r'"points"\s*:\s*(\d+)', rest[:500])
+            if pts_m:
+                data.point_claim_points = int(pts_m.group(1))
+                logger.info("RSC: point_claim_points=%d", data.point_claim_points)
 
     logger.info(
         "RSC: balance=%d level=%d daily_set_items=%d activities_remaining=%d/%d",

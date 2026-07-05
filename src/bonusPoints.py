@@ -22,6 +22,20 @@ class BonusPoints:
         self._claim_streak_bonus()
         self._claim_banner_bonus()
 
+    def _wait_for_button_interactable(self, button, timeout: int) -> bool:
+        """Return True when button has non-zero size and is partially in the viewport."""
+        try:
+            WebDriverWait(self.webdriver, timeout).until(
+                lambda d: d.execute_script(
+                    "var r=arguments[0].getBoundingClientRect();"
+                    "return r.width>0 && r.height>0 && r.top>=0 && r.top<window.innerHeight;",
+                    button,
+                )
+            )
+            return True
+        except TimeoutException:
+            return False
+
     def _claim_streak_bonus(self) -> None:
         """Click the 'Ready to claim' streak card on the dashboard.
 
@@ -39,24 +53,33 @@ class BonusPoints:
             dashboard.point_claim_points,
         )
 
-        buttons = self.webdriver.find_elements(
-            By.XPATH, "//button[.//p[text()='Ready to claim']]"
-        )
-        if not buttons:
-            logging.warning("[BONUS POINTS] Ready to claim button not found in DOM")
+        # The button may render late on first page load. Retry once after
+        # reloading the dashboard if it is not yet interactable.
+        button = None
+        for attempt in range(1, 3):
+            buttons = self.webdriver.find_elements(
+                By.XPATH, "//button[.//p[text()='Ready to claim']]"
+            )
+            if buttons:
+                self.webdriver.execute_script(
+                    "arguments[0].scrollIntoView({block:'center'});", buttons[0]
+                )
+                if self._wait_for_button_interactable(buttons[0], timeout=15):
+                    button = buttons[0]
+                    break
+            if attempt < 2:
+                logging.info(
+                    "[BONUS POINTS] Button not ready on attempt %d — reloading dashboard",
+                    attempt,
+                )
+                self.browser.utils.goToRewards()
+
+        if button is None:
+            logging.warning(
+                "[BONUS POINTS] Ready to claim button never became interactable — giving up"
+            )
             return
 
-        button = buttons[0]
-        self.webdriver.execute_script(
-            "arguments[0].scrollIntoView({block:'center'});", button
-        )
-        WebDriverWait(self.webdriver, 5).until(
-            lambda d: d.execute_script(
-                "var r=arguments[0].getBoundingClientRect();"
-                "return r.top>=0 && r.bottom<=window.innerHeight;",
-                button,
-            )
-        )
         # React Aria buttons use pointer events — ActionChains generates the full
         # pointerdown/pointerup/click sequence that triggers the React handler.
         ActionChains(self.webdriver).move_to_element(button).click().perform()
@@ -71,10 +94,10 @@ class BonusPoints:
             logging.warning("[BONUS POINTS] Side panel did not open")
             return
 
-        # Find the 'Claim points' button inside the panel
+        # Find the 'Claim points' button inside the panel and wait until clickable
         try:
-            claim_btn = WebDriverWait(self.webdriver, 5).until(
-                EC.presence_of_element_located(
+            claim_btn = WebDriverWait(self.webdriver, 10).until(
+                EC.element_to_be_clickable(
                     (By.XPATH, "//button[.//span[text()='Claim points']]")
                 )
             )
@@ -85,13 +108,9 @@ class BonusPoints:
         self.webdriver.execute_script(
             "arguments[0].scrollIntoView({block:'center'});", claim_btn
         )
-        WebDriverWait(self.webdriver, 5).until(
-            lambda d: d.execute_script(
-                "var r=arguments[0].getBoundingClientRect();"
-                "return r.top>=0 && r.bottom<=window.innerHeight;",
-                claim_btn,
-            )
-        )
+        if not self._wait_for_button_interactable(claim_btn, timeout=5):
+            logging.warning("[BONUS POINTS] 'Claim points' button not in viewport — attempting click anyway")
+
         ActionChains(self.webdriver).move_to_element(claim_btn).click().perform()
         logging.info("[BONUS POINTS] Clicked 'Claim points' in panel")
 

@@ -36,17 +36,46 @@ class Activities:
         if not anchors:
             return False
 
-        anchor = anchors[0]
-        self.webdriver.execute_script(
-            "arguments[0].scrollIntoView({block:'center'});", anchor
-        )
-        WebDriverWait(self.webdriver, 5).until(
-            lambda d: d.execute_script(
-                "var r=arguments[0].getBoundingClientRect();"
-                "return r.top>=0 && r.bottom<=window.innerHeight;",
-                anchor,
+        # Retry once: if the anchor has no size on first load, reload the dashboard
+        # and look for it again. The card click is required — direct URL navigation
+        # does not award points.
+        for attempt in range(1, 3):
+            anchor = anchors[0]
+            self.webdriver.execute_script(
+                "arguments[0].scrollIntoView({block:'center'});", anchor
             )
-        )
+            try:
+                WebDriverWait(self.webdriver, 5).until(
+                    lambda d: d.execute_script(
+                        "var r=arguments[0].getBoundingClientRect();"
+                        "return r.width>0 && r.height>0;",
+                        anchor,
+                    )
+                )
+                break  # anchor is rendered, proceed to click
+            except TimeoutException:
+                if attempt < 2:
+                    logging.info(
+                        "[ACTIVITY] Anchor not rendered for '%s', reloading dashboard (attempt %d)",
+                        cleanupActivityTitle(item.title), attempt,
+                    )
+                    self.browser.utils.goToRewards()
+                    anchors = self.webdriver.find_elements(
+                        By.XPATH, f"//a[contains(@href, '{token}')]"
+                    )
+                    if not anchors:
+                        logging.warning(
+                            "[ACTIVITY] Anchor for '%s' disappeared after reload",
+                            cleanupActivityTitle(item.title),
+                        )
+                        return False
+                else:
+                    logging.warning(
+                        "[ACTIVITY] Anchor for '%s' still has no size after reload — skipping",
+                        cleanupActivityTitle(item.title),
+                    )
+                    return False
+
         self.webdriver.execute_script("arguments[0].click();", anchor)
         logging.info(
             "[ACTIVITY] [%s] Clicked '%s'",

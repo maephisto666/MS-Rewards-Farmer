@@ -369,6 +369,11 @@ class Login:
             ):
                 return "password_required"
 
+            # "Stay signed in?" on login.live.com uses id="primaryButton" / id="secondaryButton"
+            # (no kmsiForm wrapper, no data-testid attribute)
+            if self._find_first_visible([(By.ID, "primaryButton"), (By.ID, "secondaryButton")]):
+                return "post_login"
+
             return False
 
         return wait.until(detector)
@@ -517,14 +522,16 @@ class Login:
                 pass
 
             # Generic primaryButton (catch-all for "Stay signed in?", etc.)
-            try:
-                btn = self.webdriver.find_element(By.CSS_SELECTOR, "[data-testid='primaryButton']")
-                if btn.is_displayed():
-                    logging.info("[LOGIN] Clicking primaryButton to advance...")
-                    btn.click()
-                    continue
-            except NoSuchElementException:
-                pass
+            # Covers both data-testid='primaryButton' (new Rewards login form)
+            # and id="primaryButton" (login.live.com "Stay signed in?" dialog)
+            btn = self._find_first_visible([
+                (By.CSS_SELECTOR, "[data-testid='primaryButton']"),
+                (By.ID, "primaryButton"),
+            ])
+            if btn:
+                logging.info("[LOGIN] Clicking primaryButton to advance...")
+                btn.click()
+                continue
 
         # Final check for "Protect your account" prompt
         isAskingToProtect = self.utils.checkIfTextPresentAfterDelay("protect your account", 5)

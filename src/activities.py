@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.browser import Browser
-from src.constants import REWARDS_URL
+from src.constants import REWARDS_DASHBOARD_URL
 from src.rsc import DailySetItem
 from src.utils import (
     CONFIG,
@@ -175,7 +175,7 @@ class Activities:
             if incomplete:
                 logging.info("incompleteActivities: %s", incomplete)
                 APPRISE.notify(
-                    '"' + '", "'.join(incomplete) + '"\n' + REWARDS_URL,
+                    '"' + '", "'.join(incomplete) + '"\n' + REWARDS_DASHBOARD_URL,
                     f"We found some incomplete activities for {self.browser.email}",
                 )
 

@@ -37,7 +37,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from urllib3 import Retry
 
-from .constants import REWARDS_URL, SEARCH_URL
+from .constants import REWARDS_DASHBOARD_URL, SEARCH_URL
 
 PREFER_BING_INFO = True
 
@@ -246,7 +246,7 @@ class Utils:
         self.goToRewards()
 
     def goToRewards(self) -> None:
-        self.webdriver.get(REWARDS_URL)
+        self.webdriver.get(REWARDS_DASHBOARD_URL)
         # The page may redirect: rewards.bing.com/ → rewards.bing.com/dashboard
         assert self.webdriver.current_url.startswith(
             "https://rewards.bing.com/"

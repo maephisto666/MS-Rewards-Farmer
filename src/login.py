@@ -12,6 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from undetected_chromedriver import Chrome
 
+from src.constants import REWARDS_DASHBOARD_URL, REWARDS_SIGNIN_URL, REWARDS_URL
 from src.browser import Browser
 from src.utils import CONFIG, APPRISE
 
@@ -39,33 +40,21 @@ class Login:
             element = self.webdriver.find_element(
                 By.XPATH, "//div[@id='serviceAbuseLandingTitle']"
             )
-            self.locked(element)
-        except NoSuchElementException:
+            if element.is_displayed():
+                logging.critical("This Account is Locked!")
+                # Do not close the driver here — Browser.__exit__ owns teardown.
+                raise LoginError("Account locked, moving to the next account.")
+        except (NoSuchElementException, ElementNotInteractableException):
             pass
 
     def check_banned_user(self):
         try:
             element = self.webdriver.find_element(By.XPATH, '//*[@id="fraudErrorBody"]')
-            self.banned(element)
-        except NoSuchElementException:
-            pass
-
-    def locked(self, element):
-        try:
-            if element.is_displayed():
-                logging.critical("This Account is Locked!")
-                # Do not close the driver here — Browser.__exit__ owns teardown.
-                raise LoginError("Account locked, moving to the next account.")
-        except (ElementNotInteractableException, NoSuchElementException):
-            pass
-
-    def banned(self, element):
-        try:
             if element.is_displayed():
                 logging.critical("This Account is Banned!")
                 # Do not close the driver here — Browser.__exit__ owns teardown.
                 raise LoginError("Account banned, moving to the next account.")
-        except (ElementNotInteractableException, NoSuchElementException):
+        except (NoSuchElementException, ElementNotInteractableException):
             pass
 
     def login(self) -> None:
@@ -76,8 +65,6 @@ class Login:
                 logging.info("[LOGIN] Logging-in...")
                 self.execute_login()
                 logging.info("[LOGIN] Logged-in successfully!")
-            self.check_locked_user()
-            self.check_banned_user()
         except Exception as e:
             logging.error(f"Error during login: {e}")
             # Do not close the driver here — Browser.__exit__ owns teardown.
@@ -86,7 +73,7 @@ class Login:
             raise
 
     def execute_login(self) -> None:
-        self.webdriver.get("https://rewards.bing.com/Signin/")
+        self.webdriver.get(REWARDS_SIGNIN_URL)
 
         wait = WebDriverWait(self.webdriver, 10)
 
@@ -242,7 +229,7 @@ class Login:
         # =====================================================================
         logging.info("[LOGIN] Checking for 2FA...")
         requires_2fa = False
-        post_password_state = self._detect_post_password_state(wait, passwordField)
+        post_password_state = self._detect_post_password_state(wait)
 
         if post_password_state == "totp":
             requires_2fa = True
@@ -261,7 +248,7 @@ class Login:
                 EC.element_to_be_clickable((By.ID, "idSIButton9")),
             ))
             submit_btn.click()
-            post_password_state = self._detect_post_password_state(wait, retry_password_field)
+            post_password_state = self._detect_post_password_state(wait)
             if post_password_state == "totp":
                 requires_2fa = True
         elif post_password_state == "other_ways":
@@ -328,13 +315,16 @@ class Login:
         self._handle_post_login_dialogs(wait)
         self._dismiss_dashboard_overlays()
 
-    def _detect_post_password_state(self, wait, passwordField) -> str:
-        try:
-            wait.until(EC.staleness_of(passwordField))
-        except TimeoutException:
-            logging.debug("[LOGIN] Password field did not go stale quickly after submit.")
-
+    def _detect_post_password_state(self, wait) -> str:
         def detector(_):
+            # "Stay signed in?" on login.live.com uses id="primaryButton" /
+            # id="secondaryButton" (no kmsiForm wrapper, no data-testid attribute).
+            # Checked first because this page can appear quickly after password
+            # submission in the passkey flow, before any rewards-domain redirect.
+            if self._find_first_visible([(By.ID, "primaryButton"), (By.ID, "secondaryButton")]):
+                logging.debug("[LOGIN] id=primaryButton detected (login.live.com 'Stay signed in?' dialog)")
+                return "post_login"
+
             if self._find_first_visible([
                 (By.NAME, "OneTimeCodeViewForm"),
                 (By.CSS_SELECTOR, "input[name='otc']"),
@@ -369,14 +359,13 @@ class Login:
             ):
                 return "password_required"
 
-            # "Stay signed in?" on login.live.com uses id="primaryButton" / id="secondaryButton"
-            # (no kmsiForm wrapper, no data-testid attribute)
-            if self._find_first_visible([(By.ID, "primaryButton"), (By.ID, "secondaryButton")]):
-                return "post_login"
-
             return False
 
-        return wait.until(detector)
+        # 30 s: the passkey flow adds extra redirect hops between password
+        # submission and the post-password page, pushing elapsed time well past
+        # the shared 10 s `wait`.
+        detection_wait = WebDriverWait(self.webdriver, 30)
+        return detection_wait.until(detector)
 
     def _wait_for_otp_input(self, wait, timeout: int = 10):
         custom_wait = WebDriverWait(self.webdriver, timeout)
@@ -478,7 +467,7 @@ class Login:
             page_text = self.webdriver.page_source
             if "HTTP ERROR" in page_text or "ERR_TIMED_OUT" in page_text or "isn't working" in page_text:
                 logging.warning(f"[LOGIN] Error page detected (URL: {self.webdriver.current_url}). Retrying navigation...")
-                self.webdriver.get("https://rewards.bing.com/")
+                self.webdriver.get(REWARDS_URL)
                 continue
 
             # "Is your security info still accurate?" dialog (old form, uses element IDs)

@@ -6,6 +6,22 @@
 
 Sometimes, due to errors during login, dirty sessions are created. As a consequence, in subsequent executions opening Chrome is not possible anymore.
 
+### Reduce per-run Chrome startup delay (~49 s)
+
+`undetected_chromedriver`'s `Patcher.auto()` **deletes and re-downloads** the chromedriver
+binary on every startup (by design, to guarantee a fresh patched binary). This takes ~40–50 s
+on each run against `storage.googleapis.com`.
+
+The only way to skip the download is to pass `driver_executable_path` pointing to an
+already-patched binary. UC then calls `is_binary_patched()` and short-circuits. We would need
+to manage the binary ourselves: cache it per Chrome major version, detect when Chrome updates,
+and re-patch at that point.
+
+`getChromeVersion()` in `browser.py` (which launches a throwaway `WebDriver` to read
+`browserVersion`) adds a further ~1–2 s and can be removed — UC auto-detects the Chrome
+version without it when `version_main` is not passed. However, removing it without also
+solving the Patcher download will save at most ~2 s out of ~50 s.
+
 ## Nice to Have
 
 ### Alternative Browser Backend (Camoufox)
@@ -105,9 +121,11 @@ selector lists. The file is at the "one more case and it breaks silently" point.
 
 #### Correctness / debuggability bugs to fix
 
-- `self.webdriver.close()` is called inside `login()`, `locked()`, `banned()` while
+- ~~`self.webdriver.close()` is called inside `login()`, `locked()`, `banned()` while
   `Browser.__exit__` also calls `close()+quit()` → double-close exception masks the real
-  cause of the failure.
+  cause of the failure.~~ **Fixed**: `close()` removed from all handlers; `Browser.__exit__`
+  owns teardown exclusively. `_locked()`/`_banned()` helpers merged into
+  `check_locked_user()`/`check_banned_user()`.
 - `assert CONFIG.browser.visible` + `input()` as a 2FA fallback: under `python -O` the
   assert is stripped entirely; in Docker/CI the `input()` blocks forever.
 - `_find_first_visible` swallows bare `Exception`, hiding `InvalidSessionIdException`,
@@ -171,8 +189,8 @@ Key ideas:
 
 1. **`DebugRecorder` + page fingerprint + typed exceptions** — biggest leverage on future
    triage time; small, self-contained, unblocks every later refactor.
-2. **Remove double-close + replace `assert` / `input()` control flow** — correctness fixes
-   hiding real failure modes today.
+2. ~~**Remove double-close + replace `assert` / `input()` control flow**~~ **Partially done**:
+   double-close removed. `assert` / `input()` 2FA fallback still pending.
 3. **Extract `SelectorRegistry` / `locators.py`** — pure deletion-style refactor; collapses
    the three OTP selector lists + the 7 OTP-submit fallbacks + the post-login probes into
    named constants. Prevents the "forgot one of the three copies" drift already observed.
@@ -245,7 +263,9 @@ Full special-case inventory (43 branches / ~30 variants, with line numbers):
 - **Password step (PW1-PW2)**: `passwd` / `passwordEntry`.
 - **Post-password step (PP1-PP8)**: TOTP input (10 selectors), "Other ways to sign in",
   passkey URL, `kmsiForm`, `iPageTitle`, RewardsPortal, `80041032` error code substring,
-  "Please enter the password" substring.
+  "Please enter the password" substring. **Fixed** (issue #23): TOTP/`other_ways` checks are
+  now gated on `browser.totp is not None`; accounts without 2FA no longer poll endlessly for
+  2FA elements that will never appear.
 - **Auth-app picker (A1-A3)**: tileList span, `PhoneAppOTP`, "authenticator app" text.
 - **OTP input (O1-O10)**: 10 duplicated selectors.
 - **OTP submit (S1-S7)**: `idSubmit_SAOTCC_Continue`, `idSIButton9`, primaryButton,

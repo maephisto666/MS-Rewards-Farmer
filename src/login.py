@@ -317,32 +317,28 @@ class Login:
 
     def _detect_post_password_state(self, wait) -> str:
         def detector(_):
-            # "Stay signed in?" on login.live.com uses id="primaryButton" /
-            # id="secondaryButton" (no kmsiForm wrapper, no data-testid attribute).
-            # Checked first because this page can appear quickly after password
-            # submission in the passkey flow, before any rewards-domain redirect.
-            if self._find_first_visible([(By.ID, "primaryButton"), (By.ID, "secondaryButton")]):
-                logging.debug("[LOGIN] id=primaryButton detected (login.live.com 'Stay signed in?' dialog)")
-                return "post_login"
+            # Only probe for 2FA screens when a TOTP secret is configured —
+            # these elements will never appear on accounts without 2FA and
+            # polling for them wastes the entire detection window.
+            if self.browser.totp is not None:
+                if self._find_first_visible([
+                    (By.NAME, "OneTimeCodeViewForm"),
+                    (By.CSS_SELECTOR, "input[name='otc']"),
+                    (By.ID, "idTxtBx_SAOTCC_OTC"),
+                    (By.CSS_SELECTOR, "input[id*='SAOTCC']"),
+                    (By.CSS_SELECTOR, "input[id*='OTC']"),
+                    (By.CSS_SELECTOR, "input[aria-label='Code']"),
+                    (By.CSS_SELECTOR, "input[placeholder='Code']"),
+                    (By.CSS_SELECTOR, "input[autocomplete='one-time-code']"),
+                    (By.CSS_SELECTOR, "input[inputmode='numeric']"),
+                    (By.CSS_SELECTOR, "input[type='tel']"),
+                ]):
+                    return "totp"
 
-            if self._find_first_visible([
-                (By.NAME, "OneTimeCodeViewForm"),
-                (By.CSS_SELECTOR, "input[name='otc']"),
-                (By.ID, "idTxtBx_SAOTCC_OTC"),
-                (By.CSS_SELECTOR, "input[id*='SAOTCC']"),
-                (By.CSS_SELECTOR, "input[id*='OTC']"),
-                (By.CSS_SELECTOR, "input[aria-label='Code']"),
-                (By.CSS_SELECTOR, "input[placeholder='Code']"),
-                (By.CSS_SELECTOR, "input[autocomplete='one-time-code']"),
-                (By.CSS_SELECTOR, "input[inputmode='numeric']"),
-                (By.CSS_SELECTOR, "input[type='tel']"),
-            ]):
-                return "totp"
-
-            if self._find_first_visible([
-                (By.XPATH, "//button[contains(., 'Other ways to sign in') or contains(., 'other ways to sign in')]"),
-            ]):
-                return "other_ways"
+                if self._find_first_visible([
+                    (By.XPATH, "//button[contains(., 'Other ways to sign in') or contains(., 'other ways to sign in')]"),
+                ]):
+                    return "other_ways"
 
             if (
                 "/dashboard" in self.webdriver.current_url
@@ -361,11 +357,7 @@ class Login:
 
             return False
 
-        # 30 s: the passkey flow adds extra redirect hops between password
-        # submission and the post-password page, pushing elapsed time well past
-        # the shared 10 s `wait`.
-        detection_wait = WebDriverWait(self.webdriver, 30)
-        return detection_wait.until(detector)
+        return wait.until(detector)
 
     def _wait_for_otp_input(self, wait, timeout: int = 10):
         custom_wait = WebDriverWait(self.webdriver, timeout)
@@ -429,6 +421,7 @@ class Login:
         _dismissable = (TimeoutException, ElementClickInterceptedException, ElementNotInteractableException)
 
         # Tutorial modal first — its backdrop covers the whole page including the cookie banner
+        logging.debug("[LOGIN] Checking for new-user tutorial modal (up to 15 s)...")
         try:
             btn = self.utils.waitUntilClickable(
                 By.XPATH, "//button[@slot='close'][contains(normalize-space(), 'Get started')]", 15

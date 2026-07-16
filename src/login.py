@@ -345,6 +345,10 @@ class Login:
                 or "passkey/enroll" in self.webdriver.current_url
                 or self._find_first_visible([(By.NAME, "kmsiForm")])
                 or self._find_first_visible([(By.ID, "iPageTitle")])
+                # "Stay signed in?" on login.live.com uses id="primaryButton" with no
+                # kmsiForm wrapper — must be detected here so the detector returns
+                # "post_login" rather than timing out.
+                or self._find_first_visible([(By.ID, "primaryButton")])
             ):
                 return "post_login"
 

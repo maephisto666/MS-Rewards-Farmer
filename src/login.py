@@ -377,7 +377,28 @@ class Login:
 
             return False
 
-        return wait.until(detector)
+        try:
+            return wait.until(detector)
+        except TimeoutException:
+            # Detector saw no recognizable post-password page within the window.
+            # Log what's actually on screen so the failure is diagnosable instead
+            # of raising a bare, contextless TimeoutException.
+            visible_buttons = []
+            for b in self.webdriver.find_elements(By.XPATH, "//button | //*[@role='button']"):
+                try:
+                    if b.is_displayed():
+                        visible_buttons.append(
+                            (b.text or "").strip()
+                            or b.get_attribute("id")
+                            or b.get_attribute("data-testid")
+                        )
+                except Exception:
+                    continue
+            logging.warning(
+                "[LOGIN] Post-password detection timed out. URL: %s | Title: %s | visible buttons: %s",
+                self.webdriver.current_url, self.webdriver.title, visible_buttons,
+            )
+            raise
 
     def _wait_for_otp_input(self, wait, timeout: int = 10):
         custom_wait = WebDriverWait(self.webdriver, timeout)

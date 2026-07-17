@@ -12,7 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from undetected_chromedriver import Chrome
 
-from src.constants import REWARDS_DASHBOARD_URL, REWARDS_SIGNIN_URL, REWARDS_URL
+from src.constants import REWARDS_DASHBOARD_URL, REWARDS_URL
 from src.browser import Browser
 from src.utils import CONFIG, APPRISE
 
@@ -73,7 +73,10 @@ class Login:
             raise
 
     def execute_login(self) -> None:
-        self.webdriver.get(REWARDS_SIGNIN_URL)
+        # Enter via /dashboard. An unauthenticated /dashboard
+        # redirects to the login page with /dashboard as the return URL, so
+        # after auth the browser lands back on /dashboard.
+        self.webdriver.get(REWARDS_DASHBOARD_URL)
 
         wait = WebDriverWait(self.webdriver, 10)
 
@@ -227,7 +230,10 @@ class Login:
         # The "Approve sign-in request" screen has a 1-minute timeout,
         # so we must detect it quickly and not waste time on sequential waits.
         # =====================================================================
-        logging.info("[LOGIN] Checking for 2FA...")
+        if self.browser.totp is not None:
+            logging.info("[LOGIN] Checking for 2FA...")
+        else:
+            logging.info("[LOGIN] 2FA check disabled (no TOTP configured), checking for post-login dialogs...")
         requires_2fa = False
         post_password_state = self._detect_post_password_state(wait)
 
@@ -517,6 +523,7 @@ class Login:
             if btn:
                 logging.info("[LOGIN] Clicking primaryButton to advance...")
                 btn.click()
+                logging.info("[LOGIN] ... clicked!")
                 continue
 
         # Final check for "Protect your account" prompt

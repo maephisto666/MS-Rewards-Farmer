@@ -142,6 +142,12 @@ class Login:
         #     (idA_PWD_SwitchToCredPicker) -> click it -> then click
         #     "Use your password"
         #
+        #   Flow A' (passkey auto-attempt failed):
+        #     "Something went wrong / We couldn't sign you in with your passkey"
+        #     error page (bridge/fido) with an "Other ways to sign in" button
+        #     -> click it -> lands on the same credential picker as Flow A
+        #     -> then click "Use your password"
+        #
         #   Flow B (Outlook-app-enabled accounts):
         #     "Check your Outlook app" screen with "Use your password"
         #     directly available
@@ -158,6 +164,7 @@ class Login:
             result = wait.until(
                 EC.any_of(
                     EC.element_to_be_clickable((By.ID, "idA_PWD_SwitchToCredPicker")),
+                    EC.element_to_be_clickable((By.XPATH, "//*[(self::button or @role='button') and contains(normalize-space(.), 'Other ways to sign in')]")),
                     EC.element_to_be_clickable((By.XPATH, "//span[@role='button' and contains(text(), 'Use your password')]")),
                     EC.element_to_be_clickable((By.NAME, "passwd")),
                     EC.visibility_of_element_located((By.ID, "passwordEntry")),
@@ -170,10 +177,13 @@ class Login:
 
         el_id = result.get_attribute("id") or ""
         el_name = result.get_attribute("name") or ""
+        el_text = (result.text or "").strip().lower()
 
-        if el_id == "idA_PWD_SwitchToCredPicker":
-            # Flow A: passkey screen -> click "Sign in another way" -> then "Use your password"
-            logging.debug("[LOGIN] Passkey screen detected, clicking 'Sign in another way'...")
+        if el_id == "idA_PWD_SwitchToCredPicker" or "other ways to sign in" in el_text:
+            # Flow A / A': passkey screen ("Sign in another way") or passkey-error
+            # page ("Other ways to sign in"). Both escape to the same credential
+            # picker; from there click "Use your password".
+            logging.debug("[LOGIN] Passkey screen detected, opening credential picker...")
             result.click()
             use_password = wait.until(
                 EC.any_of(

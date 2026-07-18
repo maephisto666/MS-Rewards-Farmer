@@ -358,12 +358,15 @@ class Login:
 
             if (
                 "/dashboard" in self.webdriver.current_url
+                # The KMSI "Stay signed in?" page lives at ppsecure/post.srf.
+                # Match on the URL (language-independent) so we detect it
+                # regardless of which button markup Microsoft serves — some
+                # variants use id="primaryButton", others plain "Yes"/"No"
+                # buttons with neither a kmsiForm wrapper nor a primaryButton.
+                or "ppsecure/post.srf" in self.webdriver.current_url
                 or "passkey/enroll" in self.webdriver.current_url
                 or self._find_first_visible([(By.NAME, "kmsiForm")])
                 or self._find_first_visible([(By.ID, "iPageTitle")])
-                # "Stay signed in?" on login.live.com uses id="primaryButton" with no
-                # kmsiForm wrapper — must be detected here so the detector returns
-                # "post_login" rather than timing out.
                 or self._find_first_visible([(By.ID, "primaryButton")])
             ):
                 return "post_login"
@@ -543,6 +546,22 @@ class Login:
                 continue
             except NoSuchElementException:
                 pass
+
+            # KMSI "Stay signed in?" page (ppsecure/post.srf) — some variants
+            # have no primaryButton, only plain "Yes"/"No" buttons. Click "Yes"
+            # to persist the session. Scoped to post.srf so a stray "Yes"
+            # elsewhere is never clicked.
+            if "ppsecure/post.srf" in self.webdriver.current_url:
+                yes_btn = self._find_first_visible([
+                    (By.CSS_SELECTOR, "[data-testid='primaryButton']"),
+                    (By.ID, "primaryButton"),
+                    (By.XPATH, "//button[normalize-space()='Yes']"),
+                ])
+                if yes_btn:
+                    logging.info("[LOGIN] Clicking 'Yes' on 'Stay signed in?' page...")
+                    yes_btn.click()
+                    logging.info("[LOGIN] ... clicked!")
+                    continue
 
             # Generic primaryButton (catch-all for "Stay signed in?", etc.)
             # Covers both data-testid='primaryButton' (new Rewards login form)

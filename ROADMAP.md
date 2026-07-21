@@ -101,6 +101,24 @@ machine over roughly 30 Microsoft UI variants. Every new variant reported by use
 (`ae4bdc7`, `d994c81`, `4155a56`) has required adding another `elif` branch and duplicating
 selector lists. The file is at the "one more case and it breaks silently" point.
 
+#### Lessons from the issue #23 saga (kobi-wan's "Stay signed in?")
+
+Diagnosing a single user's login failure took ~10 blind guess-and-check iterations. Two
+concrete lessons that should shape the refactor:
+
+- **Detect pages by URL, not by button ID.** The "Stay signed in?" KMSI page was keyed on
+  `id="primaryButton"`, but Microsoft serves some accounts a variant with plain `Yes`/`No`
+  buttons and no `primaryButton`. Detection kept timing out. Switching to the
+  language-independent URL signal (`ppsecure/post.srf`) fixed it and is immune to button
+  markup churn. Page *identity* should come from stable signals (URL, structural landmarks),
+  not from the specific control we happen to want to click.
+- **A detection gate that raises a bare `TimeoutException` is undebuggable.** Every iteration
+  we guessed what page the user was on. The fix that finally unblocked us (`1d90204`) was a
+  one-line diagnostic: on timeout, log URL + title + visible buttons before re-raising. The
+  next user log named the page and its buttons exactly. This is the minimal seed of the
+  `DebugRecorder` / page-fingerprint idea below — build it *first*, before any structural
+  refactor, so every future variant self-reports instead of requiring a round-trip.
+
 #### Consolidated verdict
 
 - 508 lines, 2 god functions:

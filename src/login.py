@@ -68,8 +68,8 @@ class Login:
         except Exception as e:
             logging.error(f"Error during login: {e}")
             # Do not close the driver here — Browser.__exit__ owns teardown.
-            # Keeping the session alive lets callers (e.g. the recon harness) capture
-            # a screenshot or inspect the page state before the browser is torn down.
+            # Keeping the session alive lets the caller capture a screenshot or
+            # inspect the page state before the browser is torn down.
             raise
 
     def execute_login(self) -> None:

@@ -32,10 +32,6 @@ src/
   remainingSearches.py   # Remaining searches data class
   userAgentGenerator.py  # User-agent string generation
   loggingColoredFormatter.py  # Colored terminal log formatter
-  recon/                 # Stand-alone recon tool (run with: python -m src.recon)
-    __init__.py
-    __main__.py          # Selenium driver setup, URL probing, evidence capture orchestration
-    capture.py           # Framework-agnostic evidence capture: write_evidence(), SUMMARY.md
 localized_activities/    # Per-language activity definitions (en, es, fr, it)
 test/                    # Unit tests (unittest + parameterized)
 ```
@@ -142,27 +138,28 @@ uv run python main.py -h       # show CLI help
 uv run python main.py -C       # generate a config.yaml template
 ```
 
-### Recon tool
-
-A separate diagnostic tool captures page evidence (HTML, screenshot, network requests, RSC
-data) without running the full automation. Useful for investigating page structure changes:
-
-```sh
-uv run python -m src.recon                        # probe rewards.microsoft.com
-uv run python -m src.recon --url <url>            # probe a specific URL
-```
-
-Output is written to `logs/recon/<timestamp>/rewards.microsoft.com/` and includes
-`SUMMARY.md`, `page_source.html`, `screenshot.png`, `network_requests.json`, and `manifest.json`.
-The `logs/recon/` directory is gitignored.
-
 ## Testing
 
 ```sh
-uv run python -m pytest test/
+uv run python -m unittest        # runs the whole suite via auto-discovery
 ```
 
 Tests use `unittest` with `unittest.mock` and the `parameterized` library (dev dependency).
+`pytest` is **not** a project dependency — `uv run python -m pytest test/` fails with
+`No module named pytest`.
+
+> **Never pass arguments to `unittest`.** `src/utils.py` builds `CONFIG` at import time by
+> calling `argumentParser().parse_args()`, which reads the real `sys.argv`. Any extra
+> argument is therefore swallowed by the bot's own CLI parser, which rejects it and calls
+> `sys.exit(2)`:
+>
+> | Command | Result |
+> |---|---|
+> | `uv run python -m unittest` | 13 tests run |
+> | `uv run python -m unittest discover -s test -v` | `SystemExit: 2` while importing each test module, reported as 2 errors |
+> | `uv run python -m unittest test.test_utils` | argparse rejects `test.test_utils`, exits 2, no tests run |
+>
+> To run a subset, use `unittest.main(argv=[...])` inside a test module rather than the CLI.
 
 ## Linting
 

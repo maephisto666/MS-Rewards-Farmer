@@ -2,7 +2,7 @@
 
 > Status: **Phase 2 complete, Phase 3 next**. Lives on branch `feat/rewards-redesign-v4`
 > (target version `4.0.0`). This document is the source of truth for the rewrite; update
-> it as recon findings land and decisions are made.
+> it as findings land and decisions are made.
 
 ## Background
 
@@ -10,7 +10,7 @@ In July 2026 Microsoft rolled out a major redesign of the Rewards experience. Ob
 suspected effects:
 
 - The Rewards page is now a **Next.js App Router application** (v16.2.6, deployed
-  2026-07-01) using React Server Components. Confirmed by Phase 2 recon.
+  2026-07-01) using React Server Components. Confirmed in Phase 2.
   The existing Selenium selectors are ineffective. The new URL is
   `https://rewards.bing.com/dashboard` (both `rewards.bing.com/` and
   `rewards.microsoft.com/` redirect there).
@@ -49,7 +49,7 @@ primary data source. This is what makes us resilient to the *next* redesign, not
 
 > **Open question, not a conclusion.** The `dapi/me/*` endpoints that Read-to-Earn uses are a
 > *candidate* backend for the new SPA, not a foregone answer. Large orgs do not always make
-> clean choices. Recon must distinguish between at least:
+> clean choices. Investigation must distinguish between at least:
 > - (a) the same `dapi` REST API also backs the new web dashboard;
 > - (b) the React app uses a **brand-new** API / GraphQL / BFF;
 > - (c) the old API is kept **only for mobile** while web moved to something else.
@@ -61,42 +61,94 @@ primary data source. This is what makes us resilient to the *next* redesign, not
 - [x] Cut `feat/rewards-redesign-v4` (major version → `4.0.0-dev`).
 - [x] Land this planning doc so intent is tracked.
 
-## Phase 1 — Debug / recon tooling *first* (the enabler)
+## Phase 1 — Debug tooling *first* (the enabler)
 
-Build a small, permanent **page-recon harness**, runnable from the terminal, *before* touching
-automation logic. It is CLI-first; the Chrome/Claude browser integration is used only where a
-terminal-only path cannot capture visual state (screenshots, rendered layout).
+Diagnosing a breakage must not require reproducing it by hand in visible mode. Some form of
+permanent, general-purpose evidence capture has to exist before automation logic is rewritten.
 
-Requirements:
+A single-purpose recon harness was built and used to answer the Phase 2 questions, then
+**removed**: it was tied too tightly to one investigation (fixed probe URLs, a bespoke
+report format, its own login driver) to be worth maintaining as a permanent tool. The
+findings it produced are preserved in Phase 2 below.
 
-- **Owns the login flow.** It must not assume an authenticated session — it drives login
-  (credentials + TOTP) and reaches the logged-in Rewards dashboard on its own. This makes the
-  recon harness the natural proving ground for the login state-machine refactor (see Phase 3).
-- **Captures, for a logged-in session:** DOM dump, screenshot, detected framework
-  (React + version), relevant `window` globals, and **network requests** — with special
-  attention to any `dapi/me/*` or new-era API/GraphQL calls the SPA fires.
-- **Packaged as a repo command + skill** (e.g. `uv run python -m src.recon` and a `/recon`
-  skill) so future breakages are diagnosable in one command instead of manual visible-mode
-  repro.
-- Reuses the `DebugRecorder` / evidence-bundle design already specified in
-  [ROADMAP.md](../ROADMAP.md) (login refactor) — same machinery, broader target.
-- **Security:** never persist passwords, TOTP secrets, computed OTPs, JWTs, or auth cookie
-  values; redact per the ROADMAP security constraints. Evidence dir gitignored.
+What replaces it is deliberately **not** specified here. The requirement is a *generic*
+debugger, and that design already lives in [ROADMAP.md](../ROADMAP.md) under the login-flow
+refactor: `DebugRecorder`, page fingerprinting, typed errors carrying `(step, fingerprint,
+artefacts)`, and a `--diagnose` flag. That machinery is broader than the Rewards page and
+should be built once, there, rather than duplicated per investigation.
 
-## Phase 2 — Recon & the framework decision  ✅
+Constraints any such tool must respect:
 
-Using the Phase 1 tooling on a real logged-in account. Evidence captured in
-`logs/recon/20260703T114117Z/` (gitignored).
+- **Do not assume an authenticated session.** `Login.login()` short-circuits on
+  `utils.isLoggedIn()`, so a cached cookie means "logged in" is reported while
+  `execute_login()` never runs and no sign-in page is ever visited. Any tool investigating
+  the login flow must be able to force a fresh session, and must say plainly when it did not.
+- **Hook, do not fork.** `execute_login()` walks a known sequence of steps (email, post-email,
+  password, post-password, TOTP, post-login dialogs, dashboard). Evidence capture belongs at
+  those existing boundaries, not in a parallel login implementation maintained alongside them.
+- **Security.** Never persist passwords, TOTP secrets, computed OTPs, JWTs, or auth cookie
+  values. Microsoft sign-in URLs additionally carry `epct`, `code_challenge`, `state` and the
+  account name as query parameters, and those values reach disk through URLs, page dumps and
+  any captured HTML — redact per the ROADMAP security constraints. Evidence dir gitignored.
+
+## Phase 2 — Framework decision  ✅
+
+Established against a real logged-in account before the recon tool was retired.
 
 ### Findings
 
 **1. Framework confirmed — Next.js App Router, not a plain React SPA**
 
-The recon fingerprinter detected `window.next` and `__NEXT_DATA__`. Build tag
+`window.next` and `__NEXT_DATA__` are both present. Build tag
 `dpl=20260701-3` (deployed 2026-07-01). The app uses **React Server Components (RSC)**
 with streaming via `self.__next_f.push([1, "..."])` inline scripts injected into the
 initial HTML. There is no separate client-side data fetch for the dashboard — all
 structured data arrives in the first SSR response.
+
+**1b. Full front-end inventory (re-verified live 2026-07-31)**
+
+There are **two unrelated front-end applications** in play, which is why the login code
+and the dashboard code cannot share techniques. Observed on 2026-07-31 against an
+authenticated session and again through a forced fresh login, so the sign-in pages were
+walked step by step rather than skipped via a cached cookie.
+
+| | Rewards dashboard | Microsoft sign-in |
+|---|---|---|
+| Host | `rewards.bing.com/dashboard` | `login.live.com`, `login.microsoft.com` |
+| Framework | **Next.js 16.2.11**, App Router | none — server-rendered pages |
+| Rendering | React Server Components | client-side React, no SSR payload |
+| React evidence | `__reactFiber$` expando on `<body>` | `_reactRootContainer` expando |
+| Component library | **React Aria** (66 × `data-react-aria-pressable`) | **Fluent UI v9** (Griffel, `fui-` classes) |
+| Styling | CSS bundle | Griffel CSS-in-JS |
+| State source | RSC payload in HTML (`self.__next_f`) | `window.$Config`, `window.ServerData` |
+| Bundler | webpack (`webpackChunk_N_E`) | webpack (`webpackChunk_msidentity_sisu_aad`) |
+| Build tag | `dpl=20260730-3` | `aadcdn.msauth.net/shared/4/js/` |
+
+Not present anywhere: Angular, Vue, Svelte, jQuery. Next.js moved 16.2.6 → 16.2.11
+between 2026-07-17 and 2026-07-31, so the dashboard is under active development and
+selector churn should be expected.
+
+Two consequences for the code:
+
+- **React Aria drives every dashboard control.** Its pressables are wired through
+  `usePress`, not `onclick`, so `execute_script("arguments[0].click()")` is silently
+  ignored and `ActionChains(...).move_to_element(el).click().perform()` is required.
+  This is already noted in `AGENTS.md`; the fingerprint is the evidence for it.
+- **The sign-in pages are config-driven, not DOM-driven.** `window.$Config` is the
+  authoritative state, which supports the ROADMAP recommendation to read
+  `window.$Config.sErrorCode` via `execute_script` instead of substring-matching
+  `page_source` for fragments like `80041032`.
+
+> **Fingerprinter caveat, fixed 2026-07-31.** The original `JS_FINGERPRINT` probed only
+> `__REACT_DEVTOOLS_GLOBAL_HOOK__` and `window.React`. Neither exists in a production
+> build — the hook is installed by the DevTools *extension* — so it reported
+> `React: NO` on a Next.js page, which is self-contradictory. Detection now derives
+> from React's DOM expandos (`__reactFiber$` / `__reactContainer$` /
+> `_reactRootContainer`) and asset paths, and every detector reports the evidence that
+> triggered it. Grepping static HTML for framework names has the same failure mode: the
+> sign-in HTML contains zero occurrences of `react`, and its only `jquery` hits come
+> from a `watsonsupportwithjquery` diagnostics bundle that probes for a jQuery which is
+> never actually loaded.
 
 **2. What backs the dashboard — hypothesis (c) confirmed**
 
@@ -126,7 +178,7 @@ action to trigger. This is the main unknown heading into Phase 3.
 
 **4. Mobile search death — unverified (but expected)**
 
-Not directly probed in this recon session. Mobile searches use a separate browser
+Not directly probed. Mobile searches use a separate browser
 context (`browserType == "mobile"` with resolution/UA spoofing). The Bing search
 submission mechanic (`sb_form_q` + `submit()`) likely still works — the break is that
 the new dashboard no longer reports mobile search progress. Gated behind `search.mobile`
@@ -135,9 +187,9 @@ flag defaulting off per the Phase 3 plan.
 **5. Read-to-Earn OAuth flow — assumed intact**
 
 The Read-to-Earn path uses `login.live.com → prod.rewardsplatform.microsoft.com/dapi/me/activities`.
-This API endpoint is independent of the web dashboard redesign. No recon evidence
-contradicts it. Consider adding a `/recon --mode read-to-earn` probe in a future
-harness iteration.
+This API endpoint is independent of the web dashboard redesign. No evidence gathered so
+far contradicts it, but it has never been exercised directly — verifying it end to end is
+still outstanding.
 
 ### Framework decision — Keep Selenium / undetected-chromedriver
 
@@ -163,8 +215,7 @@ blocking issue.
 - **Interaction layer:** re-implement search + activities + punch cards + bonus points against
   the new page on the chosen framework.
 - **Login:** implement the ROADMAP login state-machine refactor here (page descriptors, typed
-  errors, `DebugRecorder`, scripted-driver tests). The new page brings new variants regardless,
-  and the recon harness already exercises this flow.
+  errors, `DebugRecorder`, scripted-driver tests). The new page brings new variants regardless.
 - **Mobile split:**
   - Mobile **Read-to-Earn**: keep enabled (API/OAuth, unaffected by the web redesign).
   - Mobile **searches**: keep the code, gate behind a `search.mobile` feature flag defaulting
@@ -179,7 +230,7 @@ Since the tree is already churning:
   `undetected-chromedriver` if we adopt Playwright.
 - Ruff + pre-commit + minimal CI (lint / format / tests).
 - Docs: flip the README warning to "v4 in progress", add a `4.0.0` CHANGELOG entry, and
-  document the new architecture + recon runbook under `docs/`.
+  document the new architecture under `docs/`.
 
 ## Non-goals / accept-and-document
 

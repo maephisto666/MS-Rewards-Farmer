@@ -30,6 +30,7 @@ from selenium.common import (
     NoSuchElementException,
     TimeoutException,
 )
+from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -276,6 +277,107 @@ class Utils:
 
     def goToSearch(self) -> None:
         self.webdriver.get(SEARCH_URL)
+
+    def ensureBingSearchAuth(self) -> None:
+        """Ensure www.bing.com is authenticated for search rewards (issue #36).
+
+        On some accounts/sessions www.bing.com stays signed-out even though
+        rewards.bing.com is logged in — searches then earn nothing and the
+        PCSearch counter never appears. Opening the Bing Rewards flyout (and
+        clicking 'Get Started' if the account isn't enrolled yet) re-authenticates
+        www.bing.com. Whether it's needed is non-deterministic (Microsoft-side),
+        so this checks the isRewardsUser signal and only acts when it's False.
+
+        Never raises: on any failure searches simply proceed with the fallback,
+        exactly as before.
+        """
+        try:
+            self.webdriver.get("https://www.bing.com/")
+            if self._isBingRewardsAuthenticated():
+                logging.debug("[BING AUTH] www.bing.com already authenticated for search.")
+                return
+
+            logging.info(
+                "[BING AUTH] www.bing.com not authenticated for search — opening "
+                "Rewards flyout to re-authenticate..."
+            )
+            pill = self._findFirstVisible([
+                (By.ID, "id_rc"),
+                (By.CSS_SELECTOR, "[aria-label*='Reward']"),
+                (By.CSS_SELECTOR, "a[href*='rewards']"),
+            ])
+            if pill is None:
+                logging.warning(
+                    "[BING AUTH] Rewards pill not found on www.bing.com "
+                    "(e.g. mobile layout) — skipping; searches use the fallback."
+                )
+                return
+            ActionChains(self.webdriver).move_to_element(pill).click().perform()
+            time.sleep(4)
+
+            # Unenrolled accounts show 'Get Started' in the flyout; already-enrolled
+            # accounts show their points and just opening the flyout is enough.
+            getStarted = self._findGetStarted()
+            if getStarted is not None:
+                logging.info("[BING AUTH] Clicking 'Get Started' to enrol...")
+                ActionChains(self.webdriver).move_to_element(getStarted).click().perform()
+                time.sleep(6)
+                self.webdriver.switch_to.default_content()
+
+            # Confirm the flip.
+            self.webdriver.get("https://www.bing.com/")
+            if self._isBingRewardsAuthenticated():
+                logging.info("[BING AUTH] www.bing.com is now authenticated for search.")
+            else:
+                logging.warning(
+                    "[BING AUTH] www.bing.com still not authenticated after opening the "
+                    "flyout — searches may not count this run."
+                )
+        except Exception as exc:  # never break the search flow
+            logging.warning("[BING AUTH] ensureBingSearchAuth failed (%s) — continuing.", exc)
+            with contextlib.suppress(Exception):
+                self.webdriver.switch_to.default_content()
+
+    def _isBingRewardsAuthenticated(self) -> bool:
+        try:
+            return bool(self.getBingInfo().get("isRewardsUser"))
+        except Exception:
+            return False
+
+    def _findFirstVisible(self, selectors):
+        for by, sel in selectors:
+            for el in self.webdriver.find_elements(by, sel):
+                try:
+                    if el.is_displayed():
+                        return el
+                except Exception:
+                    continue
+        return None
+
+    def _findGetStarted(self):
+        """Find a visible 'Get started' control in the main document or any iframe.
+        The driver is left switched into the frame that owns the returned element
+        (so the caller can click it); callers must switch_to.default_content()
+        afterwards. Returns to default content when nothing is found."""
+        xpath = (
+            "//*[self::button or self::a or @role='button']"
+            "[contains(normalize-space(.), 'et started')]"
+        )
+        self.webdriver.switch_to.default_content()
+        for el in self.webdriver.find_elements(By.XPATH, xpath):
+            if el.is_displayed():
+                return el
+        for frame in self.webdriver.find_elements(By.TAG_NAME, "iframe"):
+            try:
+                self.webdriver.switch_to.default_content()
+                self.webdriver.switch_to.frame(frame)
+                for el in self.webdriver.find_elements(By.XPATH, xpath):
+                    if el.is_displayed():
+                        return el
+            except Exception:
+                continue
+        self.webdriver.switch_to.default_content()
+        return None
 
     def getDashboardData(self):
         """

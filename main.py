@@ -154,6 +154,7 @@ def executeBot(currentAccount):
             )
             BonusPoints(desktopBrowser).claimBonusPoints()
             Activities(desktopBrowser).completeActivities()
+            Activities(desktopBrowser).completeMoreActivities()
             PunchCards(desktopBrowser).completePunchCards()
             # VersusGame(desktopBrowser).completeVersusGame()
 

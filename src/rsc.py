@@ -48,6 +48,7 @@ class DailySetItem:
     date: str
     is_locked: bool
     image_url: str = ""
+    is_promotional: bool = False
 
     @classmethod
     def from_rsc(cls, d: dict) -> "DailySetItem":
@@ -61,6 +62,7 @@ class DailySetItem:
             date=d.get("date", ""),
             is_locked=_rsc_bool(d.get("isLocked"), default=False),
             image_url=d.get("imageUrl", ""),
+            is_promotional=_rsc_bool(d.get("isPromotional"), default=False),
         )
 
     @property
@@ -134,6 +136,7 @@ class DashboardData:
     balance: int = 0
     level: int = 1
     daily_set_items: list[DailySetItem] = field(default_factory=list)
+    activity_cards: list[DailySetItem] = field(default_factory=list)
     activities_remaining: int = 0
     activities_requirement: int = 0
     activities_progress: int = 0
@@ -148,6 +151,21 @@ class DashboardData:
         from datetime import date
         today = date.today().strftime("%m/%d/%Y")
         return [i for i in self.daily_set_items if i.date == today]
+
+    def eligible_activity_cards(self) -> list[DailySetItem]:
+        """'Keep earning' cards (rewards.bing.com/earn) that are simple
+        navigate-to-earn tasks we can complete by clicking the card: worth points,
+        not yet done, not locked, and not a promotional banner (sweepstakes,
+        Copilot image gen, browser-extension prompts — all points=0/promotional).
+        """
+        return [
+            c
+            for c in self.activity_cards
+            if c.points > 0
+            and not c.is_completed
+            and not c.is_locked
+            and not c.is_promotional
+        ]
 
 
 def _collect_rsc_text(html: str) -> str:
@@ -241,6 +259,13 @@ def parse_dashboard(html: str) -> DashboardData:
 
     if not data.daily_set_items:
         logger.warning("RSC: dailySetItems empty or not found in RSC payload")
+
+    # 'Keep earning' cards on the /earn page (issue #37). Not present on every
+    # page (e.g. /dashboard) — absent → empty list, which is fine.
+    raw_cards = _extract_json_array(rsc_text, "activityCards")
+    data.activity_cards = [
+        DailySetItem.from_rsc(item) for item in raw_cards if isinstance(item, dict)
+    ]
 
     # pointsclaim block: "type":"pointsclaim","model":{"pointClaim":{...} or null}
     # Two-step: first find the pointClaim value position, then check it is an object

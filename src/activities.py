@@ -23,12 +23,18 @@ class Activities:
         self.browser = browser
         self.webdriver = browser.webdriver
 
-    def _click_activity_anchor(self, item: DailySetItem) -> bool:
+    def _click_activity_anchor(self, item: DailySetItem, reload_fn=None) -> bool:
         """
         Find and JS-click the dashboard card anchor for item.
         Returns True if found and clicked, False if the anchor is not in the
         current slide's DOM (caller must advance the carousel and retry).
+
+        reload_fn is called to reload the page if the anchor isn't rendered yet;
+        it defaults to goToRewards (dashboard) but callers on other pages (e.g.
+        the /earn page) pass their own so the retry reloads the right page.
         """
+        if reload_fn is None:
+            reload_fn = self.browser.utils.goToRewards
         token = item.url_selector_token
         anchors = self.webdriver.find_elements(
             By.XPATH, f"//a[contains(@href, '{token}')]"
@@ -63,10 +69,10 @@ class Activities:
             except TimeoutException:
                 if attempt < 2:
                     logging.info(
-                        "[ACTIVITY] Anchor not rendered for '%s', reloading dashboard (attempt %d)",
+                        "[ACTIVITY] Anchor not rendered for '%s', reloading page (attempt %d)",
                         cleanupActivityTitle(item.title), attempt,
                     )
-                    self.browser.utils.goToRewards()
+                    reload_fn()
                     anchors = self.webdriver.find_elements(
                         By.XPATH, f"//a[contains(@href, '{token}')]"
                     )
@@ -164,20 +170,72 @@ class Activities:
         logging.info("[ACTIVITIES] Done")
 
         if CONFIG.get("apprise.notify.incomplete-activity"):
-            items_after = self.browser.utils.getActivities()
-            incomplete = [
-                cleanupActivityTitle(i.title)
-                for i in items_after
-                if not i.is_completed and not i.is_locked
-                and cleanupActivityTitle(i.title) not in IGNORED_ACTIVITIES
-                and i.activity_type != "REFERRAL"
-            ]
-            if incomplete:
-                logging.info("incompleteActivities: %s", incomplete)
-                APPRISE.notify(
-                    '"' + '", "'.join(incomplete) + '"\n' + REWARDS_DASHBOARD_URL,
-                    f"We found some incomplete activities for {self.browser.email}",
+            self._notify_incomplete()
+
+    def completeMoreActivities(self):
+        """Complete the simple 'Keep earning' cards on rewards.bing.com/earn
+        (issue #37) — the navigate-to-earn tasks worth points (e.g. the +10
+        featured-topic searches). Promotional banners, the Copilot image task,
+        and the multi-search task (points=0) are left for now.
+        """
+        logging.info("[MORE ACTIVITIES] Trying to complete 'Keep earning' cards...")
+
+        # getEarnData navigates to /earn and parses its RSC, so the anchors are
+        # already on the page we're on.
+        data = self.browser.utils.getEarnData()
+        todo = data.eligible_activity_cards()
+
+        if not todo:
+            logging.info("[MORE ACTIVITIES] Nothing to do.")
+            return
+
+        logging.info("[MORE ACTIVITIES] %d card(s) to complete", len(todo))
+
+        for item in todo:
+            # Each successful click resets tabs back to the /dashboard, so return
+            # to /earn and wait for this card's anchor (React hydration can lag)
+            # before clicking it.
+            self.browser.utils.goToEarn()
+            token = item.url_selector_token
+            try:
+                WebDriverWait(self.webdriver, 10).until(
+                    lambda d, t=token: d.find_elements(
+                        By.XPATH, f"//a[contains(@href, '{t}')]"
+                    )
                 )
+            except TimeoutException:
+                logging.warning(
+                    "[MORE ACTIVITY] Anchor for '%s' (token=%r) not in DOM — skipping",
+                    cleanupActivityTitle(item.title), token,
+                )
+                continue
+
+            clicked = self._click_activity_anchor(
+                item, reload_fn=self.browser.utils.goToEarn
+            )
+            if not clicked:
+                logging.warning(
+                    "[MORE ACTIVITY] No anchor found for '%s' (token=%r) — skipping",
+                    cleanupActivityTitle(item.title), item.url_selector_token,
+                )
+
+        logging.info("[MORE ACTIVITIES] Done")
+
+    def _notify_incomplete(self):
+        items_after = self.browser.utils.getActivities()
+        incomplete = [
+            cleanupActivityTitle(i.title)
+            for i in items_after
+            if not i.is_completed and not i.is_locked
+            and cleanupActivityTitle(i.title) not in IGNORED_ACTIVITIES
+            and i.activity_type != "REFERRAL"
+        ]
+        if incomplete:
+            logging.info("incompleteActivities: %s", incomplete)
+            APPRISE.notify(
+                '"' + '", "'.join(incomplete) + '"\n' + REWARDS_DASHBOARD_URL,
+                f"We found some incomplete activities for {self.browser.email}",
+            )
 
 
 def cleanupActivityTitle(activityTitle: str) -> str:

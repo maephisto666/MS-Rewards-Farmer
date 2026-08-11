@@ -38,7 +38,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from urllib3 import Retry
 
-from .constants import REWARDS_DASHBOARD_URL, SEARCH_URL
+from .constants import REWARDS_DASHBOARD_URL, REWARDS_EARN_URL, SEARCH_URL
 
 PREFER_BING_INFO = True
 
@@ -253,6 +253,20 @@ class Utils:
             "https://rewards.bing.com/"
         ), f"Unexpected URL after navigating to Rewards: {self.webdriver.current_url}"
         self.dismissCookieBanner()
+
+    def goToEarn(self) -> None:
+        self.webdriver.get(REWARDS_EARN_URL)
+        assert self.webdriver.current_url.startswith(
+            "https://rewards.bing.com/"
+        ), f"Unexpected URL after navigating to Earn: {self.webdriver.current_url}"
+        self.dismissCookieBanner()
+
+    def getEarnData(self):
+        """Navigate to the /earn page and parse its RSC payload — this is where
+        the 'Keep earning' activity cards live (issue #37)."""
+        from src.rsc import parse_dashboard  # local import: avoids circular deps
+        self.goToEarn()
+        return parse_dashboard(self.webdriver.page_source)
 
     def dismissCookieBanner(self) -> None:
         """Dismiss the cookie consent banner if present."""

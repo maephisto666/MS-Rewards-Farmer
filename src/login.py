@@ -358,16 +358,23 @@ class Login:
 
             if (
                 "/dashboard" in self.webdriver.current_url
-                # The KMSI "Stay signed in?" page lives at ppsecure/post.srf.
-                # Match on the URL (language-independent) so we detect it
-                # regardless of which button markup Microsoft serves — some
-                # variants use id="primaryButton", others plain "Yes"/"No"
-                # buttons with neither a kmsiForm wrapper nor a primaryButton.
-                or "ppsecure/post.srf" in self.webdriver.current_url
                 or "passkey/enroll" in self.webdriver.current_url
                 or self._find_first_visible([(By.NAME, "kmsiForm")])
                 or self._find_first_visible([(By.ID, "iPageTitle")])
                 or self._find_first_visible([(By.ID, "primaryButton")])
+                # KMSI "Stay signed in?" at ppsecure/post.srf with plain Yes/No
+                # buttons (no kmsiForm / primaryButton). Gate on the visible "Yes"
+                # button, NOT the bare URL: the 2FA "Enter the code" page shares
+                # the same post.srf URL, so a URL-only match would swallow it and
+                # skip OTP entry. Distinguishing by on-page content means the 2FA
+                # page is identified by its Code field (the totp check above) and
+                # the KMSI page by its Yes button.
+                or (
+                    "ppsecure/post.srf" in self.webdriver.current_url
+                    and self._find_first_visible([
+                        (By.XPATH, "//button[normalize-space()='Yes']"),
+                    ])
+                )
             ):
                 return "post_login"
 

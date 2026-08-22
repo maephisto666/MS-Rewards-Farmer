@@ -49,5 +49,9 @@ class TestUtils(TestCase):
     def test_load_localized_activities_with_invalid_language(self):
         from src.utils import load_localized_activities
 
-        with self.assertRaises(FileNotFoundError):
-            load_localized_activities("foo")
+        # An unknown language falls back to English rather than raising, so no
+        # account is skipped just because its locale has no query file.
+        fallback = load_localized_activities("foo")
+        english = load_localized_activities("en")
+        self.assertEqual(fallback.title_to_query, english.title_to_query)
+        self.assertEqual(fallback.ignore, english.ignore)

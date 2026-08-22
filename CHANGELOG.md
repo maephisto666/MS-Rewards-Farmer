@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/3.7.0...4.0.0) (2026-08-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* reworked for the redesigned Microsoft Rewards site — dashboard data is now read from the Next.js RSC payload and the login flow targets the new sign-in pages.
+
+### Added
+
+* adapt automation to the 2026 Microsoft Rewards redesign ([60c196b](https://github.com/maephisto666/MS-Rewards-Farmer/commit/60c196be65d69438967fd2ab9c4c154da36424c2))
+* complete 'Keep earning' activity cards on the /earn page ([#37](https://github.com/maephisto666/MS-Rewards-Farmer/issues/37)) ([ff26528](https://github.com/maephisto666/MS-Rewards-Farmer/commit/ff26528a2bbf5c42768b1dcf09ecd1410f1ae401))
+* read dashboard data from the Next.js RSC wire format ([c6c914d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/c6c914da2207b9693025a8e15d70376fc87422d1))
+* rework the login flow for the redesigned Microsoft sign-in ([fdd39a0](https://github.com/maephisto666/MS-Rewards-Farmer/commit/fdd39a0fec00ab367c8134db9aa1192196c9ddfd))
+
+
+### Fixed
+
+* re-authenticate www.bing.com so Bing searches are counted ([#36](https://github.com/maephisto666/MS-Rewards-Farmer/issues/36)) ([9d39e81](https://github.com/maephisto666/MS-Rewards-Farmer/commit/9d39e8132724b5038de908de3bad5f8c82684efe))
+
 ## [3.7.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/3.6.0...3.7.0) (2026-06-28)
 
 

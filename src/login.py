@@ -3,6 +3,7 @@ import logging
 from pyotp import TOTP
 from selenium.common import TimeoutException
 from selenium.common.exceptions import (
+    ElementClickInterceptedException,
     ElementNotInteractableException,
     NoSuchElementException,
 )
@@ -11,6 +12,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 from undetected_chromedriver import Chrome
 
+from src.constants import REWARDS_DASHBOARD_URL, REWARDS_URL
 from src.browser import Browser
 from src.utils import CONFIG, APPRISE
 
@@ -38,33 +40,21 @@ class Login:
             element = self.webdriver.find_element(
                 By.XPATH, "//div[@id='serviceAbuseLandingTitle']"
             )
-            self.locked(element)
-        except NoSuchElementException:
+            if element.is_displayed():
+                logging.critical("This Account is Locked!")
+                # Do not close the driver here — Browser.__exit__ owns teardown.
+                raise LoginError("Account locked, moving to the next account.")
+        except (NoSuchElementException, ElementNotInteractableException):
             pass
 
     def check_banned_user(self):
         try:
             element = self.webdriver.find_element(By.XPATH, '//*[@id="fraudErrorBody"]')
-            self.banned(element)
-        except NoSuchElementException:
-            pass
-
-    def locked(self, element):
-        try:
-            if element.is_displayed():
-                logging.critical("This Account is Locked!")
-                self.webdriver.close()
-                raise LoginError("Account locked, moving to the next account.")
-        except (ElementNotInteractableException, NoSuchElementException):
-            pass
-
-    def banned(self, element):
-        try:
             if element.is_displayed():
                 logging.critical("This Account is Banned!")
-                self.webdriver.close()
+                # Do not close the driver here — Browser.__exit__ owns teardown.
                 raise LoginError("Account banned, moving to the next account.")
-        except (ElementNotInteractableException, NoSuchElementException):
+        except (NoSuchElementException, ElementNotInteractableException):
             pass
 
     def login(self) -> None:
@@ -74,17 +64,19 @@ class Login:
             else:
                 logging.info("[LOGIN] Logging-in...")
                 self.execute_login()
-                assert self.utils.isLoggedIn()
                 logging.info("[LOGIN] Logged-in successfully!")
-            self.check_locked_user()
-            self.check_banned_user()
         except Exception as e:
             logging.error(f"Error during login: {e}")
-            self.webdriver.close()
+            # Do not close the driver here — Browser.__exit__ owns teardown.
+            # Keeping the session alive lets the caller capture a screenshot or
+            # inspect the page state before the browser is torn down.
             raise
 
     def execute_login(self) -> None:
-        self.webdriver.get("https://rewards.bing.com/Signin/")
+        # Enter via /dashboard. An unauthenticated /dashboard
+        # redirects to the login page with /dashboard as the return URL, so
+        # after auth the browser lands back on /dashboard.
+        self.webdriver.get(REWARDS_DASHBOARD_URL)
 
         wait = WebDriverWait(self.webdriver, 10)
 
@@ -105,19 +97,23 @@ class Login:
             ))
         except TimeoutException:
             logging.debug(f"[LOGIN] No email field found. URL: {self.webdriver.current_url}, Title: {self.webdriver.title}")
-            # Session might be partially active - check if we landed on a
-            # post-login screen (passkey enrollment, stay signed in, etc.)
             current_url = self.webdriver.current_url.lower()
+            # Already on dashboard — fast auth path (e.g. SSO or active session)
+            if "/dashboard" in current_url:
+                logging.info("[LOGIN] Already on dashboard, skipping login flow.")
+                self._dismiss_dashboard_overlays()
+                return
             if "passkey/enroll" in current_url:
                 logging.info("[LOGIN] Landed on post-login screen, handling dialogs...")
                 self._handle_post_login_dialogs(wait)
                 return
-            # Check if already on RewardsPortal
+            # Wait briefly in case we're mid-redirect to dashboard
             try:
-                self.utils.waitUntilVisible(
-                    By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 5
+                WebDriverWait(self.webdriver, 15).until(
+                    lambda d: "/dashboard" in d.current_url
                 )
-                logging.info("[LOGIN] Already on RewardsPortal after redirect.")
+                logging.info("[LOGIN] Redirected to dashboard.")
+                self._dismiss_dashboard_overlays()
                 return
             except TimeoutException:
                 raise TimeoutException(
@@ -146,6 +142,12 @@ class Login:
         #     (idA_PWD_SwitchToCredPicker) -> click it -> then click
         #     "Use your password"
         #
+        #   Flow A' (passkey auto-attempt failed):
+        #     "Something went wrong / We couldn't sign you in with your passkey"
+        #     error page (bridge/fido) with an "Other ways to sign in" button
+        #     -> click it -> lands on the same credential picker as Flow A
+        #     -> then click "Use your password"
+        #
         #   Flow B (Outlook-app-enabled accounts):
         #     "Check your Outlook app" screen with "Use your password"
         #     directly available
@@ -162,6 +164,7 @@ class Login:
             result = wait.until(
                 EC.any_of(
                     EC.element_to_be_clickable((By.ID, "idA_PWD_SwitchToCredPicker")),
+                    EC.element_to_be_clickable((By.XPATH, "//*[(self::button or @role='button') and contains(normalize-space(.), 'Other ways to sign in')]")),
                     EC.element_to_be_clickable((By.XPATH, "//span[@role='button' and contains(text(), 'Use your password')]")),
                     EC.element_to_be_clickable((By.NAME, "passwd")),
                     EC.visibility_of_element_located((By.ID, "passwordEntry")),
@@ -174,10 +177,13 @@ class Login:
 
         el_id = result.get_attribute("id") or ""
         el_name = result.get_attribute("name") or ""
+        el_text = (result.text or "").strip().lower()
 
-        if el_id == "idA_PWD_SwitchToCredPicker":
-            # Flow A: passkey screen -> click "Sign in another way" -> then "Use your password"
-            logging.debug("[LOGIN] Passkey screen detected, clicking 'Sign in another way'...")
+        if el_id == "idA_PWD_SwitchToCredPicker" or "other ways to sign in" in el_text:
+            # Flow A / A': passkey screen ("Sign in another way") or passkey-error
+            # page ("Other ways to sign in"). Both escape to the same credential
+            # picker; from there click "Use your password".
+            logging.debug("[LOGIN] Passkey screen detected, opening credential picker...")
             result.click()
             use_password = wait.until(
                 EC.any_of(
@@ -234,9 +240,12 @@ class Login:
         # The "Approve sign-in request" screen has a 1-minute timeout,
         # so we must detect it quickly and not waste time on sequential waits.
         # =====================================================================
-        logging.info("[LOGIN] Checking for 2FA...")
+        if self.browser.totp is not None:
+            logging.info("[LOGIN] Checking for 2FA...")
+        else:
+            logging.info("[LOGIN] 2FA check disabled (no TOTP configured), checking for post-login dialogs...")
         requires_2fa = False
-        post_password_state = self._detect_post_password_state(wait, passwordField)
+        post_password_state = self._detect_post_password_state(wait)
 
         if post_password_state == "totp":
             requires_2fa = True
@@ -245,7 +254,7 @@ class Login:
             retry_password_field = wait.until(EC.any_of(
                 EC.element_to_be_clickable((By.NAME, "passwd")),
                 EC.element_to_be_clickable((By.ID, "passwordEntry")),
-                EC.element_to_be_clickable((By.ID, "i0118")),
+                EC.element_to_be_clickable((By.ID, "i01115")),
             ))
             retry_password_field.click()
             retry_password_field.clear()
@@ -255,7 +264,7 @@ class Login:
                 EC.element_to_be_clickable((By.ID, "idSIButton9")),
             ))
             submit_btn.click()
-            post_password_state = self._detect_post_password_state(wait, retry_password_field)
+            post_password_state = self._detect_post_password_state(wait)
             if post_password_state == "totp":
                 requires_2fa = True
         elif post_password_state == "other_ways":
@@ -320,51 +329,86 @@ class Login:
         # =====================================================================
         logging.info("[LOGIN] Handling post-login dialogs...")
         self._handle_post_login_dialogs(wait)
+        self._dismiss_dashboard_overlays()
 
-    def _detect_post_password_state(self, wait, passwordField) -> str:
-        try:
-            wait.until(EC.staleness_of(passwordField))
-        except TimeoutException:
-            logging.debug("[LOGIN] Password field did not go stale quickly after submit.")
-
+    def _detect_post_password_state(self, wait) -> str:
         def detector(_):
-            if self._find_first_visible([
-                (By.NAME, "OneTimeCodeViewForm"),
-                (By.CSS_SELECTOR, "input[name='otc']"),
-                (By.ID, "idTxtBx_SAOTCC_OTC"),
-                (By.CSS_SELECTOR, "input[id*='SAOTCC']"),
-                (By.CSS_SELECTOR, "input[id*='OTC']"),
-                (By.CSS_SELECTOR, "input[aria-label='Code']"),
-                (By.CSS_SELECTOR, "input[placeholder='Code']"),
-                (By.CSS_SELECTOR, "input[autocomplete='one-time-code']"),
-                (By.CSS_SELECTOR, "input[inputmode='numeric']"),
-                (By.CSS_SELECTOR, "input[type='tel']"),
-            ]):
-                return "totp"
+            # Only probe for 2FA screens when a TOTP secret is configured —
+            # these elements will never appear on accounts without 2FA and
+            # polling for them wastes the entire detection window.
+            if self.browser.totp is not None:
+                if self._find_first_visible([
+                    (By.NAME, "OneTimeCodeViewForm"),
+                    (By.CSS_SELECTOR, "input[name='otc']"),
+                    (By.ID, "idTxtBx_SAOTCC_OTC"),
+                    (By.CSS_SELECTOR, "input[id*='SAOTCC']"),
+                    (By.CSS_SELECTOR, "input[id*='OTC']"),
+                    (By.CSS_SELECTOR, "input[aria-label='Code']"),
+                    (By.CSS_SELECTOR, "input[placeholder='Code']"),
+                    (By.CSS_SELECTOR, "input[autocomplete='one-time-code']"),
+                    (By.CSS_SELECTOR, "input[inputmode='numeric']"),
+                    (By.CSS_SELECTOR, "input[type='tel']"),
+                ]):
+                    return "totp"
 
-            if self._find_first_visible([
-                (By.XPATH, "//button[contains(., 'Other ways to sign in') or contains(., 'other ways to sign in')]"),
-            ]):
-                return "other_ways"
+                if self._find_first_visible([
+                    (By.XPATH, "//button[contains(., 'Other ways to sign in') or contains(., 'other ways to sign in')]"),
+                ]):
+                    return "other_ways"
 
             if (
-                "passkey/enroll" in self.webdriver.current_url
+                "/dashboard" in self.webdriver.current_url
+                or "passkey/enroll" in self.webdriver.current_url
                 or self._find_first_visible([(By.NAME, "kmsiForm")])
                 or self._find_first_visible([(By.ID, "iPageTitle")])
-                or self._find_first_visible([(By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]')])
+                or self._find_first_visible([(By.ID, "primaryButton")])
+                # KMSI "Stay signed in?" at ppsecure/post.srf with plain Yes/No
+                # buttons (no kmsiForm / primaryButton). Gate on the visible "Yes"
+                # button, NOT the bare URL: the 2FA "Enter the code" page shares
+                # the same post.srf URL, so a URL-only match would swallow it and
+                # skip OTP entry. Distinguishing by on-page content means the 2FA
+                # page is identified by its Code field (the totp check above) and
+                # the KMSI page by its Yes button.
+                or (
+                    "ppsecure/post.srf" in self.webdriver.current_url
+                    and self._find_first_visible([
+                        (By.XPATH, "//button[normalize-space()='Yes']"),
+                    ])
+                )
             ):
                 return "post_login"
 
             page_text = self.webdriver.page_source
             if (
-                "sErrorCode\":\"80041032" in page_text
+                "sErrorCode\":\"150041032" in page_text
                 or "Please enter the password for your Microsoft account." in page_text
             ):
                 return "password_required"
 
             return False
 
-        return wait.until(detector)
+        try:
+            return wait.until(detector)
+        except TimeoutException:
+            # Detector saw no recognizable post-password page within the window.
+            # Log what's actually on screen so the failure is diagnosable instead
+            # of raising a bare, contextless TimeoutException.
+            visible_buttons = []
+            for b in self.webdriver.find_elements(By.XPATH, "//button | //*[@role='button']"):
+                try:
+                    if b.is_displayed():
+                        visible_buttons.append(
+                            (b.text or "").strip()
+                            or b.get_attribute("id")
+                            or b.get_attribute("data-testid")
+                        )
+                except Exception:
+                    continue
+            logging.warning(
+                "[LOGIN] Post-password detection timed out. URL: %s | Title: %s | visible buttons: %s",
+                self.webdriver.current_url, self.webdriver.title, visible_buttons,
+            )
+            raise
 
     def _wait_for_otp_input(self, wait, timeout: int = 10):
         custom_wait = WebDriverWait(self.webdriver, timeout)
@@ -423,14 +467,41 @@ class Login:
                     continue
         return None
 
+    def _dismiss_dashboard_overlays(self) -> None:
+        """Dismiss cookie banner and new-user tutorial modal if present on the dashboard."""
+        _dismissable = (TimeoutException, ElementClickInterceptedException, ElementNotInteractableException)
+
+        # Tutorial modal first — its backdrop covers the whole page including the cookie banner
+        logging.debug("[LOGIN] Checking for new-user tutorial modal (up to 15 s)...")
+        try:
+            btn = self.utils.waitUntilClickable(
+                By.XPATH, "//button[@slot='close'][contains(normalize-space(), 'Get started')]", 15
+            )
+            btn.click()
+            logging.info("[LOGIN] Dismissed new-user tutorial modal.")
+        except _dismissable:
+            pass
+
+        # Cookie consent banner — now safe to click once the modal backdrop is gone
+        try:
+            btn = self.utils.waitUntilClickable(
+                By.XPATH, "//button[normalize-space()='Reject']", 15
+            )
+            btn.click()
+            logging.info("[LOGIN] Dismissed cookie consent banner.")
+        except _dismissable:
+            pass
+
     def _handle_post_login_dialogs(self, wait) -> None:
         self.check_locked_user()
         self.check_banned_user()
 
         for _ in range(5):
+            if "/dashboard" in self.webdriver.current_url:
+                return
             try:
-                self.utils.waitUntilVisible(
-                    By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 5
+                WebDriverWait(self.webdriver, 5).until(
+                    lambda d: "/dashboard" in d.current_url
                 )
                 return
             except TimeoutException:
@@ -440,7 +511,7 @@ class Login:
             page_text = self.webdriver.page_source
             if "HTTP ERROR" in page_text or "ERR_TIMED_OUT" in page_text or "isn't working" in page_text:
                 logging.warning(f"[LOGIN] Error page detected (URL: {self.webdriver.current_url}). Retrying navigation...")
-                self.webdriver.get("https://rewards.bing.com/")
+                self.webdriver.get(REWARDS_URL)
                 continue
 
             # "Is your security info still accurate?" dialog (old form, uses element IDs)
@@ -483,15 +554,34 @@ class Login:
             except NoSuchElementException:
                 pass
 
-            # Generic primaryButton (catch-all for "Stay signed in?", etc.)
-            try:
-                btn = self.webdriver.find_element(By.CSS_SELECTOR, "[data-testid='primaryButton']")
-                if btn.is_displayed():
-                    logging.info("[LOGIN] Clicking primaryButton to advance...")
-                    btn.click()
+            # KMSI "Stay signed in?" page (ppsecure/post.srf) — some variants
+            # have no primaryButton, only plain "Yes"/"No" buttons. Click "Yes"
+            # to persist the session. Scoped to post.srf so a stray "Yes"
+            # elsewhere is never clicked.
+            if "ppsecure/post.srf" in self.webdriver.current_url:
+                yes_btn = self._find_first_visible([
+                    (By.CSS_SELECTOR, "[data-testid='primaryButton']"),
+                    (By.ID, "primaryButton"),
+                    (By.XPATH, "//button[normalize-space()='Yes']"),
+                ])
+                if yes_btn:
+                    logging.info("[LOGIN] Clicking 'Yes' on 'Stay signed in?' page...")
+                    yes_btn.click()
+                    logging.info("[LOGIN] ... clicked!")
                     continue
-            except NoSuchElementException:
-                pass
+
+            # Generic primaryButton (catch-all for "Stay signed in?", etc.)
+            # Covers both data-testid='primaryButton' (new Rewards login form)
+            # and id="primaryButton" (login.live.com "Stay signed in?" dialog)
+            btn = self._find_first_visible([
+                (By.CSS_SELECTOR, "[data-testid='primaryButton']"),
+                (By.ID, "primaryButton"),
+            ])
+            if btn:
+                logging.info("[LOGIN] Clicking primaryButton to advance...")
+                btn.click()
+                logging.info("[LOGIN] ... clicked!")
+                continue
 
         # Final check for "Protect your account" prompt
         isAskingToProtect = self.utils.checkIfTextPresentAfterDelay("protect your account", 5)
@@ -502,6 +592,6 @@ class Login:
             print("Account protection detected, handle prompts and press enter when on rewards page")
             input()
 
-        self.utils.waitUntilVisible(
-            By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]'
+        WebDriverWait(self.webdriver, 30).until(
+            lambda d: "/dashboard" in d.current_url,
         )

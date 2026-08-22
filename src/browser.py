@@ -70,8 +70,15 @@ class Browser:
             f"in __exit__ exc_type={exc_type} exc_value={exc_value} traceback={traceback}"
         )
         # turns out close is needed for undetected_chromedriver
-        self.webdriver.close()
-        self.webdriver.quit()
+        # Suppress session errors: Chrome may have already crashed before we get here
+        try:
+            self.webdriver.close()
+        except Exception:
+            logging.debug("browser.__exit__: close() failed (session already gone)")
+        try:
+            self.webdriver.quit()
+        except Exception:
+            logging.debug("browser.__exit__: quit() failed (session already gone)")
 
     def browserSetup(
         self,
@@ -91,6 +98,8 @@ class Browser:
             options.add_argument("--disable-dev-shm-usage")
             options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
+        options.add_argument("--no-first-run")
+        options.add_argument("--no-default-browser-check")
         options.add_argument("--disable-extensions")
         options.add_argument("--dns-prefetch-disable")
         options.add_argument("--disable-gpu")
@@ -120,16 +129,16 @@ class Browser:
                 driver_executable_path="/usr/bin/chromedriver",
             )
         else:
-            # Obtain webdriver chrome driver version
             version = self.getChromeVersion()
             major = int(version.split(".")[0])
-
+            logging.debug(f"browserSetup: launching UC Chrome {major} with profile {self.userDataDir}")
             driver = webdriver.Chrome(
                 options=options,
                 seleniumwire_options=seleniumwireOptions,
                 user_data_dir=self.userDataDir.as_posix(),
                 version_main=major,
             )
+            logging.debug("browserSetup: UC Chrome launched")
 
         seleniumLogger = logging.getLogger("seleniumwire")
         seleniumLogger.setLevel(logging.ERROR)
@@ -258,65 +267,74 @@ class Browser:
 
     @staticmethod
     def getChromeVersion() -> str:
+        logging.debug("getChromeVersion: starting temporary headless Chrome")
         chrome_options = ChromeOptions()
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--no-first-run")
+        chrome_options.add_argument("--no-default-browser-check")
+        chrome_options.add_argument("--disable-default-apps")
         driver = WebDriver(options=chrome_options)
         version = driver.capabilities["browserVersion"]
-
+        logging.debug(f"getChromeVersion: detected Chrome {version}")
         driver.close()
         driver.quit()
-        # driver.__exit__(None, None, None)
-
         return version
+
+    # Default search count used when the Bing API does not expose counters
+    # (e.g. Microsoft Rewards accounts in regions where Bing Rewards is separate).
+    # The bingSearch() exit condition (no points earned after maxRetries) naturally
+    # stops the loop before this ceiling is reached on days when searches are done.
+    _FALLBACK_DESKTOP_SEARCHES = 30
+    _FALLBACK_MOBILE_SEARCHES = 0
 
     def getRemainingSearches(
         self, desktopAndMobile: bool = False
     ) -> RemainingSearches | int:
-        if PREFER_BING_INFO:
+        try:
             bingInfo = self.utils.getBingInfo()
-        else:
-            bingInfo = self.utils.getDashboardData()
-        searchPoints = 1
-        if PREFER_BING_INFO:
             counters = bingInfo["flyoutResult"]["userStatus"]["counters"]
-        else:
-            counters = bingInfo["userStatus"]["counters"]
-        pcSearch: dict = counters["PCSearch" if PREFER_BING_INFO else "pcSearch"][0]
-        pointProgressMax: int = pcSearch["pointProgressMax"]
+            pcSearch: dict = counters["PCSearch"][0]
+            pointProgressMax: int = pcSearch["pointProgressMax"]
 
-        searchPoints: int
-        if pointProgressMax in [30, 90, 102]:
-            searchPoints = 3
-        elif pointProgressMax in [50, 150] or pointProgressMax >= 170:
-            searchPoints = 5
-        pcPointsRemaining = pcSearch["pointProgressMax"] - pcSearch["pointProgress"]
-        assert pcPointsRemaining % searchPoints == 0
-        remainingDesktopSearches: int = int(pcPointsRemaining / searchPoints)
+            searchPoints: int = 1
+            if pointProgressMax in [30, 60, 90, 102]:
+                searchPoints = 3
+            elif pointProgressMax in [50, 150] or pointProgressMax >= 170:
+                searchPoints = 5
+            pcPointsRemaining = pcSearch["pointProgressMax"] - pcSearch["pointProgress"]
+            assert pcPointsRemaining % searchPoints == 0
+            remainingDesktopSearches: int = int(pcPointsRemaining / searchPoints)
 
-        if PREFER_BING_INFO:
             activeLevel = bingInfo["userInfo"]["profile"]["attributes"]["level"]
-        else:
-            activeLevel = bingInfo["userStatus"]["levelInfo"]["activeLevel"]
-        remainingMobileSearches: int = 0
-        if activeLevel == "Level2":
-            mobileSearch: dict = counters[
-                "MobileSearch" if PREFER_BING_INFO else "mobileSearch"
-            ][0]
-            mobilePointsRemaining = (
-                mobileSearch["pointProgressMax"] - mobileSearch["pointProgress"]
-            )
-            assert mobilePointsRemaining % searchPoints == 0
-            remainingMobileSearches = int(mobilePointsRemaining / searchPoints)
-        elif activeLevel == "Level1":
-            pass
-        else:
-            raise AssertionError(f"Unknown activeLevel: {activeLevel}")
+            remainingMobileSearches: int = 0
+            if activeLevel == "Level2":
+                mobileSearch: dict = counters["MobileSearch"][0]
+                mobilePointsRemaining = (
+                    mobileSearch["pointProgressMax"] - mobileSearch["pointProgress"]
+                )
+                assert mobilePointsRemaining % searchPoints == 0
+                remainingMobileSearches = int(mobilePointsRemaining / searchPoints)
 
-        if desktopAndMobile:
-            return RemainingSearches(
-                desktop=remainingDesktopSearches, mobile=remainingMobileSearches
+            if desktopAndMobile:
+                return RemainingSearches(
+                    desktop=remainingDesktopSearches, mobile=remainingMobileSearches
+                )
+            return remainingMobileSearches if self.mobile else remainingDesktopSearches
+
+        except (KeyError, TypeError, AssertionError) as exc:
+            # getBingInfo did not return Bing Rewards counters — common for Microsoft
+            # Rewards accounts in regions where Bing Rewards is a separate programme
+            # (e.g. NL). Fall back to a conservative ceiling; bingSearch() exits
+            # naturally when searches stop earning points.
+            import logging as _log
+            _log.warning(
+                "getRemainingSearches: Bing counter unavailable (%s) — using default %d/%d",
+                exc, self._FALLBACK_DESKTOP_SEARCHES, self._FALLBACK_MOBILE_SEARCHES,
             )
-        if self.mobile:
-            return remainingMobileSearches
-        return remainingDesktopSearches
+            if desktopAndMobile:
+                return RemainingSearches(
+                    desktop=self._FALLBACK_DESKTOP_SEARCHES,
+                    mobile=self._FALLBACK_MOBILE_SEARCHES,
+                )
+            return self._FALLBACK_MOBILE_SEARCHES if self.mobile else self._FALLBACK_DESKTOP_SEARCHES

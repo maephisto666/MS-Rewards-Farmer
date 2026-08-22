@@ -6,6 +6,22 @@
 
 Sometimes, due to errors during login, dirty sessions are created. As a consequence, in subsequent executions opening Chrome is not possible anymore.
 
+### Reduce per-run Chrome startup delay (~49 s)
+
+`undetected_chromedriver`'s `Patcher.auto()` **deletes and re-downloads** the chromedriver
+binary on every startup (by design, to guarantee a fresh patched binary). This takes ~40–50 s
+on each run against `storage.googleapis.com`.
+
+The only way to skip the download is to pass `driver_executable_path` pointing to an
+already-patched binary. UC then calls `is_binary_patched()` and short-circuits. We would need
+to manage the binary ourselves: cache it per Chrome major version, detect when Chrome updates,
+and re-patch at that point.
+
+`getChromeVersion()` in `browser.py` (which launches a throwaway `WebDriver` to read
+`browserVersion`) adds a further ~1–2 s and can be removed — UC auto-detects the Chrome
+version without it when `version_main` is not passed. However, removing it without also
+solving the Patcher download will save at most ~2 s out of ~50 s.
+
 ## Nice to Have
 
 ### Alternative Browser Backend (Camoufox)
@@ -16,20 +32,6 @@ an anti-detection Firefox-based browser, as an alternative to undetected-chromed
 bot detection. Revisiting this as a fresh feature once the codebase is stable would be
 worthwhile.
 
-### Activity Handling Improvements
-
-The `feat/better-activities` branch contains several improvements worth evaluating and
-incorporating:
-
-- **Remove PyAutoGUI dependency** -- the `pyautogui` package is no longer used for activity
-  completion and can be dropped from requirements.
-- **Navigate directly via activity URL** -- use `activity["destinationUrl"]` instead of
-  clicking on activity cards in the page, avoiding click interception issues.
-- **Avoid unnecessary page reloads** -- add `forceRefresh` parameters to `goToRewards()`,
-  `goToSearch()`, `getDashboardData()`, and related methods to skip navigation when already
-  on the correct page.
-- **General cleanup** -- remove unused imports and dead code paths.
-
 ### Revisit PREFER_BING_INFO and Data Sources
 
 The codebase has two data sources for account info (points, remaining searches, user level):
@@ -37,16 +39,14 @@ The codebase has two data sources for account info (points, remaining searches, 
 - **Bing API** (`getBingInfo()`) -- HTTP call to `bing.com/rewards/panelflyout/getuserinfo`.
   Faster (no page navigation), but undocumented and its schema has broken (e.g. `PCSearch`
   key no longer exists). Currently disabled via `PREFER_BING_INFO = False`.
-- **Dashboard scraping** (`getDashboardData()`) -- Navigates to `rewards.bing.com` and
-  extracts the `dashboard` JavaScript object. Slower (page load + 5s wait), but reliable.
+- **RSC wire format** (`getDashboardData()`) -- Navigates to `rewards.microsoft.com` and
+  parses the Next.js RSC payload embedded in the page HTML (`src/rsc.py`). Reliable, but
+  requires a full page load.
 
 The `PREFER_BING_INFO` flag and all its `if/else` branches throughout `browser.py` and
 `utils.py` are a leftover from the upstream repo where it was always `True` and never
-exposed as a configuration option. Now that it's `False`, the API code paths are dead code.
-
-This needs revisiting: understand if the Bing API can still be used reliably (possibly with
-updated key names), or if the dashboard scraping approach should be the sole data source.
-Either way, the dual-path branching should be cleaned up.
+exposed as a configuration option. Now that it's `False`, the Bing API code paths are dead
+code and should be removed.
 
 ### Developer Tooling and SDLC Cleanup
 
@@ -101,6 +101,24 @@ machine over roughly 30 Microsoft UI variants. Every new variant reported by use
 (`ae4bdc7`, `d994c81`, `4155a56`) has required adding another `elif` branch and duplicating
 selector lists. The file is at the "one more case and it breaks silently" point.
 
+#### Lessons from the issue #23 saga (kobi-wan's "Stay signed in?")
+
+Diagnosing a single user's login failure took ~10 blind guess-and-check iterations. Two
+concrete lessons that should shape the refactor:
+
+- **Detect pages by URL, not by button ID.** The "Stay signed in?" KMSI page was keyed on
+  `id="primaryButton"`, but Microsoft serves some accounts a variant with plain `Yes`/`No`
+  buttons and no `primaryButton`. Detection kept timing out. Switching to the
+  language-independent URL signal (`ppsecure/post.srf`) fixed it and is immune to button
+  markup churn. Page *identity* should come from stable signals (URL, structural landmarks),
+  not from the specific control we happen to want to click.
+- **A detection gate that raises a bare `TimeoutException` is undebuggable.** Every iteration
+  we guessed what page the user was on. The fix that finally unblocked us (`1d90204`) was a
+  one-line diagnostic: on timeout, log URL + title + visible buttons before re-raising. The
+  next user log named the page and its buttons exactly. This is the minimal seed of the
+  `DebugRecorder` / page-fingerprint idea below — build it *first*, before any structural
+  refactor, so every future variant self-reports instead of requiring a round-trip.
+
 #### Consolidated verdict
 
 - 508 lines, 2 god functions:
@@ -121,9 +139,11 @@ selector lists. The file is at the "one more case and it breaks silently" point.
 
 #### Correctness / debuggability bugs to fix
 
-- `self.webdriver.close()` is called inside `login()`, `locked()`, `banned()` while
+- ~~`self.webdriver.close()` is called inside `login()`, `locked()`, `banned()` while
   `Browser.__exit__` also calls `close()+quit()` → double-close exception masks the real
-  cause of the failure.
+  cause of the failure.~~ **Fixed**: `close()` removed from all handlers; `Browser.__exit__`
+  owns teardown exclusively. `_locked()`/`_banned()` helpers merged into
+  `check_locked_user()`/`check_banned_user()`.
 - `assert CONFIG.browser.visible` + `input()` as a 2FA fallback: under `python -O` the
   assert is stripped entirely; in Docker/CI the `input()` blocks forever.
 - `_find_first_visible` swallows bare `Exception`, hiding `InvalidSessionIdException`,
@@ -187,8 +207,8 @@ Key ideas:
 
 1. **`DebugRecorder` + page fingerprint + typed exceptions** — biggest leverage on future
    triage time; small, self-contained, unblocks every later refactor.
-2. **Remove double-close + replace `assert` / `input()` control flow** — correctness fixes
-   hiding real failure modes today.
+2. ~~**Remove double-close + replace `assert` / `input()` control flow**~~ **Partially done**:
+   double-close removed. `assert` / `input()` 2FA fallback still pending.
 3. **Extract `SelectorRegistry` / `locators.py`** — pure deletion-style refactor; collapses
    the three OTP selector lists + the 7 OTP-submit fallbacks + the post-login probes into
    named constants. Prevents the "forgot one of the three copies" drift already observed.
@@ -261,7 +281,9 @@ Full special-case inventory (43 branches / ~30 variants, with line numbers):
 - **Password step (PW1-PW2)**: `passwd` / `passwordEntry`.
 - **Post-password step (PP1-PP8)**: TOTP input (10 selectors), "Other ways to sign in",
   passkey URL, `kmsiForm`, `iPageTitle`, RewardsPortal, `80041032` error code substring,
-  "Please enter the password" substring.
+  "Please enter the password" substring. **Fixed** (issue #23): TOTP/`other_ways` checks are
+  now gated on `browser.totp is not None`; accounts without 2FA no longer poll endlessly for
+  2FA elements that will never appear.
 - **Auth-app picker (A1-A3)**: tileList span, `PhoneAppOTP`, "authenticator app" text.
 - **OTP input (O1-O10)**: 10 duplicated selectors.
 - **OTP submit (S1-S7)**: `idSubmit_SAOTCC_Continue`, `idSIButton9`, primaryButton,

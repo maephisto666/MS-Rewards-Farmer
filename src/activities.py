@@ -1,23 +1,15 @@
-import contextlib
 import logging
-import random
-from random import randint
-from time import sleep
-
 from selenium.common import TimeoutException
 from selenium.webdriver.common.by import By
-from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 from src.browser import Browser
-from src.constants import REWARDS_URL
+from src.constants import REWARDS_DASHBOARD_URL
+from src.rsc import DailySetItem
 from src.utils import (
     CONFIG,
     APPRISE,
-    getAnswerCode,
     cooldown,
-    ACTIVITY_TITLES_TO_QUERIES,
     IGNORED_ACTIVITIES,
 )
 
@@ -30,224 +22,220 @@ class Activities:
     def __init__(self, browser: Browser):
         self.browser = browser
         self.webdriver = browser.webdriver
-        self.unmapped_activities: list[str] = []
 
-    def completeSearch(self):
-        # Simulate completing a search activity
-        pass
+    def _click_activity_anchor(self, item: DailySetItem, reload_fn=None) -> bool:
+        """
+        Find and JS-click the dashboard card anchor for item.
+        Returns True if found and clicked, False if the anchor is not in the
+        current slide's DOM (caller must advance the carousel and retry).
 
-    def completeSurvey(self):
-        # Simulate completing a survey activity
-        # noinspection SpellCheckingInspection
-        self.browser.utils.waitUntilClickable(By.ID, f"btoption{randint(0, 1)}").click()
-
-    def completeQuiz(self):
-        # Simulate completing a quiz activity
-        with contextlib.suppress(
-            TimeoutException
-        ):  # Handles in case quiz was started in previous run
-            startQuiz = self.browser.utils.waitUntilQuizLoads()
-            self.browser.utils.click(startQuiz)
-        self.browser.utils.waitUntilVisible(By.ID, "overlayPanel", 5)
-        maxQuestions = self.webdriver.execute_script(
-            "return _w.rewardsQuizRenderInfo.maxQuestions"
+        reload_fn is called to reload the page if the anchor isn't rendered yet;
+        it defaults to goToRewards (dashboard) but callers on other pages (e.g.
+        the /earn page) pass their own so the retry reloads the right page.
+        """
+        if reload_fn is None:
+            reload_fn = self.browser.utils.goToRewards
+        token = item.url_selector_token
+        anchors = self.webdriver.find_elements(
+            By.XPATH, f"//a[contains(@href, '{token}')]"
         )
-        numberOfOptions = self.webdriver.execute_script(
-            "return _w.rewardsQuizRenderInfo.numberOfOptions"
-        )
-        while True:
-            correctlyAnsweredQuestionCount: int = self.webdriver.execute_script(
-                "return _w.rewardsQuizRenderInfo.CorrectlyAnsweredQuestionCount"
+        if not anchors:
+            sample = [
+                a.get_attribute("href")[:80]
+                for a in self.webdriver.find_elements(
+                    By.XPATH, "//a[contains(@href, 'bing.com/search')]"
+                )[:5]
+            ]
+            logging.debug("[ACTIVITY] No anchor for token %r; bing search hrefs in DOM: %s", token, sample)
+            return False
+
+        # Retry once: if the anchor has no size on first load, reload the dashboard
+        # and look for it again. The card click is required — direct URL navigation
+        # does not award points.
+        for attempt in range(1, 3):
+            anchor = anchors[0]
+            self.webdriver.execute_script(
+                "arguments[0].scrollIntoView({block:'center'});", anchor
             )
-
-            if correctlyAnsweredQuestionCount == maxQuestions:
-                return
-
-            self.browser.utils.waitUntilQuestionRefresh()
-
-            sleep(10)
-
-            if numberOfOptions == 8:
-                answers = []
-                for i in range(numberOfOptions):
-                    isCorrectOption = self.webdriver.find_element(
-                        By.ID, f"rqAnswerOption{i}"
-                    ).get_attribute("iscorrectoption")
-                    if isCorrectOption and isCorrectOption.lower() == "true":
-                        answers.append(f"rqAnswerOption{i}")
-                for answer in answers:
-                    element = self.webdriver.find_element(By.ID, answer)
-                    self.browser.utils.click(element)
-            elif numberOfOptions in [2, 3, 4]:
-                correctOption = self.webdriver.execute_script(
-                    "return _w.rewardsQuizRenderInfo.correctAnswer"
+            try:
+                WebDriverWait(self.webdriver, 5).until(
+                    lambda d: d.execute_script(
+                        "var r=arguments[0].getBoundingClientRect();"
+                        "return r.width>0 && r.height>0;",
+                        anchor,
+                    )
                 )
-                for i in range(numberOfOptions):
-                    if (
-                        self.webdriver.find_element(
-                            By.ID, f"rqAnswerOption{i}"
-                        ).get_attribute("data-option")
-                        == correctOption
-                    ):
-                        correctAnswer = self.browser.utils.waitUntilClickable(
-                            By.ID, f"rqAnswerOption{i}"
+                break  # anchor is rendered, proceed to click
+            except TimeoutException:
+                if attempt < 2:
+                    logging.info(
+                        "[ACTIVITY] Anchor not rendered for '%s', reloading page (attempt %d)",
+                        cleanupActivityTitle(item.title), attempt,
+                    )
+                    reload_fn()
+                    anchors = self.webdriver.find_elements(
+                        By.XPATH, f"//a[contains(@href, '{token}')]"
+                    )
+                    if not anchors:
+                        logging.warning(
+                            "[ACTIVITY] Anchor for '%s' disappeared after reload",
+                            cleanupActivityTitle(item.title),
                         )
-                        self.browser.utils.click(correctAnswer)
-                        break
+                        return False
+                else:
+                    logging.warning(
+                        "[ACTIVITY] Anchor for '%s' still has no size after reload — skipping",
+                        cleanupActivityTitle(item.title),
+                    )
+                    return False
 
-    def completeABC(self):
-        # Simulate completing an ABC activity
-        counter = self.webdriver.find_element(
-            By.XPATH, '//*[@id="QuestionPane0"]/div[2]'
-        ).text[:-1][1:]
-        numberOfQuestions = max(int(s) for s in counter.split() if s.isdigit())
-        for question in range(numberOfQuestions):
-            element = self.webdriver.find_element(
-                By.ID, f"questionOptionChoice{question}{randint(0, 2)}"
-            )
-            self.browser.utils.click(element)
-            sleep(randint(10, 15))
-            element = self.webdriver.find_element(By.ID, f"nextQuestionbtn{question}")
-            self.browser.utils.click(element)
-            sleep(randint(10, 15))
-
-    def completeThisOrThat(self):
-        # Simulate completing a This or That activity
-        with contextlib.suppress(
-            TimeoutException
-        ):  # Handles in case quiz was started in previous run
-            startQuiz = self.browser.utils.waitUntilQuizLoads()
-            self.browser.utils.click(startQuiz)
-        self.browser.utils.waitUntilQuestionRefresh()
-        for _ in range(10):
-            correctAnswerCode = self.webdriver.execute_script(
-                "return _w.rewardsQuizRenderInfo.correctAnswer"
-            )
-            answer1, answer1Code = self.getAnswerAndCode("rqAnswerOption0")
-            answer2, answer2Code = self.getAnswerAndCode("rqAnswerOption1")
-            answerToClick: WebElement
-            if answer1Code == correctAnswerCode:
-                answerToClick = answer1
-            elif answer2Code == correctAnswerCode:
-                answerToClick = answer2
-
-            self.browser.utils.click(answerToClick)
-            sleep(randint(10, 15))
-
-    def getAnswerAndCode(self, answerId: str) -> tuple[WebElement, str]:
-        # Helper function to get answer element and its code
-        answerEncodeKey = self.webdriver.execute_script("return _G.IG")
-        answer = self.webdriver.find_element(By.ID, answerId)
-        answerTitle = answer.get_attribute("data-option")
-        return (
-            answer,
-            getAnswerCode(answerEncodeKey, answerTitle),
+        self.webdriver.execute_script("arguments[0].click();", anchor)
+        logging.info(
+            "[ACTIVITY] [%s] Clicked '%s'",
+            item.activity_type, cleanupActivityTitle(item.title),
         )
-
-    def completeActivity(self, activity: dict) -> None:
-        activityTitle = cleanupActivityTitle(activity["title"])
-        logging.debug(f"activityTitle={activityTitle}")
-        logging.debug(f"activity attributes: {list(activity.get('attributes', {}).keys())}")
-
-        if activity["complete"] or activity["pointProgressMax"] == 0:
-            logging.debug("Already done, returning")
-            return
-        if activityTitle in IGNORED_ACTIVITIES:
-            logging.debug(f"Ignoring {activityTitle}")
-            return
-        if "puzzle" in activityTitle.lower() or "Windows search" == activityTitle:
-            logging.info(f"[ACTIVITY] Skipping '{activityTitle}' because it's not supported")
-            return
-
-        if activityTitle not in ACTIVITY_TITLES_TO_QUERIES:
-            if activityTitle not in self.unmapped_activities:
-                self.unmapped_activities.append(activityTitle)
-
-        if activity["attributes"].get("is_unlocked", "True") != "True":
-            logging.debug("Activity locked, returning")
-            return
-
+        # Wait for the destination tab to open and finish loading, then close it.
+        # Points are registered server-side on page load; we just need to let it complete.
         try:
-            activityElement = self.browser.utils.waitUntilClickable(
-                By.XPATH, f'//*[contains(text(), "{activity["title"]}")]', timeToWait=20
+            WebDriverWait(self.webdriver, 12).until(
+                lambda d: len(d.window_handles) > 1
             )
-            self.browser.utils.click(activityElement)
-            self.browser.utils.switchToNewTab()
-            with contextlib.suppress(TimeoutException):
-                searchbar = self.browser.utils.waitUntilClickable(
-                    By.ID, "sb_form_q", timeToWait=30
-                )
-                self.browser.utils.click(searchbar)
-                searchbar.clear()
-            if activityTitle in ACTIVITY_TITLES_TO_QUERIES:
-                queries = ACTIVITY_TITLES_TO_QUERIES[activityTitle]
-                query = random.choice(queries)
-                searchbar.send_keys(query)
-                searchbar.submit()
-                WebDriverWait(self.webdriver, 10).until(
-                    EC.presence_of_element_located((By.ID, "b_results"))
-                )
-                logging.info(f"[ACTIVITY] Search submitted for '{activityTitle}' with query '{query}'")
-            elif "poll" in activityTitle:
-                self.completeSurvey()
-            elif activity["promotionType"] == "urlreward":
-                self.completeSearch()
-            elif activity["promotionType"] == "quiz":
-                if activity["pointProgressMax"] == 10:
-                    self.completeABC()
-                elif activity["pointProgressMax"] in [30, 40]:
-                    self.completeQuiz()
-                elif activity["pointProgressMax"] == 50:
-                    self.completeThisOrThat()
-            else:
-                searchbar.send_keys(activityTitle)
-                searchbar.submit()
-                WebDriverWait(self.webdriver, 10).until(
-                    EC.presence_of_element_located((By.ID, "b_results"))
-                )
-                logging.info(f"[ACTIVITY] No mapped query, used title as fallback for '{activityTitle}'")
-            logging.debug("Done")
-        except Exception:
-            logging.error(f"[ACTIVITY] Error doing '{activityTitle}'", exc_info=True)
-            logging.debug(f"activity={activity}")
-            return
-        finally:
-            self.browser.utils.resetTabs()
+            self.webdriver.switch_to.window(self.webdriver.window_handles[-1])
+            WebDriverWait(self.webdriver, 15).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+            self.webdriver.switch_to.window(self.webdriver.window_handles[0])
+        except TimeoutException:
+            pass  # no new tab opened (same-tab redirect or instant credit)
+        self.browser.utils.resetTabs()
         cooldown()
+        return True
 
     def completeActivities(self):
-        logging.info("[ACTIVITIES] " + "Trying to complete all activities...")
-        activities = self.browser.utils.getActivities()
-        for activity in activities:
-            self.completeActivity(activity)
-        if self.unmapped_activities:
-            logging.info(
-                f"[ACTIVITIES] Activities with no mapped query (title used as fallback): "
-                f"{', '.join(repr(t) for t in self.unmapped_activities)}"
-            )
-        logging.info("[ACTIVITIES] " + "Done")
+        logging.info("[ACTIVITIES] Trying to complete all activities...")
 
-        # todo Send one email for all accounts?
-        if CONFIG.get("apprise.notify.incomplete-activity"):  # todo Use fancy new way
-            incompleteActivities: list[str] = []
-            activitiesBefore = activities
-            activitiesAfter = [activity for activity in self.browser.utils.getActivities() if activity in activitiesBefore]
+        # Read dashboard RSC — only today's items have clickable anchors.
+        # The RSC payload includes 3 days of items (today + 2 future days).
+        dashboard = self.browser.utils.getDashboardData()
+        items = dashboard.todays_daily_set()
 
-            for activity in activitiesAfter:
-                activityTitle = cleanupActivityTitle(activity["title"])
-                if (
-                    activityTitle not in IGNORED_ACTIVITIES
-                    and activity["pointProgress"] < activity["pointProgressMax"]
-                    and activity["attributes"].get("is_unlocked", "True") == "True"
-                    # todo Add check whether activity was in original set, in case added in between
-                ):
-                    incompleteActivities.append(activityTitle)
-            if incompleteActivities:
-                logging.info(f"incompleteActivities: {incompleteActivities}")
-                APPRISE.notify(
-                    '"' + '", "'.join(incompleteActivities) + '"\n' + REWARDS_URL,
-                    f"We found some incomplete activities for {self.browser.email}",
+        todo = []
+        for item in items:
+            title = cleanupActivityTitle(item.title)
+            atype = item.activity_type
+            if item.is_completed:
+                continue
+            if item.is_locked:
+                continue
+            if item.points == 0:
+                continue
+            if title in IGNORED_ACTIVITIES:
+                continue
+            if not item.destination:
+                logging.warning("[ACTIVITY] No destination for '%s', skipping", title)
+                continue
+            todo.append(item)
+
+        if not todo:
+            logging.info("[ACTIVITIES] Nothing to do today.")
+            logging.info("[ACTIVITIES] Done")
+            return
+
+        logging.info("[ACTIVITIES] %d items to complete today", len(todo))
+
+        # Wait up to 10 s for the first expected anchor to appear in the DOM.
+        # React hydration can lag the initial HTML on slower machines, so anchors
+        # that are present in the RSC payload may not yet be in the live DOM.
+        first_token = todo[0].url_selector_token
+        try:
+            WebDriverWait(self.webdriver, 10).until(
+                lambda d: d.find_elements(
+                    By.XPATH, f"//a[contains(@href, '{first_token}')]"
                 )
+            )
+        except TimeoutException:
+            logging.info(
+                "[ACTIVITIES] Anchors not in DOM after 10 s — reloading dashboard once"
+            )
+            self.browser.utils.goToRewards()
+
+        for item in todo:
+            clicked = self._click_activity_anchor(item)
+            if not clicked:
+                logging.warning(
+                    "[ACTIVITY] No anchor found for '%s' (token=%r) — skipping",
+                    cleanupActivityTitle(item.title), item.url_selector_token,
+                )
+
+        logging.info("[ACTIVITIES] Done")
+
+        if CONFIG.get("apprise.notify.incomplete-activity"):
+            self._notify_incomplete()
+
+    def completeMoreActivities(self):
+        """Complete the simple 'Keep earning' cards on rewards.bing.com/earn
+        (issue #37) — the navigate-to-earn tasks worth points (e.g. the +10
+        featured-topic searches). Promotional banners, the Copilot image task,
+        and the multi-search task (points=0) are left for now.
+        """
+        logging.info("[MORE ACTIVITIES] Trying to complete 'Keep earning' cards...")
+
+        # getEarnData navigates to /earn and parses its RSC, so the anchors are
+        # already on the page we're on.
+        data = self.browser.utils.getEarnData()
+        todo = data.eligible_activity_cards()
+
+        if not todo:
+            logging.info("[MORE ACTIVITIES] Nothing to do.")
+            return
+
+        logging.info("[MORE ACTIVITIES] %d card(s) to complete", len(todo))
+
+        for item in todo:
+            # Each successful click resets tabs back to the /dashboard, so return
+            # to /earn and wait for this card's anchor (React hydration can lag)
+            # before clicking it.
+            self.browser.utils.goToEarn()
+            token = item.url_selector_token
+            try:
+                WebDriverWait(self.webdriver, 10).until(
+                    lambda d, t=token: d.find_elements(
+                        By.XPATH, f"//a[contains(@href, '{t}')]"
+                    )
+                )
+            except TimeoutException:
+                logging.warning(
+                    "[MORE ACTIVITY] Anchor for '%s' (token=%r) not in DOM — skipping",
+                    cleanupActivityTitle(item.title), token,
+                )
+                continue
+
+            clicked = self._click_activity_anchor(
+                item, reload_fn=self.browser.utils.goToEarn
+            )
+            if not clicked:
+                logging.warning(
+                    "[MORE ACTIVITY] No anchor found for '%s' (token=%r) — skipping",
+                    cleanupActivityTitle(item.title), item.url_selector_token,
+                )
+
+        logging.info("[MORE ACTIVITIES] Done")
+
+    def _notify_incomplete(self):
+        items_after = self.browser.utils.getActivities()
+        incomplete = [
+            cleanupActivityTitle(i.title)
+            for i in items_after
+            if not i.is_completed and not i.is_locked
+            and cleanupActivityTitle(i.title) not in IGNORED_ACTIVITIES
+            and i.activity_type != "REFERRAL"
+        ]
+        if incomplete:
+            logging.info("incompleteActivities: %s", incomplete)
+            APPRISE.notify(
+                '"' + '", "'.join(incomplete) + '"\n' + REWARDS_DASHBOARD_URL,
+                f"We found some incomplete activities for {self.browser.email}",
+            )
 
 
 def cleanupActivityTitle(activityTitle: str) -> str:

@@ -74,6 +74,11 @@ class Searches:
             f"[BING] Starting {self.browser.browserType.capitalize()} Edge Bing searches..."
         )
 
+        # Make sure www.bing.com is authenticated for search rewards before we
+        # start — otherwise searches earn nothing and the counter never appears
+        # (issue #36). No-op when already authenticated.
+        self.browser.utils.ensureBingSearchAuth()
+
         self.browser.utils.goToSearch()
 
         while True:

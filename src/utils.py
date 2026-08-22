@@ -30,6 +30,7 @@ from selenium.common import (
     NoSuchElementException,
     TimeoutException,
 )
+from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
@@ -37,9 +38,9 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.wait import WebDriverWait
 from urllib3 import Retry
 
-from .constants import REWARDS_URL, SEARCH_URL
+from .constants import REWARDS_DASHBOARD_URL, REWARDS_EARN_URL, SEARCH_URL
 
-PREFER_BING_INFO = False
+PREFER_BING_INFO = True
 
 
 class Config(dict):
@@ -189,7 +190,6 @@ DEFAULT_CONFIG: Config = Config(
             "visible": False,
             "proxy": None,
         },
-        "rtfr": False,
         "logging": {
             "format": "%(asctime)s [%(levelname)s] %(message)s",
             "level": "INFO",
@@ -232,12 +232,6 @@ class Utils:
         text_found = re.search(text, self.webdriver.page_source)
         return text_found is not None
 
-    def waitUntilQuestionRefresh(self) -> WebElement:
-        return self.waitUntilVisible(By.CLASS_NAME, "rqECredits", timeToWait=20)
-
-    def waitUntilQuizLoads(self) -> WebElement:
-        return self.waitUntilVisible(By.XPATH, '//*[@id="rqStartQuiz"]')
-
     def resetTabs(self) -> None:
         curr = self.webdriver.current_window_handle
 
@@ -253,11 +247,26 @@ class Utils:
         self.goToRewards()
 
     def goToRewards(self) -> None:
-        self.webdriver.get(REWARDS_URL)
-        assert (
-            self.webdriver.current_url == REWARDS_URL
-        ), f"{self.webdriver.current_url} {REWARDS_URL}"
+        self.webdriver.get(REWARDS_DASHBOARD_URL)
+        # The page may redirect: rewards.bing.com/ → rewards.bing.com/dashboard
+        assert self.webdriver.current_url.startswith(
+            "https://rewards.bing.com/"
+        ), f"Unexpected URL after navigating to Rewards: {self.webdriver.current_url}"
         self.dismissCookieBanner()
+
+    def goToEarn(self) -> None:
+        self.webdriver.get(REWARDS_EARN_URL)
+        assert self.webdriver.current_url.startswith(
+            "https://rewards.bing.com/"
+        ), f"Unexpected URL after navigating to Earn: {self.webdriver.current_url}"
+        self.dismissCookieBanner()
+
+    def getEarnData(self):
+        """Navigate to the /earn page and parse its RSC payload — this is where
+        the 'Keep earning' activity cards live (issue #37)."""
+        from src.rsc import parse_dashboard  # local import: avoids circular deps
+        self.goToEarn()
+        return parse_dashboard(self.webdriver.page_source)
 
     def dismissCookieBanner(self) -> None:
         """Dismiss the cookie consent banner if present."""
@@ -283,22 +292,127 @@ class Utils:
     def goToSearch(self) -> None:
         self.webdriver.get(SEARCH_URL)
 
-    # Prefer getBingInfo if possible
-    def getDashboardData(self) -> dict:
+    def ensureBingSearchAuth(self) -> None:
+        """Ensure www.bing.com is authenticated for search rewards (issue #36).
+
+        On some accounts/sessions www.bing.com stays signed-out even though
+        rewards.bing.com is logged in — searches then earn nothing and the
+        PCSearch counter never appears. Opening the Bing Rewards flyout (and
+        clicking 'Get Started' if the account isn't enrolled yet) re-authenticates
+        www.bing.com. Whether it's needed is non-deterministic (Microsoft-side),
+        so this checks the isRewardsUser signal and only acts when it's False.
+
+        Never raises: on any failure searches simply proceed with the fallback,
+        exactly as before.
+        """
+        try:
+            self.webdriver.get("https://www.bing.com/")
+            if self._isBingRewardsAuthenticated():
+                logging.debug("[BING AUTH] www.bing.com already authenticated for search.")
+                return
+
+            logging.info(
+                "[BING AUTH] www.bing.com not authenticated for search — opening "
+                "Rewards flyout to re-authenticate..."
+            )
+            pill = self._findFirstVisible([
+                (By.ID, "id_rc"),
+                (By.CSS_SELECTOR, "[aria-label*='Reward']"),
+                (By.CSS_SELECTOR, "a[href*='rewards']"),
+            ])
+            if pill is None:
+                logging.warning(
+                    "[BING AUTH] Rewards pill not found on www.bing.com "
+                    "(e.g. mobile layout) — skipping; searches use the fallback."
+                )
+                return
+            ActionChains(self.webdriver).move_to_element(pill).click().perform()
+            time.sleep(4)
+
+            # Unenrolled accounts show 'Get Started' in the flyout; already-enrolled
+            # accounts show their points and just opening the flyout is enough.
+            getStarted = self._findGetStarted()
+            if getStarted is not None:
+                logging.info("[BING AUTH] Clicking 'Get Started' to enrol...")
+                ActionChains(self.webdriver).move_to_element(getStarted).click().perform()
+                time.sleep(6)
+                self.webdriver.switch_to.default_content()
+
+            # Confirm the flip.
+            self.webdriver.get("https://www.bing.com/")
+            if self._isBingRewardsAuthenticated():
+                logging.info("[BING AUTH] www.bing.com is now authenticated for search.")
+            else:
+                logging.warning(
+                    "[BING AUTH] www.bing.com still not authenticated after opening the "
+                    "flyout — searches may not count this run."
+                )
+        except Exception as exc:  # never break the search flow
+            logging.warning("[BING AUTH] ensureBingSearchAuth failed (%s) — continuing.", exc)
+            with contextlib.suppress(Exception):
+                self.webdriver.switch_to.default_content()
+
+    def _isBingRewardsAuthenticated(self) -> bool:
+        try:
+            return bool(self.getBingInfo().get("isRewardsUser"))
+        except Exception:
+            return False
+
+    def _findFirstVisible(self, selectors):
+        for by, sel in selectors:
+            for el in self.webdriver.find_elements(by, sel):
+                try:
+                    if el.is_displayed():
+                        return el
+                except Exception:
+                    continue
+        return None
+
+    def _findGetStarted(self):
+        """Find a visible 'Get started' control in the main document or any iframe.
+        The driver is left switched into the frame that owns the returned element
+        (so the caller can click it); callers must switch_to.default_content()
+        afterwards. Returns to default content when nothing is found."""
+        xpath = (
+            "//*[self::button or self::a or @role='button']"
+            "[contains(normalize-space(.), 'et started')]"
+        )
+        self.webdriver.switch_to.default_content()
+        for el in self.webdriver.find_elements(By.XPATH, xpath):
+            if el.is_displayed():
+                return el
+        for frame in self.webdriver.find_elements(By.TAG_NAME, "iframe"):
+            try:
+                self.webdriver.switch_to.default_content()
+                self.webdriver.switch_to.frame(frame)
+                for el in self.webdriver.find_elements(By.XPATH, xpath):
+                    if el.is_displayed():
+                        return el
+            except Exception:
+                continue
+        self.webdriver.switch_to.default_content()
+        return None
+
+    def getDashboardData(self):
+        """
+        Navigate to the Rewards dashboard and parse the RSC wire-format payload
+        embedded in the page HTML. Returns a DashboardData object.
+
+        The old window.dashboard global is gone as of the 2026 revamp (Next.js
+        App Router). All data now arrives server-rendered in
+        self.__next_f.push() inline scripts.
+        """
+        from src.rsc import parse_dashboard, DashboardData  # local import: avoids circular deps
         self.goToRewards()
-        time.sleep(5)  # fixme Avoid busy wait (if this works)
-        return self.webdriver.execute_script("return dashboard")
+        return parse_dashboard(self.webdriver.page_source)
 
-    def getDailySetPromotions(self) -> list[dict]:
-        return self.getDashboardData()["dailySetPromotions"][
-            date.today().strftime("%m/%d/%Y")
-        ]
+    def getActivities(self):
+        """Return today's daily-set items from the RSC dashboard.
 
-    def getMorePromotions(self) -> list[dict]:
-        return self.getDashboardData()["morePromotions"]
-
-    def getActivities(self) -> list[dict]:
-        return self.getDailySetPromotions() + self.getMorePromotions()
+        Only today's items have clickable anchors; future days are in the RSC
+        payload but not rendered as links until their date arrives.
+        """
+        return self.getDashboardData().todays_daily_set()
 
     def getBingInfo(self) -> Any:
         session = makeRequestsSession()
@@ -316,7 +430,14 @@ class Utils:
                 assert (
                     response.status_code == requests.codes.ok
                 )  # pylint: disable=no-member
-                return response.json()
+                data = response.json()
+                logging.debug(
+                    "getBingInfo: isRewardsUser=%s userInfo.balance=%s flyoutResult.userStatus.availablePoints=%s",
+                    data.get("isRewardsUser"),
+                    data.get("userInfo", {}).get("balance"),
+                    data.get("flyoutResult", {}).get("userStatus", {}).get("availablePoints"),
+                )
+                return data
             except (JSONDecodeError, AssertionError) as e:
                 logging.info(f"Attempt {attempt + 1} failed: {e}")
                 if attempt < retries - 1:
@@ -329,33 +450,35 @@ class Utils:
                     raise
 
     def isLoggedIn(self) -> bool:
-        if self.getBingInfo()["isRewardsUser"]:  # faster, if it works
-            return True
-        self.webdriver.get(
-            "https://rewards.bing.com/"
-        )  # changed site to allow bypassing when M$ blocks access to login.live.com randomly
+        try:
+            if self.getBingInfo()["isRewardsUser"]:
+                return True
+        except Exception:
+            pass
+        # Fallback: navigate and check for dashboard redirect
+        self.webdriver.get("https://rewards.bing.com/")
         with contextlib.suppress(TimeoutException):
-            self.waitUntilVisible(
-                By.CSS_SELECTOR, 'html[data-role-name="RewardsPortal"]', 10
+            WebDriverWait(self.webdriver, 10).until(
+                lambda d: "/dashboard" in d.current_url or "welcome" in d.current_url
             )
-
-            return self.webdriver.current_url != "https://rewards.bing.com/welcome?idru=%2F"
-        return False
+        return "/dashboard" in self.webdriver.current_url
 
     def getAccountPoints(self) -> int:
-        if PREFER_BING_INFO:
-            return self.getBingInfo()["userInfo"]["balance"]
-        return self.getDashboardData()["userStatus"]["availablePoints"]
+        # RSC balance is always accurate; getBingInfo may return 0 in some regions.
+        # getDashboardData() navigates to /dashboard and parses the RSC payload.
+        return self.getDashboardData().balance
 
     def getGoalPoints(self) -> int:
-        if PREFER_BING_INFO:
+        try:
             return self.getBingInfo()["flyoutResult"]["userGoal"]["price"]
-        return self.getDashboardData()["userStatus"]["redeemGoal"]["price"]
+        except (KeyError, TypeError):
+            return 0
 
     def getGoalTitle(self) -> str:
-        if PREFER_BING_INFO:
+        try:
             return self.getBingInfo()["flyoutResult"]["userGoal"]["title"]
-        return self.getDashboardData()["userStatus"]["redeemGoal"]["title"]
+        except (KeyError, TypeError):
+            return ""
 
     def tryDismissAllMessages(self) -> None:
         byValues = [
@@ -687,10 +810,6 @@ def loadConfig(configFilename="config.yaml") -> Config:
 
     config = DEFAULT_CONFIG | Config.fromYaml(configFile) | args_config
 
-    if config.rtfr:
-        print("Please read the README.md file before using this script. Exiting.")
-        sys.exit()
-
     return config
 
 
@@ -705,12 +824,6 @@ def initApprise() -> Apprise:
 
     apprise.add(urls)
     return apprise
-
-
-def getAnswerCode(key: str, string: str) -> str:
-    t = sum(ord(string[i]) for i in range(len(string)))
-    t += int(key[-2:], 16)
-    return str(t)
 
 
 def formatNumber(number, num_decimals=0) -> str:

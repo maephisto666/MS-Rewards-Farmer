@@ -6,28 +6,26 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 ![GitHub issues](https://img.shields.io/github/issues/maephisto666/MS-Rewards-Farmer?style=for-the-badge)
 
-> [!WARNING]
-> **The `main` branch is currently broken** due to Microsoft's July 2026 redesign of the
-> Rewards page. The new experience is a Next.js application with a substantially different
-> structure that renders the existing automation ineffective.
->
-> An experimental branch [`feat/rewards-redesign-v4`](../../tree/feat/rewards-redesign-v4)
-> contains a full rewrite adapted to the new page structure. It has been tested internally
-> and is working reliably for searches, daily set activities, and bonus point claiming.
-> It will be merged into `main` once it has had more real-world testing.
-
 > [!IMPORTANT]
 > If you are multi-accounting and abusing the service for which this is intended -
 **_DO NOT COMPLAIN ABOUT BANS!!!_**
 
 > [!CAUTION]
-> Use it at your own risk, M$ may ban your account (and I would not be responsible for it)
+> Use it at your own risk, M$ may ban your account (and I would not be responsible for it).
 >
-> Do not run more than one account at a time.
+> Based on signals from the community, the following practices appear to reduce ban risk:
 >
-> Do not use more than one phone number per 5 accounts.
->
-> Do not redeem more than one reward per day.
+> - Do not run more than one account at a time.
+> - Do not use more than one phone number per 5 accounts.
+> - Do not redeem more than one reward per day.
+
+## Table of Contents
+
+- [Project History](#project-history)
+- [Installation](#installation)
+- [Configuration file](#configuration-file)
+- [Usage](#usage)
+- [Features](#features)
 
 ## Project History
 
@@ -35,7 +33,8 @@
 - Forked and significantly refactored/maintained by [@klept0](https://github.com/klept0) as [MS-Rewards-Farmer](https://github.com/klept0/MS-Rewards-Farmer), with contributions from a community of volunteers.
 - The [@klept0](https://github.com/klept0) fork was **archived in January 2026**. At that point, the upstream `master` branch was non-functional, and the `develop` branch was in a better state but still not fully working. This repository was created in February 2026 to continue the project, incorporating a series of fixes and improvements that had been developed independently to overcome the limitations of the upstream version.
 - As of March 2026, this fork is in a **working state**. It has been tested for over 2 weeks with consistent results. The script may occasionally fail due to browser timeouts or transient issues -- running it in a loop with a short delay (e.g. 5 minutes) between executions works well in practice.
-- In **July 2026**, Microsoft rolled out a major redesign of the Rewards page, breaking this automation. The new Rewards experience is a Next.js single-page application with a substantially different DOM structure, rendering the existing Selenium selectors ineffective. Additionally, Microsoft appears to have reduced the total number of points earnable per day, which has drawn widespread complaints from the Rewards community on Reddit and similar platforms. Mobile search points also appear to no longer be collectable through browser automation. Work is underway to adapt the code to the new page structure.
+- In **July 2026**, Microsoft rolled out a major redesign of the Rewards page, breaking this automation. The new Rewards experience is a React single-page application with a substantially different DOM structure, rendering the existing Selenium selectors ineffective. Additionally, Microsoft appears to have reduced the total number of points earnable per day, which has drawn widespread complaints from the Rewards community on Reddit and similar platforms. Mobile search points also appear to no longer be collectable through browser automation. Work is underway to adapt the code to the new page structure.
+- After testing a new version of the script with the new version of the Microsoft Rewards page we merged the experimental branch to main.
 
 ## Installation
 
@@ -174,13 +173,11 @@ apprise: # 'apprise' is the name of the service used for notifications https://g
 browser:
   geolocation: US # Replace with your country code https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2.
   # Detected by default, can be overridden with command-line arguments.
-  language: en # Replace with your language code https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes.
+  language: en-US # Replace with your language code https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes.
   # Detected by default, can be overridden with command-line arguments.
   visible: false # set it to true to show the browser window, can be overridden with command-line arguments.
   proxy: null # set the global proxy using the 'http://user:pass@host:port' syntax.
   # Override per-account proxies. Can be overridden with command-line arguments.
-rtfr: true # If true, display the "read the readme" message at the start of the script and prevent the script
-# from running. Default is false.
 logging:
   level: INFO # Set to DEBUG, WARNING, ERROR or CRITICAL to change the level of displayed information in the terminal
   # See https://docs.python.org/3/library/logging.html#logging-levels. Can be overridden with command-line arguments.
@@ -250,7 +247,7 @@ You can display this message at any moment using `python main.py -h`.
 
 ## Features
 
-- Bing searches (Desktop and Mobile) with current User-Agents
+- Bing desktop searches with current User-Agents
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
@@ -264,7 +261,8 @@ You can display this message at any moment using `python main.py -h`.
 - Proxy Support (3.0) - they need to be **high quality** proxies
 - Logs to CSV file for point tracking
 
-## Contributing
+> [!NOTE]
+> Mobile searches are no longer automated. With the new Rewards experience, mobile searches
+> do not yield points through browser automation. The mobile browser session is still used
+> for Read to Earn tasks.
 
-Fork this repo and create a pull request into `main`. Extra points if you update the
-[CHANGELOG.md](CHANGELOG.md).

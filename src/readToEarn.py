@@ -4,6 +4,7 @@ import secrets
 import time
 
 from requests_oauthlib import OAuth2Session
+from selenium.webdriver.common.by import By
 
 from src.browser import Browser
 from .activities import Activities
@@ -43,15 +44,38 @@ class ReadToEarn:
         self.webdriver.get(authorization_url)
         count = 0
         while True:
-            logging.info("[READ TO EARN] Waiting for Login")
-            if self.webdriver.current_url.startswith(
+            current_url = self.webdriver.current_url
+            if current_url.startswith(
                 "https://login.live.com/oauth20_desktop.srf?code="
             ):
-                redirect_response = self.webdriver.current_url
+                redirect_response = current_url
                 break
+            # A silent SSO redirect should reach the ?code= URL within a second
+            # or two. Log where the flow is parked each poll so that, if it
+            # stalls, we can see which interactive screen (passkey / "Stay
+            # signed in?" / consent) is blocking the redirect.
+            logging.info("[READ TO EARN] Waiting for Login (URL: %s)", current_url)
             time.sleep(1)
             count += 1
             if count >= 10:
+                # Capture the blocking page state before giving up, so the
+                # failure is diagnosable instead of a contextless exception.
+                visible_buttons = []
+                for b in self.webdriver.find_elements(By.XPATH, "//button | //*[@role='button']"):
+                    try:
+                        if b.is_displayed():
+                            visible_buttons.append(
+                                (b.text or "").strip()
+                                or b.get_attribute("id")
+                                or b.get_attribute("data-testid")
+                            )
+                    except Exception:
+                        continue
+                logging.error(
+                    "[READ TO EARN] Stuck waiting for OAuth redirect. "
+                    "URL: %s | Title: %s | visible buttons: %s",
+                    self.webdriver.current_url, self.webdriver.title, visible_buttons,
+                )
                 raise Exception("Stuck in waiting for login")
 
         logging.info("[READ TO EARN] Logged-in successfully !")

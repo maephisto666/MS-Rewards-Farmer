@@ -1,8 +1,37 @@
-# v4 Plan — Adapt to the July 2026 Rewards redesign
+# July 2026 Rewards redesign — investigation and implementation record
 
-> Status: **Phase 2 complete, Phase 3 next**. Lives on branch `feat/rewards-redesign-v4`
-> (target version `4.0.0`). This document is the source of truth for the rewrite; update
-> it as findings land and decisions are made.
+> Historical record of the investigation and v4 implementation. The work was merged to
+> `main` and released as `4.0.0`; this is no longer the source of truth for active
+> development planning.
+
+## Current status
+
+The core redesign adaptation is delivered in `main`:
+
+- Dashboard data is parsed from the Next.js RSC payload in `src/rsc.py`, and balance,
+  daily-set items, activity cards, activity counters, and claimable streak points no longer
+  depend on `window.dashboard`.
+- Daily-set activities and `/earn` “Keep earning” cards use RSC data to find the correct
+  rendered card anchor, then click it through Selenium. Direct navigation to a
+  `destination` URL was tested and does **not** award points.
+- Streak bonus claiming, the redesigned login flow, and Bing re-authentication were updated
+  for the new experience. Punch cards are deliberately skipped because they are not exposed
+  by the currently parsed RSC data.
+
+The following planned work remains open:
+
+- The login state-machine refactor, `DebugRecorder`, page fingerprinting, typed errors, and
+  `--diagnose` mode are not implemented.
+- Mobile searches still run when mobile searches are selected; the proposed dedicated
+  feature flag, defaulting off, was not added.
+- Search counters are still read from the legacy Bing information endpoint when available,
+  with conservative fallback limits when they are not. A native replacement has not been
+  found in the RSC payload.
+- `PREFER_BING_INFO` remains declared in `src/utils.py`, although the old dashboard
+  dual-path is no longer used.
+- Phase 4 cleanup is deferred: `selenium-wire`, `pyautogui`, `setuptools<81`, and
+  undetected-chromedriver remain dependencies; Ruff, pre-commit, and dedicated lint/test CI
+  have not been added.
 
 ## Background
 
@@ -18,9 +47,9 @@ suspected effects:
   side. No engineering fix; document expectations only.
 - **Mobile search points appear to no longer be collectable** via browser automation.
 
-### Why *everything* broke at once (root cause)
+### Why *everything* broke at once (pre-v4 root cause)
 
-The entire data model of the current tool flows through a single line:
+Before v4, the entire data model flowed through a single line:
 
 - `src/utils.py:290` — `getDashboardData()` does `execute_script("return dashboard")`,
   reading a global `dashboard` JavaScript object off `rewards.bing.com`.
@@ -165,9 +194,9 @@ All three critical data objects are embedded directly in the RSC payload:
 | Activity counters | Script 58 | `{"activitiesProgress": 0, "activitiesRemaining": 2, "activitiesRequirement": 2, "blendedRatio": 0.586}` |
 | Daily set items | Script 38 | Array of `{offerId, points, isCompleted, destination, title, description, date, imageUrl, isLocked, unlockCriteria}` |
 
-The `destination` field on each `dailySetItem` is a direct URL (e.g. a Bing search URL)
-that completes the activity. This means we can navigate directly to the destination
-instead of clicking activity cards in the DOM.
+The `destination` field on each `dailySetItem` is a direct URL (e.g. a Bing search URL).
+Later implementation testing showed that direct navigation does not award points, so the
+automation uses RSC data to locate and click the rendered activity-card anchor instead.
 
 **3. Search counters — not yet located**
 
@@ -204,33 +233,34 @@ The new data model changes the calculus:
   a data-layer rewrite is scope creep.
 - `selenium-wire` can still be dropped (see Phase 4) without switching frameworks.
 
-**Decision: keep `undetected-chromedriver` + Selenium for Phase 3.** Playwright
-remains an option for a future Phase 5 if stealth or await ergonomics become a
+**Decision: keep `undetected-chromedriver` + Selenium for the v4 implementation.**
+Playwright remains an option for a future phase if stealth or await ergonomics become a
 blocking issue.
 
-## Phase 3 — Core rewrite (on the branch)
+## Phase 3 — Core rewrite (delivered portions and remaining work)
 
-- **Data layer:** built on whatever Phase 2 establishes as the real backend; collapse the dead
-  `PREFER_BING_INFO` dual-path in the process (ROADMAP debt).
-- **Interaction layer:** re-implement search + activities + punch cards + bonus points against
-  the new page on the chosen framework.
-- **Login:** implement the ROADMAP login state-machine refactor here (page descriptors, typed
-  errors, `DebugRecorder`, scripted-driver tests). The new page brings new variants regardless.
-- **Mobile split:**
-  - Mobile **Read-to-Earn**: keep enabled (API/OAuth, unaffected by the web redesign).
-  - Mobile **searches**: keep the code, gate behind a `search.mobile` feature flag defaulting
-    **off**, documented as "MS stopped counting these as of July 2026". Microsoft has not yet
-    redesigned the mobile app, so this may return — the flag makes re-enabling trivial.
+- [x] **Data layer:** RSC parsing now supplies dashboard balance, daily-set items, activity
+  cards, activity counters, and streak-claim state.
+- [x] **Interaction layer:** daily activities, `/earn` cards, and streak bonus claiming were
+  adapted to the new page. Punch cards remain skipped because their data is unavailable.
+- [x] **Login:** support for the redesigned Microsoft sign-in flow was added.
+- [ ] **Login architecture:** the ROADMAP state-machine refactor, diagnostics, and
+  scripted-driver tests remain outstanding.
+- [ ] **Mobile split:** Read-to-Earn remains enabled, but the proposed
+  `search.mobile` feature flag has not been implemented. Mobile browser searches therefore
+  still execute when selected.
+- [ ] **Search counters:** no RSC-backed search-counter implementation has been found;
+  legacy Bing information and fallback ceilings remain in use.
 
-## Phase 4 — Cleanup folded in (ROADMAP debt)
+## Phase 4 — Deferred cleanup (ROADMAP debt)
 
 Since the tree is already churning:
 
 - Drop `selenium-wire` → unpin `setuptools<81`; drop `pyautogui` if unused; drop
   `undetected-chromedriver` if we adopt Playwright.
 - Ruff + pre-commit + minimal CI (lint / format / tests).
-- Docs: flip the README warning to "v4 in progress", add a `4.0.0` CHANGELOG entry, and
-  document the new architecture under `docs/`.
+- Docs: the `4.0.0` release is complete. Keep the README and architecture documentation
+  aligned with the RSC implementation as follow-up work.
 
 ## Non-goals / accept-and-document
 

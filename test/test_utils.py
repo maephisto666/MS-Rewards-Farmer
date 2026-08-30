@@ -1,12 +1,37 @@
 from unittest import TestCase
+from unittest.mock import MagicMock, patch
 
 # noinspection PyPackageRequirements
 from parameterized import parameterized
+from requests import Response
 
-from src.utils import CONFIG, APPRISE, isValidCountryCode, isValidLanguageCode
+from src.utils import (
+    CONFIG,
+    APPRISE,
+    Utils,
+    isValidCountryCode,
+    isValidLanguageCode,
+)
 
 
 class TestUtils(TestCase):
+    def test_bing_rewards_info_decodes_goal_title_as_utf8(self):
+        response = Response()
+        response.status_code = 200
+        response.encoding = "ISO-8859-1"
+        response._content = (
+            b'{"flyoutResult":{"userGoal":{"title":"M\xc3\xbcnchen"}}}'
+        )
+        session = MagicMock()
+        session.get.return_value = response
+        webdriver = MagicMock()
+        webdriver.get_cookies.return_value = []
+
+        with patch("src.utils.makeRequestsSession", return_value=session):
+            info = Utils(webdriver).getBingRewardsInfo()
+
+        self.assertEqual(info["flyoutResult"]["userGoal"]["title"], "München")
+
     def test_send_notification(self):
         CONFIG.apprise.enabled = True
         APPRISE.notify("body", "title")

@@ -428,6 +428,9 @@ class Utils:
                 assert (
                     response.status_code == requests.codes.ok
                 )  # pylint: disable=no-member
+                # Bing sometimes sends UTF-8 JSON without a usable charset header.
+                # Decode it explicitly so localized goal titles are not mojibake.
+                response.encoding = "utf-8"
                 data = response.json()
                 logging.debug(
                     "getBingRewardsInfo: isRewardsUser=%s userInfo.balance=%s flyoutResult.userStatus.availablePoints=%s",

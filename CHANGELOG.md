@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.1](https://github.com/maephisto666/MS-Rewards-Farmer/compare/4.0.0...4.0.1) (2026-08-30)
+
+
+### Changed
+
+* remove obsolete Bing info preference ([#42](https://github.com/maephisto666/MS-Rewards-Farmer/issues/42)) ([f4b139f](https://github.com/maephisto666/MS-Rewards-Farmer/commit/f4b139f3bb1a23811a86cf1948a8e27223e71e22))
+
 ## [4.0.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/3.7.0...4.0.0) (2026-08-22)
 
 

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.3](https://github.com/maephisto666/MS-Rewards-Farmer/compare/4.0.2...4.0.3) (2026-08-30)
+
+
+### Fixed
+
+* **ci:** remove release name prefix ([#53](https://github.com/maephisto666/MS-Rewards-Farmer/issues/53)) ([d37868a](https://github.com/maephisto666/MS-Rewards-Farmer/commit/d37868ac16d332ab7477f20eb168c231a709c563))
+* **ci:** remove release package name ([#51](https://github.com/maephisto666/MS-Rewards-Farmer/issues/51)) ([2b54237](https://github.com/maephisto666/MS-Rewards-Farmer/commit/2b542372f9b89c979b0cd52c48b4722268ddbbed))
+* **ci:** separate release pull requests ([#49](https://github.com/maephisto666/MS-Rewards-Farmer/issues/49)) ([4b4a53a](https://github.com/maephisto666/MS-Rewards-Farmer/commit/4b4a53ac7ae97fd3e45022310d8c1077da09d803))
+
 ## [4.0.2](https://github.com/maephisto666/MS-Rewards-Farmer/compare/4.0.1...4.0.2) (2026-08-30)
 
 

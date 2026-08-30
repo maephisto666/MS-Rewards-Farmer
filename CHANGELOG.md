@@ -5,6 +5,81 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/4.0.1...5.0.0) (2026-08-30)
+
+
+### ⚠ BREAKING CHANGES
+
+* reworked for the redesigned Microsoft Rewards site — dashboard data is now read from the Next.js RSC payload and the login flow targets the new sign-in pages.
+
+### Added
+
+* adapt automation to the 2026 Microsoft Rewards redesign ([60c196b](https://github.com/maephisto666/MS-Rewards-Farmer/commit/60c196be65d69438967fd2ab9c4c154da36424c2))
+* add --totp CLI parameter for 2FA ([3c9fde0](https://github.com/maephisto666/MS-Rewards-Farmer/commit/3c9fde06098bf54523c01ee4c36d79281f4f53cb))
+* add --totp CLI parameter for 2FA ([bc527d8](https://github.com/maephisto666/MS-Rewards-Farmer/commit/bc527d888dba2406754ed5e32ebba8c68a389212))
+* add reset functionality to delete session files and kill chrome processes ([70631b8](https://github.com/maephisto666/MS-Rewards-Farmer/commit/70631b87f4617c1fa62ba4b48c7c12c57f2ceaa9))
+* add virtual authenticator to bypass passkey dialogs (v3.2.0) ([d25089b](https://github.com/maephisto666/MS-Rewards-Farmer/commit/d25089b7ce4ba8cafab25f5263e27ab3b584b0ef))
+* add virtual authenticator to bypass passkey dialogs (v3.2.0) ([a5ae398](https://github.com/maephisto666/MS-Rewards-Farmer/commit/a5ae39892707de77a6d12d0bb69379acfb9c4108))
+* added explicit registry for Python dependencies ([ec7dcff](https://github.com/maephisto666/MS-Rewards-Farmer/commit/ec7dcff8cb78142f7f332628ffd50bf0e446eafb))
+* auto-claim bonus points banner on rewards page ([2ca4e30](https://github.com/maephisto666/MS-Rewards-Farmer/commit/2ca4e307e11d122882193bf593a4a163a6f301bd))
+* auto-claim bonus points banner on rewards page ([9e539a5](https://github.com/maephisto666/MS-Rewards-Farmer/commit/9e539a5a8cf0b28502ec22895b25d5a3228381a7))
+* complete 'Keep earning' activity cards on the /earn page ([#37](https://github.com/maephisto666/MS-Rewards-Farmer/issues/37)) ([ff26528](https://github.com/maephisto666/MS-Rewards-Farmer/commit/ff26528a2bbf5c42768b1dcf09ecd1410f1ae401))
+* read dashboard data from the Next.js RSC wire format ([c6c914d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/c6c914da2207b9693025a8e15d70376fc87422d1))
+* register Windows scheduled task via PowerShell instead of XML ([#30](https://github.com/maephisto666/MS-Rewards-Farmer/issues/30)) ([c965a29](https://github.com/maephisto666/MS-Rewards-Farmer/commit/c965a29b0f964d257e32e6bc07ee3a32578006ae))
+* rework the login flow for the redesigned Microsoft sign-in ([fdd39a0](https://github.com/maephisto666/MS-Rewards-Farmer/commit/fdd39a0fec00ab367c8134db9aa1192196c9ddfd))
+* rewrite login flow with EC.any_of for faster, locale-independen… ([711e7e8](https://github.com/maephisto666/MS-Rewards-Farmer/commit/711e7e83058e63dafa926ed892697cdf6c9a03d0))
+* rewrite login flow with EC.any_of for faster, locale-independent detection ([0c72466](https://github.com/maephisto666/MS-Rewards-Farmer/commit/0c724661c24e084edc9d8fd2bda3f3a447ca6354))
+* support multiple queries per activity with title fallback ([9686a65](https://github.com/maephisto666/MS-Rewards-Farmer/commit/9686a651f2fe98a10587eee004ea05de9ecd2e47))
+* support multiple queries per activity with title fallback ([ab8133a](https://github.com/maephisto666/MS-Rewards-Farmer/commit/ab8133a339c639ce93d534017bec47431b1f6665)), closes [#25](https://github.com/maephisto666/MS-Rewards-Farmer/issues/25)
+
+
+### Fixed
+
+* 280 ([608f48c](https://github.com/maephisto666/MS-Rewards-Farmer/commit/608f48cff044c392391526aa915a24d822858c9f))
+* add search effectiveness tracking and readToEarn stuck detection ([963d7fa](https://github.com/maephisto666/MS-Rewards-Farmer/commit/963d7faf540f724402c207b5b9cf98497ca7ebaf))
+* allow browser language to be set independently of geolocation ([e1a3619](https://github.com/maephisto666/MS-Rewards-Farmer/commit/e1a36196715124bb65bea808c4f6783309f0eb9e))
+* allow browser language to be set independently of geolocation ([0f1770e](https://github.com/maephisto666/MS-Rewards-Farmer/commit/0f1770e9524a4b8e1eb73752c5211f8c667b67e7))
+* **ci:** configure release group title ([#44](https://github.com/maephisto666/MS-Rewards-Farmer/issues/44)) ([a03e8bf](https://github.com/maephisto666/MS-Rewards-Farmer/commit/a03e8bfa9f15c5513de23774aa4eb75f414e8a03))
+* clean up login() method - deduplicate locked/banned checks, move assert after execute_login ([ac1910d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/ac1910d0d84e07123923323b8d3c7f2c42692cda))
+* clean up login() method - deduplicate locked/banned checks, move… ([33c0a24](https://github.com/maephisto666/MS-Rewards-Farmer/commit/33c0a24c24a2cff9e95ebf8633fd5aa1db2448ae))
+* format notification message for incomplete activities ([d2a6ebd](https://github.com/maephisto666/MS-Rewards-Farmer/commit/d2a6ebd00f6d39163896a214e4cccd4c65a555d3))
+* format notification message for incomplete activities ([#272](https://github.com/maephisto666/MS-Rewards-Farmer/issues/272)) ([b43c741](https://github.com/maephisto666/MS-Rewards-Farmer/commit/b43c7411fb0c937b25a19f39aa3a0d46498df31c))
+* handle additional white OTP and password-required pages ([4155a56](https://github.com/maephisto666/MS-Rewards-Farmer/commit/4155a56c0244f00bfd7861b5d005d364cb67c37f))
+* handle login flow for accounts without 2FA enabled ([7214e2d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/7214e2dd3d322e7fac0dd800883d3148d5621e1b))
+* handle login flow for accounts without 2FA enabled ([b5a88f4](https://github.com/maephisto666/MS-Rewards-Farmer/commit/b5a88f414f2df799bdb0e66588503837b2b22a2b))
+* handle null promotionalItem in punch cards ([#17](https://github.com/maephisto666/MS-Rewards-Farmer/issues/17)) ([b2a7cc6](https://github.com/maephisto666/MS-Rewards-Farmer/commit/b2a7cc6b215bd60840a74036c900afda11773d1f))
+* improve punch card CTA click reliability ([1ceb1a1](https://github.com/maephisto666/MS-Rewards-Farmer/commit/1ceb1a12fe809dc0558cf8311b1c9eec36ca477b))
+* improve punch card CTA click reliability ([80916c7](https://github.com/maephisto666/MS-Rewards-Farmer/commit/80916c78291fa9d76bfbc0f9658bcc648cbfc7d8))
+* login flow was failing due to an unmanaged redirect ([490c808](https://github.com/maephisto666/MS-Rewards-Farmer/commit/490c8083c5f18b9a113de0752399ddae2758c2dd))
+* login flow was failing due to an unmanaged redirect ([9cee90d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/9cee90dad7f8ccbf922d4ae6001c5190a641fb0b))
+* proactively dismiss cookie consent banner on rewards page ([9e25501](https://github.com/maephisto666/MS-Rewards-Farmer/commit/9e2550170f30983ab31fcb189b77d524c5d258d8))
+* re-authenticate www.bing.com so Bing searches are counted ([#36](https://github.com/maephisto666/MS-Rewards-Farmer/issues/36)) ([9d39e81](https://github.com/maephisto666/MS-Rewards-Farmer/commit/9d39e8132724b5038de908de3bad5f8c82684efe))
+* reload trends when shelf is exhausted during search retries ([4726e73](https://github.com/maephisto666/MS-Rewards-Farmer/commit/4726e73698306c1cd113534310a24edf05917a9d))
+* reload trends when shelf is exhausted during search retries ([b1170ca](https://github.com/maephisto666/MS-Rewards-Farmer/commit/b1170ca02c24659df28d14000077d38e64a46ed0))
+* remove redundant sleep between searches (cooldown already provid… ([08e3a8d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/08e3a8da55611efaa53d6d615825513b9aeadd16))
+* remove redundant sleep between searches (cooldown already provides delay) ([24ed0e8](https://github.com/maephisto666/MS-Rewards-Farmer/commit/24ed0e808643dabf6f8c564763a785f873043d05))
+* requirements.txt to reduce vulnerabilities ([19d5890](https://github.com/maephisto666/MS-Rewards-Farmer/commit/19d58903d1e640ba7106431a0b0848d87ff2eeaa))
+* requirements.txt to reduce vulnerabilities ([b424c39](https://github.com/maephisto666/MS-Rewards-Farmer/commit/b424c3961c4eaa3af50cd680d9beea53b0e8d1a0))
+* resolve KeyError in getEdgeVersions and bug in getLanguageCountry ([6f6a0c5](https://github.com/maephisto666/MS-Rewards-Farmer/commit/6f6a0c5b252706146c6b76856f3c363ff4862b8a))
+* resolve KeyError in getEdgeVersions and bug in getLanguageCountry ([#237](https://github.com/maephisto666/MS-Rewards-Farmer/issues/237)) ([4f0eb3a](https://github.com/maephisto666/MS-Rewards-Farmer/commit/4f0eb3aeb95ade6f10d4071b7c4cdc348a9ddf0e))
+* skip cooldown for unmapped search activities, replace sleep with explicit wait ([408463a](https://github.com/maephisto666/MS-Rewards-Farmer/commit/408463a9a2643b7ba2ae8e1ad97c9eb2a1675263))
+* skip cooldown for unmapped search activities, replace sleep with explicit wait ([1674f46](https://github.com/maephisto666/MS-Rewards-Farmer/commit/1674f468325f182e5907ce6533c9a9b4f7cceb72))
+* support both OTP page variants in login flow ([d994c81](https://github.com/maephisto666/MS-Rewards-Farmer/commit/d994c81e4722efd12af1f3a5a21d69780323bdc4))
+* use dashboard data instead of Bing API (PREFER_BING_INFO=False), default formatNumber to 0 decimals ([b08f506](https://github.com/maephisto666/MS-Rewards-Farmer/commit/b08f50617b60352ef799726708ae5342f5bca22d))
+* use dashboard data instead of Bing API (PREFER_BING_INFO=False),… ([1b609e9](https://github.com/maephisto666/MS-Rewards-Farmer/commit/1b609e9f1c1bc084e70587621e41c214768baae5))
+* use JavaScript click as fallback when element is intercepted ([#18](https://github.com/maephisto666/MS-Rewards-Farmer/issues/18)) ([ad76ef9](https://github.com/maephisto666/MS-Rewards-Farmer/commit/ad76ef9bc3c2a61e5f9bb6772087c4cb7ff9dbc5))
+* use rewards.bing.com/ instead of /Signin/ in isLoggedIn fallback ([9e3a92d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/9e3a92da588c3c0fd47dad552d72e3c10fe9d664))
+* use rewards.bing.com/ instead of /Signin/ in isLoggedIn fallback ([584b811](https://github.com/maephisto666/MS-Rewards-Farmer/commit/584b811dcd97e85a5db5609eaeefe8a72e288775))
+
+
+### Changed
+
+* incompleteActivities ([e9d8b52](https://github.com/maephisto666/MS-Rewards-Farmer/commit/e9d8b52a3bf840e10a33d246441e6c83cd6c21d4))
+* incompleteActivities ([#273](https://github.com/maephisto666/MS-Rewards-Farmer/issues/273)) ([77daa95](https://github.com/maephisto666/MS-Rewards-Farmer/commit/77daa95213ed8cc9f0deaeb9e52763126d1c5b32))
+* remove `sendNotification` ([813d97d](https://github.com/maephisto666/MS-Rewards-Farmer/commit/813d97d9ac38a9ef95269d3adea796cbfd0421a3))
+* remove `sendNotification` ([#283](https://github.com/maephisto666/MS-Rewards-Farmer/issues/283)) ([bf56dfa](https://github.com/maephisto666/MS-Rewards-Farmer/commit/bf56dfa9d1e4ccb421ae64c07eec4d607322f67f)), closes [#186](https://github.com/maephisto666/MS-Rewards-Farmer/issues/186)
+* remove obsolete Bing info preference ([#42](https://github.com/maephisto666/MS-Rewards-Farmer/issues/42)) ([f4b139f](https://github.com/maephisto666/MS-Rewards-Farmer/commit/f4b139f3bb1a23811a86cf1948a8e27223e71e22))
+
 ## [4.0.1](https://github.com/maephisto666/MS-Rewards-Farmer/compare/4.0.0...4.0.1) (2026-08-30)
 
 

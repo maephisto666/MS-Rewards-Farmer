@@ -292,7 +292,7 @@ class Browser:
         self, desktopAndMobile: bool = False
     ) -> RemainingSearches | int:
         try:
-            bingInfo = self.utils.getBingInfo()
+            bingInfo = self.utils.getBingRewardsInfo()
             counters = bingInfo["flyoutResult"]["userStatus"]["counters"]
             pcSearch: dict = counters["PCSearch"][0]
             pointProgressMax: int = pcSearch["pointProgressMax"]
@@ -323,7 +323,7 @@ class Browser:
             return remainingMobileSearches if self.mobile else remainingDesktopSearches
 
         except (KeyError, TypeError, AssertionError) as exc:
-            # getBingInfo did not return Bing Rewards counters — common for Microsoft
+            # getBingRewardsInfo did not return Bing Rewards counters — common for Microsoft
             # Rewards accounts in regions where Bing Rewards is a separate programme
             # (e.g. NL). Fall back to a conservative ceiling; bingSearch() exits
             # naturally when searches stop earning points.

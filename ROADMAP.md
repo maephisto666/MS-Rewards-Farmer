@@ -36,7 +36,8 @@ worthwhile.
 
 The current code uses two complementary data sources:
 
-- **Bing API** (`getBingInfo()`) -- HTTP call to `bing.com/rewards/panelflyout/getuserinfo`.
+- **Bing API** (`getBingRewardsInfo()`) -- HTTP call to
+  `bing.com/rewards/panelflyout/getuserinfo`.
   It remains necessary to verify Bing Rewards authentication, retrieve search counters and
   level when available, and report redemption-goal details. It is undocumented and its schema
   can be unavailable or change by region, so search counting has conservative fallbacks.
@@ -47,7 +48,7 @@ The current code uses two complementary data sources:
 
 `PREFER_BING_INFO` was an obsolete upstream switch between the legacy `window.dashboard`
 scraper and the Bing API. The v4 RSC migration removed that dual path, and the unused switch
-was removed. Do not remove `getBingInfo()` or its callers until replacements exist for its
+was removed. Do not remove `getBingRewardsInfo()` or its callers until replacements exist for its
 remaining responsibilities.
 
 ### Developer Tooling and SDLC Cleanup

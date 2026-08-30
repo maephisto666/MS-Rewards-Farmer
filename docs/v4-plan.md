@@ -27,8 +27,8 @@ The following planned work remains open:
 - Search counters are still read from the legacy Bing information endpoint when available,
   with conservative fallback limits when they are not. A native replacement has not been
   found in the RSC payload.
-- `PREFER_BING_INFO` remains declared in `src/utils.py`, although the old dashboard
-  dual-path is no longer used.
+- The obsolete `PREFER_BING_INFO` preference and its legacy dashboard dual-path were removed;
+  active Bing information calls remain for search authentication, search counters, and goals.
 - Phase 4 cleanup is deferred: `selenium-wire`, `pyautogui`, `setuptools<81`, and
   undetected-chromedriver remain dependencies; Ruff, pre-commit, and dedicated lint/test CI
   have not been added.

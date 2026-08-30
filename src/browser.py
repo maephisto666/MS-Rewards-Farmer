@@ -19,7 +19,7 @@ from src.utils import (
     getBrowserConfig,
     getProjectRoot,
     saveBrowserConfig,
-    PREFER_BING_INFO, LANGUAGE, COUNTRY,
+    LANGUAGE, COUNTRY,
 )
 
 

@@ -40,8 +40,6 @@ from urllib3 import Retry
 
 from .constants import REWARDS_DASHBOARD_URL, REWARDS_EARN_URL, SEARCH_URL
 
-PREFER_BING_INFO = True
-
 
 class Config(dict):
     """

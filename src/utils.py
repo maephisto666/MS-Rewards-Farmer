@@ -40,8 +40,6 @@ from urllib3 import Retry
 
 from .constants import REWARDS_DASHBOARD_URL, REWARDS_EARN_URL, SEARCH_URL
 
-PREFER_BING_INFO = True
-
 
 class Config(dict):
     """
@@ -354,7 +352,7 @@ class Utils:
 
     def _isBingRewardsAuthenticated(self) -> bool:
         try:
-            return bool(self.getBingInfo().get("isRewardsUser"))
+            return bool(self.getBingRewardsInfo().get("isRewardsUser"))
         except Exception:
             return False
 
@@ -414,7 +412,7 @@ class Utils:
         """
         return self.getDashboardData().todays_daily_set()
 
-    def getBingInfo(self) -> Any:
+    def getBingRewardsInfo(self) -> Any:
         session = makeRequestsSession()
         retries = CONFIG.retries.max
         backoff_factor = CONFIG.get("retries.backoff-factor")
@@ -432,7 +430,7 @@ class Utils:
                 )  # pylint: disable=no-member
                 data = response.json()
                 logging.debug(
-                    "getBingInfo: isRewardsUser=%s userInfo.balance=%s flyoutResult.userStatus.availablePoints=%s",
+                    "getBingRewardsInfo: isRewardsUser=%s userInfo.balance=%s flyoutResult.userStatus.availablePoints=%s",
                     data.get("isRewardsUser"),
                     data.get("userInfo", {}).get("balance"),
                     data.get("flyoutResult", {}).get("userStatus", {}).get("availablePoints"),
@@ -451,7 +449,7 @@ class Utils:
 
     def isLoggedIn(self) -> bool:
         try:
-            if self.getBingInfo()["isRewardsUser"]:
+            if self.getBingRewardsInfo()["isRewardsUser"]:
                 return True
         except Exception:
             pass
@@ -464,19 +462,19 @@ class Utils:
         return "/dashboard" in self.webdriver.current_url
 
     def getAccountPoints(self) -> int:
-        # RSC balance is always accurate; getBingInfo may return 0 in some regions.
+        # RSC balance is always accurate; getBingRewardsInfo may return 0 in some regions.
         # getDashboardData() navigates to /dashboard and parses the RSC payload.
         return self.getDashboardData().balance
 
     def getGoalPoints(self) -> int:
         try:
-            return self.getBingInfo()["flyoutResult"]["userGoal"]["price"]
+            return self.getBingRewardsInfo()["flyoutResult"]["userGoal"]["price"]
         except (KeyError, TypeError):
             return 0
 
     def getGoalTitle(self) -> str:
         try:
-            return self.getBingInfo()["flyoutResult"]["userGoal"]["title"]
+            return self.getBingRewardsInfo()["flyoutResult"]["userGoal"]["title"]
         except (KeyError, TypeError):
             return ""
 

@@ -32,21 +32,24 @@ an anti-detection Firefox-based browser, as an alternative to undetected-chromed
 bot detection. Revisiting this as a fresh feature once the codebase is stable would be
 worthwhile.
 
-### Revisit PREFER_BING_INFO and Data Sources
+### Revisit Bing information and dashboard data sources
 
-The codebase has two data sources for account info (points, remaining searches, user level):
+The current code uses two complementary data sources:
 
-- **Bing API** (`getBingInfo()`) -- HTTP call to `bing.com/rewards/panelflyout/getuserinfo`.
-  Faster (no page navigation), but undocumented and its schema has broken (e.g. `PCSearch`
-  key no longer exists). Currently disabled via `PREFER_BING_INFO = False`.
-- **RSC wire format** (`getDashboardData()`) -- Navigates to `rewards.microsoft.com` and
-  parses the Next.js RSC payload embedded in the page HTML (`src/rsc.py`). Reliable, but
-  requires a full page load.
+- **Bing API** (`getBingRewardsInfo()`) -- HTTP call to
+  `bing.com/rewards/panelflyout/getuserinfo`.
+  It remains necessary to verify Bing Rewards authentication, retrieve search counters and
+  level when available, and report redemption-goal details. It is undocumented and its schema
+  can be unavailable or change by region, so search counting has conservative fallbacks.
+- **RSC wire format** (`getDashboardData()`) -- Navigates to `rewards.bing.com/dashboard` and
+  parses the Next.js RSC payload embedded in the page HTML (`src/rsc.py`). It is the
+  authoritative source for balance, daily-set items, activity cards, activity counters, and
+  streak-claim state.
 
-The `PREFER_BING_INFO` flag and all its `if/else` branches throughout `browser.py` and
-`utils.py` are a leftover from the upstream repo where it was always `True` and never
-exposed as a configuration option. Now that it's `False`, the Bing API code paths are dead
-code and should be removed.
+`PREFER_BING_INFO` was an obsolete upstream switch between the legacy `window.dashboard`
+scraper and the Bing API. The v4 RSC migration removed that dual path, and the unused switch
+was removed. Do not remove `getBingRewardsInfo()` or its callers until replacements exist for its
+remaining responsibilities.
 
 ### Developer Tooling and SDLC Cleanup
 

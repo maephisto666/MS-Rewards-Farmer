@@ -1,6 +1,6 @@
 [project]
 name = "ms-rewards-farmer"
-version = "4.0.3"
+version = "5.0.0"
 description = "A 'simple' python application that uses Selenium to help with your M$ Rewards"
 readme = "README.md"
 requires-python = ">=3.12"

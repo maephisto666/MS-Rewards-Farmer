@@ -18,7 +18,6 @@ MS-Rewards-Farmer is a Python automation tool that uses Selenium to farm Microso
 ```
 main.py                  # Entry point: account loop, logging setup, CSV export
 src/
-  __init__.py            # Public API: RemainingSearches re-export
   browser.py             # Selenium browser setup (desktop/mobile), session management
   login.py               # Microsoft account login with TOTP and virtual authenticator
   searches.py            # Bing search automation
@@ -29,7 +28,6 @@ src/
   rsc.py                 # Next.js RSC wire-format parser: DashboardData, DailySetItem
   utils.py               # Config class (YAML), CLI arg parsing, Selenium helpers, Apprise wrapper
   constants.py           # REWARDS_URL, SEARCH_URL, VERSION
-  remainingSearches.py   # Remaining searches data class
   userAgentGenerator.py  # User-agent string generation
   loggingColoredFormatter.py  # Colored terminal log formatter
 localized_activities/    # Per-language activity definitions (en, es, fr, it)

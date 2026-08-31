@@ -51,6 +51,13 @@ scraper and the Bing API. The v4 RSC migration removed that dual path, and the u
 was removed. Do not remove `getBingRewardsInfo()` or its callers until replacements exist for its
 remaining responsibilities.
 
+### Mobile browser searches retired
+
+Microsoft no longer awards points for browser-automated mobile searches, so this project does
+not perform them. The `channel.mobile.enabled` setting controls only the mobile Read-to-Earn
+channel. `channel.desktop.enabled` independently controls the dashboard and desktop-search
+channel.
+
 ### Developer Tooling and SDLC Cleanup
 
 The project inherited several tooling config files from the upstream repo that are not

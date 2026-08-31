@@ -156,6 +156,11 @@ the default ones, if not said otherwise.
 > and it'll result in preventing updates (such as ignored activities).
 > You should only add a variable to your configuration file if you want to change it.
 
+> [!NOTE]
+> `search.type` is replaced with independent channel switches. Remove any existing
+> `search:` section and use `channel.desktop.enabled` and
+> `channel.mobile.enabled` instead.
+
 ```yaml
 # config.yaml
 apprise: # 'apprise' is the name of the service used for notifications https://github.com/caronc/apprise
@@ -189,9 +194,11 @@ retries:
 cooldown:
   min: 300 # The minimal wait time between two searches/activities
   max: 600 # The maximal wait time between two searches/activities
-search:
-  type: both # Set it to 'mobile' or 'desktop' to only complete searches on one plateform,
-  # can be overridden with command-line arguments.
+channel:
+  desktop:
+    enabled: true # Complete dashboard activities and desktop Bing searches.
+  mobile:
+    enabled: true # Complete Read to Earn. Mobile Bing searches are not performed.
 accounts: # The accounts to use. You can put zero, one or an infinite number of accounts here.
   # Empty by default, can be overridden with command-line arguments.
   - email: Your Email 1 # replace with your email
@@ -208,7 +215,8 @@ accounts: # The accounts to use. You can put zero, one or an infinite number of 
 
 ```
 usage: main.py [-h] [-c CONFIG] [-C] [-v] [-l LANG] [-g GEO] [-em EMAIL] [-pw PASSWORD]
-               [-totp TOTP] [-p PROXY] [-t {desktop,mobile,both}] [-da] [-d] [-r]
+               [-totp TOTP] [-p PROXY] [--desktop-channel | --no-desktop-channel]
+               [--mobile-channel | --no-mobile-channel] [-da] [-d] [-r]
 
 A simple bot that uses Selenium to farm M$ Rewards in Python
 
@@ -231,8 +239,10 @@ options:
   -p PROXY, --proxy PROXY
                         Global Proxy, supports http/https/socks4/socks5 (overrides config per-
                         account proxies) `(ex: http://user:pass@host:port)`
-  -t {desktop,mobile,both}, --searchtype {desktop,mobile,both}
-                        Set to search in either desktop, mobile or both (default: both)
+  --desktop-channel, --no-desktop-channel
+                        Enable or disable the desktop channel
+  --mobile-channel, --no-mobile-channel
+                        Enable or disable the mobile Read-to-Earn channel
   -da, --disable-apprise
                         Disable Apprise notifications, useful when developing
   -d, --debug           Set the logging level to DEBUG
@@ -248,6 +258,7 @@ You can display this message at any moment using `python main.py -h`.
 ## Features
 
 - Bing desktop searches with current User-Agents
+- Mobile Read to Earn
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
@@ -262,7 +273,6 @@ You can display this message at any moment using `python main.py -h`.
 - Logs to CSV file for point tracking
 
 > [!NOTE]
-> Mobile searches are no longer automated. With the new Rewards experience, mobile searches
-> do not yield points through browser automation. The mobile browser session is still used
-> for Read to Earn tasks.
+> Mobile searches are not automated because they do not yield points through browser
+> automation. The mobile channel remains available for Read to Earn tasks.
 

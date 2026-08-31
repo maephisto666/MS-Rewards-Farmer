@@ -8,7 +8,7 @@ import re
 import shutil
 import sys
 import time
-from argparse import Namespace, ArgumentParser
+from argparse import Namespace, ArgumentParser, BooleanOptionalAction
 from copy import deepcopy
 from datetime import date
 from pathlib import Path
@@ -194,7 +194,10 @@ DEFAULT_CONFIG: Config = Config(
         },
         "retries": {"backoff-factor": 120, "max": 4, "strategy": "EXPONENTIAL"},
         "cooldown": {"min": 300, "max": 600},
-        "search": {"type": "both"},
+        "channel": {
+            "desktop": {"enabled": True},
+            "mobile": {"enabled": True},
+        },
         "accounts": [],
     }
 )
@@ -613,11 +616,16 @@ def argumentParser() -> Namespace:
         "\n`(ex: http://user:pass@host:port)`",
     )
     parser.add_argument(
-        "-t",
-        "--searchtype",
-        choices=["desktop", "mobile", "both"],
+        "--desktop-channel",
+        action=BooleanOptionalAction,
         default=None,
-        help="Set to search in either desktop, mobile or both (default: both)",
+        help="Enable or disable the desktop channel",
+    )
+    parser.add_argument(
+        "--mobile-channel",
+        action=BooleanOptionalAction,
+        default=None,
+        help="Enable or disable the mobile Read-to-Earn channel",
     )
     parser.add_argument(
         "-da",
@@ -668,9 +676,13 @@ def commandLineArgumentsAsConfig(args: Namespace) -> Config:
     if args.debug:
         config.logging = Config()
         config.logging.level = "DEBUG"
-    if args.searchtype:
-        config.search = Config()
-        config.search.type = args.searchtype
+    if args.desktop_channel is not None:
+        config.channel = Config()
+        config.channel.desktop = Config(enabled=args.desktop_channel)
+    if args.mobile_channel is not None:
+        if "channel" not in config:
+            config.channel = Config()
+        config.channel.mobile = Config(enabled=args.mobile_channel)
     if args.email and args.password:
         account = Config(
             email=args.email,

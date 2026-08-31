@@ -8,13 +8,30 @@ from requests import Response
 from src.utils import (
     CONFIG,
     APPRISE,
+    DEFAULT_CONFIG,
     Utils,
+    argumentParser,
+    commandLineArgumentsAsConfig,
     isValidCountryCode,
     isValidLanguageCode,
 )
 
 
 class TestUtils(TestCase):
+    def test_default_channels_enable_desktop_and_mobile(self):
+        self.assertTrue(DEFAULT_CONFIG.channel.desktop.enabled)
+        self.assertTrue(DEFAULT_CONFIG.channel.mobile.enabled)
+
+    def test_cli_channel_flags_override_configuration(self):
+        with patch(
+            "sys.argv",
+            ["main.py", "--no-desktop-channel", "--mobile-channel"],
+        ):
+            config = commandLineArgumentsAsConfig(argumentParser())
+
+        self.assertFalse(config.channel.desktop.enabled)
+        self.assertTrue(config.channel.mobile.enabled)
+
     def test_bing_rewards_info_decodes_goal_title_as_utf8(self):
         response = Response()
         response.status_code = 200

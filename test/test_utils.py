@@ -1,11 +1,13 @@
 from unittest import TestCase
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 # noinspection PyPackageRequirements
 from parameterized import parameterized
 from requests import Response
 
 from src.utils import (
+    BING_HOME_URL,
+    BING_REWARDS_FLYOUT_URL,
     CONFIG,
     APPRISE,
     DEFAULT_CONFIG,
@@ -31,6 +33,56 @@ class TestUtils(TestCase):
 
         self.assertFalse(config.channel.desktop.enabled)
         self.assertTrue(config.channel.mobile.enabled)
+
+    def test_bing_auth_opens_flyout_directly_before_selector_fallback(self):
+        webdriver = MagicMock()
+        utils = Utils(webdriver)
+
+        with (
+            patch.object(utils, "_isBingRewardsAuthenticated", side_effect=[False, True]),
+            patch.object(utils, "_clickGetStartedIfPresent") as click_get_started,
+            patch.object(utils, "_findFirstVisible") as find_pill,
+        ):
+            utils.ensureBingSearchAuth()
+
+        self.assertEqual(
+            webdriver.get.call_args_list,
+            [
+                call(BING_HOME_URL),
+                call(BING_REWARDS_FLYOUT_URL),
+                call(BING_HOME_URL),
+            ],
+        )
+        click_get_started.assert_called_once()
+        find_pill.assert_not_called()
+
+    def test_bing_auth_falls_back_to_rewards_header_control(self):
+        webdriver = MagicMock()
+        pill = MagicMock()
+        utils = Utils(webdriver)
+        action_chain = MagicMock()
+
+        with (
+            patch.object(
+                utils, "_isBingRewardsAuthenticated", side_effect=[False, False, True]
+            ),
+            patch.object(utils, "_clickGetStartedIfPresent") as click_get_started,
+            patch.object(utils, "_findFirstVisible", return_value=pill),
+            patch("src.utils.ActionChains", return_value=action_chain),
+        ):
+            utils.ensureBingSearchAuth()
+
+        self.assertEqual(
+            webdriver.get.call_args_list,
+            [
+                call(BING_HOME_URL),
+                call(BING_REWARDS_FLYOUT_URL),
+                call(BING_HOME_URL),
+                call(BING_HOME_URL),
+            ],
+        )
+        self.assertEqual(click_get_started.call_count, 2)
+        action_chain.move_to_element.assert_called_once_with(pill)
 
     def test_bing_rewards_info_decodes_goal_title_as_utf8(self):
         response = Response()

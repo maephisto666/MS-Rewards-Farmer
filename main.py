@@ -8,7 +8,7 @@ from enum import Enum, auto
 from logging import handlers
 
 from src.bonusPoints import BonusPoints
-from src.browser import Browser, RemainingSearches
+from src.browser import Browser
 from src.login import Login
 from src.punchCards import PunchCards
 from src.searches import Searches
@@ -140,11 +140,11 @@ def executeBot(currentAccount):
 
     startingPoints: int | None = None
     accountPoints: int
-    remainingSearches: RemainingSearches
+    remainingSearches: int = 0
     goalTitle: str
     goalPoints: int
 
-    if CONFIG.search.type in ("desktop", "both", None):
+    if CONFIG.channel.desktop.enabled:
         with Browser(mobile=False, account=currentAccount) as desktopBrowser:
             utils = desktopBrowser.utils
             Login(desktopBrowser).login()
@@ -165,14 +165,12 @@ def executeBot(currentAccount):
             goalTitle = utils.getGoalTitle()
 
             try:
-                remainingSearches = desktopBrowser.getRemainingSearches(
-                    desktopAndMobile=True
-                )
+                remainingSearches = desktopBrowser.getRemainingSearches()
             except Exception:
                 logging.exception("[POINTS] getRemainingSearches failed on desktop browser")
             accountPoints = utils.getAccountPoints()
 
-    if CONFIG.search.type in ("mobile", "both", None):
+    if CONFIG.channel.mobile.enabled:
         with Browser(mobile=True, account=currentAccount) as mobileBrowser:
             utils = mobileBrowser.utils
             Login(mobileBrowser).login()
@@ -182,18 +180,9 @@ def executeBot(currentAccount):
                 ReadToEarn(mobileBrowser).completeReadToEarn()
             except Exception:
                 logging.exception("[READ TO EARN] Failed to complete Read to Earn")
-            with Searches(mobileBrowser) as searches:
-                searches.bingSearches()
-
             goalPoints = utils.getGoalPoints()
             goalTitle = utils.getGoalTitle()
 
-            try:
-                remainingSearches = mobileBrowser.getRemainingSearches(
-                    desktopAndMobile=True
-                )
-            except Exception:
-                logging.exception("[POINTS] getRemainingSearches failed on mobile browser")
             accountPoints = utils.getAccountPoints()
 
     logging.info(
@@ -225,7 +214,7 @@ def executeBot(currentAccount):
             "Daily Points Update",
         )
     elif appriseSummary == AppriseSummary.ON_ERROR:
-        if remainingSearches.getTotal() > 0:
+        if remainingSearches > 0:
             APPRISE.notify(
                 f"account email: {currentAccount.email}, {remainingSearches}",
                 "Error: remaining searches",

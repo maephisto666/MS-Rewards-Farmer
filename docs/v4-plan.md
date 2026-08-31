@@ -22,8 +22,8 @@ The following planned work remains open:
 
 - The login state-machine refactor, `DebugRecorder`, page fingerprinting, typed errors, and
   `--diagnose` mode are not implemented.
-- Mobile searches still run when mobile searches are selected; the proposed dedicated
-  feature flag, defaulting off, was not added.
+- Mobile browser searches were removed because Microsoft no longer awards points for them.
+  The mobile channel remains enabled by default for Read-to-Earn only.
 - Search counters are still read from the legacy Bing information endpoint when available,
   with conservative fallback limits when they are not. A native replacement has not been
   found in the RSC payload.
@@ -205,13 +205,11 @@ found in the captured page source. These counters are either in a lazily-loaded 
 component, behind a separate route (e.g. `/pointsbreakdown`), or require a search
 action to trigger. This is the main unknown heading into Phase 3.
 
-**4. Mobile search death — unverified (but expected)**
+**4. Mobile search retirement**
 
-Not directly probed. Mobile searches use a separate browser
-context (`browserType == "mobile"` with resolution/UA spoofing). The Bing search
-submission mechanic (`sb_form_q` + `submit()`) likely still works — the break is that
-the new dashboard no longer reports mobile search progress. Gated behind `search.mobile`
-flag defaulting off per the Phase 3 plan.
+Microsoft no longer awards points for browser-automated mobile searches. The project no
+longer performs them. The mobile browser context remains for the independent Read-to-Earn
+OAuth flow.
 
 **5. Read-to-Earn OAuth flow — assumed intact**
 
@@ -246,9 +244,8 @@ blocking issue.
 - [x] **Login:** support for the redesigned Microsoft sign-in flow was added.
 - [ ] **Login architecture:** the ROADMAP state-machine refactor, diagnostics, and
   scripted-driver tests remain outstanding.
-- [ ] **Mobile split:** Read-to-Earn remains enabled, but the proposed
-  `search.mobile` feature flag has not been implemented. Mobile browser searches therefore
-  still execute when selected.
+- [x] **Mobile split:** mobile browser searches were removed. Read-to-Earn remains in the
+  independently selectable mobile channel.
 - [ ] **Search counters:** no RSC-backed search-counter implementation has been found;
   legacy Bing information and fallback ceilings remain in use.
 

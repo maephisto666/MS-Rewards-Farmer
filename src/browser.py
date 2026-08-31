@@ -11,7 +11,6 @@ from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.virtual_authenticator import VirtualAuthenticatorOptions, Protocol, Transport
 
-from src import RemainingSearches
 from src.userAgentGenerator import GenerateUserAgent
 from src.utils import (
     CONFIG,
@@ -286,11 +285,7 @@ class Browser:
     # The bingSearch() exit condition (no points earned after maxRetries) naturally
     # stops the loop before this ceiling is reached on days when searches are done.
     _FALLBACK_DESKTOP_SEARCHES = 30
-    _FALLBACK_MOBILE_SEARCHES = 0
-
-    def getRemainingSearches(
-        self, desktopAndMobile: bool = False
-    ) -> RemainingSearches | int:
+    def getRemainingSearches(self) -> int:
         try:
             bingInfo = self.utils.getBingRewardsInfo()
             counters = bingInfo["flyoutResult"]["userStatus"]["counters"]
@@ -306,21 +301,7 @@ class Browser:
             assert pcPointsRemaining % searchPoints == 0
             remainingDesktopSearches: int = int(pcPointsRemaining / searchPoints)
 
-            activeLevel = bingInfo["userInfo"]["profile"]["attributes"]["level"]
-            remainingMobileSearches: int = 0
-            if activeLevel == "Level2":
-                mobileSearch: dict = counters["MobileSearch"][0]
-                mobilePointsRemaining = (
-                    mobileSearch["pointProgressMax"] - mobileSearch["pointProgress"]
-                )
-                assert mobilePointsRemaining % searchPoints == 0
-                remainingMobileSearches = int(mobilePointsRemaining / searchPoints)
-
-            if desktopAndMobile:
-                return RemainingSearches(
-                    desktop=remainingDesktopSearches, mobile=remainingMobileSearches
-                )
-            return remainingMobileSearches if self.mobile else remainingDesktopSearches
+            return remainingDesktopSearches
 
         except (KeyError, TypeError, AssertionError) as exc:
             # getBingRewardsInfo did not return Bing Rewards counters — common for Microsoft
@@ -329,12 +310,7 @@ class Browser:
             # naturally when searches stop earning points.
             import logging as _log
             _log.warning(
-                "getRemainingSearches: Bing counter unavailable (%s) — using default %d/%d",
-                exc, self._FALLBACK_DESKTOP_SEARCHES, self._FALLBACK_MOBILE_SEARCHES,
+                "getRemainingSearches: Bing counter unavailable (%s) — using default %d",
+                exc, self._FALLBACK_DESKTOP_SEARCHES,
             )
-            if desktopAndMobile:
-                return RemainingSearches(
-                    desktop=self._FALLBACK_DESKTOP_SEARCHES,
-                    mobile=self._FALLBACK_MOBILE_SEARCHES,
-                )
-            return self._FALLBACK_MOBILE_SEARCHES if self.mobile else self._FALLBACK_DESKTOP_SEARCHES
+            return self._FALLBACK_DESKTOP_SEARCHES

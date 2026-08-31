@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/4.0.3...5.0.0) (2026-08-31)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove mobile Bing searches ([#55](https://github.com/maephisto666/MS-Rewards-Farmer/issues/55))
+
+### Added
+
+* remove mobile Bing searches ([#55](https://github.com/maephisto666/MS-Rewards-Farmer/issues/55)) ([95d11c4](https://github.com/maephisto666/MS-Rewards-Farmer/commit/95d11c4646b13fa6ecbf0e0cd7ccbdb2481fce4a))
+
 ## [4.0.3](https://github.com/maephisto666/MS-Rewards-Farmer/compare/4.0.2...4.0.3) (2026-08-30)
 
 

@@ -21,6 +21,7 @@ src/
   browser.py             # Selenium browser setup (desktop/mobile), session management
   login.py               # Microsoft account login with TOTP and virtual authenticator
   searches.py            # Bing search automation
+  trends.py              # Trending keyword pool for searches: CSV/RSS sources, JSON cache, back-off
   activities.py          # Daily set activities (dashboard card click → new tab wait)
   bonusPoints.py         # Streak bonus + banner bonus claiming
   punchCards.py          # Punch card stub (skipped — not exposed in RSC data model)

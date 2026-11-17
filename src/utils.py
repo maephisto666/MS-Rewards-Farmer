@@ -792,6 +792,7 @@ def resetBot():
         getProjectRoot() / "google_trends.bak",
         getProjectRoot() / "google_trends.dat",
         getProjectRoot() / "google_trends.dir",
+        getProjectRoot() / "google_trends.json",
         getProjectRoot() / "logs" / "previous_points_data.json",
     )
     for path in filesToDeletePaths:

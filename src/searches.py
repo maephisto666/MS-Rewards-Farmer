@@ -1,15 +1,13 @@
-import dbm.dumb
 import logging
-import shelve
 from enum import Enum, auto
 from random import random
 from time import sleep
 from typing import Final
 
 from selenium.webdriver.common.by import By
-from trendspy import Trends
 
 from src.browser import Browser
+from src.trends import TrendsCache
 from src.utils import CONFIG, getProjectRoot, cooldown, COUNTRY
 
 
@@ -48,25 +46,13 @@ class Searches:
         self.browser = browser
         self.webdriver = browser.webdriver
 
-        dumbDbm = dbm.dumb.open((getProjectRoot() / "google_trends").__str__())
-        self.googleTrendsShelf: shelve.Shelf = shelve.Shelf(dumbDbm)
+        self.trends = TrendsCache(getProjectRoot() / "google_trends.json", COUNTRY)
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        self.googleTrendsShelf.__exit__(None, None, None)
-
-    def _loadTrends(self, count: int = 20) -> None:
-        logging.debug(
-            f"google_trends before load = {list(self.googleTrendsShelf.items())}"
-        )
-        trends = Trends().trending_now(geo=COUNTRY)[:count]
-        for trend in trends:
-            self.googleTrendsShelf[trend.keyword] = trend
-        logging.debug(
-            f"google_trends after load = {list(self.googleTrendsShelf.items())}"
-        )
+        pass
 
     def bingSearches(self) -> None:
         # Function to perform Bing searches
@@ -87,8 +73,7 @@ class Searches:
             if remainingSearches == 0:
                 break
 
-            if remainingSearches > len(self.googleTrendsShelf):
-                self._loadTrends(remainingSearches)
+            self.trends.refresh(remainingSearches)
 
             result_search_counted = self.bingSearch()
             if not result_search_counted:
@@ -105,8 +90,11 @@ class Searches:
         # Function to perform a single Bing search
         pointsBefore = self.browser.utils.getAccountPoints()
 
-        trend = list(self.googleTrendsShelf.keys())[0]
-        trendKeywords = self.googleTrendsShelf[trend].trend_keywords
+        picked = self.trends.pick()
+        if picked is None:
+            logging.error("[BING] No trending keywords available to search for")
+            return False
+        trend, trendKeywords = picked
         logging.debug(f"trendKeywords={trendKeywords}")
         logging.debug(f"trend={trend}")
         baseDelay = Searches.baseDelay
@@ -114,14 +102,14 @@ class Searches:
         for i in range(self.maxRetries + 1):
             if i != 0:
                 if not trendKeywords:
-                    del self.googleTrendsShelf[trend]
+                    self.trends.markUsed(trend)
+                    self.trends.refresh(1)
 
-                    if not self.googleTrendsShelf:
-                        logging.info("[BING] Trend shelf empty, reloading...")
-                        self._loadTrends()
-
-                    trend = list(self.googleTrendsShelf.keys())[0]
-                    trendKeywords = self.googleTrendsShelf[trend].trend_keywords
+                    picked = self.trends.pick()
+                    if picked is None:
+                        logging.error("[BING] No trending keywords available to search for")
+                        return False
+                    trend, trendKeywords = picked
 
                 sleepTime: int
                 if Searches.retriesStrategy == Searches.retriesStrategy.EXPONENTIAL:
@@ -152,7 +140,7 @@ class Searches:
 
             pointsAfter = self.browser.utils.getAccountPoints()
             if pointsBefore < pointsAfter:
-                del self.googleTrendsShelf[trend]
+                self.trends.markUsed(trend)
                 cooldown()
                 return True
 

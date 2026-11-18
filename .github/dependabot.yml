@@ -19,11 +19,13 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # selenium-wire is unmaintained and only works with these exact versions, see AGENTS.md
+      # selenium-wire is unmaintained and only works with these exact versions, see AGENTS.md and issues #80, #81
       - dependency-name: "blinker"
       - dependency-name: "selenium-wire"
       - dependency-name: "undetected-chromedriver"
       - dependency-name: "pyopenssl"
         versions: [">=26.2"]
+      - dependency-name: "cryptography"
+        versions: [">=48"]
       - dependency-name: "setuptools"
         versions: [">=81"]

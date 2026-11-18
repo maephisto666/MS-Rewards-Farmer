@@ -48,7 +48,7 @@ types and footers.
 | `feat!:` / `fix!:` | Breaking change (or add `BREAKING CHANGE:` footer) | major bump |
 | `refactor:` | Code restructure with no behaviour change | patch bump |
 | `perf:` | Performance improvement | patch bump |
-| `deps:` | Dependency updates that are part of the shipped code | patch bump |
+| `deps:` | **Every** change to the shipped dependencies: upgrades, pins, Dependabot PRs, manual or automated | patch bump |
 | `revert:` | Revert a previous change | patch bump |
 | `docs:` | Documentation only | none |
 | `chore:` | Tooling, dependency, config updates | none |
@@ -75,6 +75,12 @@ Rules:
 - `docs:` / `chore:` / `ci:` / `build:` / `style:` / `test:` commits are hidden in the CHANGELOG
   and do **not** trigger a release by themselves. `refactor:`, `perf:`, `deps:` and `revert:`
   commits **do** (patch bump), even when the behaviour is unchanged.
+- **Dependency changes always use `deps:`** (no scope, not `fix(deps):`), whoever makes them:
+  Dependabot is configured to do the same, so the CHANGELOG stays consistent. Only dependencies
+  used by development tooling use `chore:`. Both `deps:` and `fix(deps):` release, but
+  `fix(deps):` files the entry under "Fixed" with a `**deps:**` scope, while `deps:` files it
+  under "Changed" (`deps` and `refactor` share that section in `release-please-config.json`).
+  Mention in the PR body when a dependency change fixes a security advisory.
 - **Never commit or push unless explicitly asked.** Wait for the user to say "commit" or "push".
 
 ## Branching rules
@@ -148,9 +154,10 @@ How it works:
     for dev dependencies) so they follow the conventional-commit rules above; a merged `deps:`
     PR triggers a patch release.
   - **Security updates are not subject to that limit.** They have their own fixed limit of 10
-    open PRs, so many can appear at once (7 on the first run). According to the GitHub docs the
-    `commit-message` and `ignore` settings also apply to them once the config is active (verified
-    in the version-update job logs; not yet observed on a new security PR).
+    open PRs, so many can appear at once (7 on the first run). The `commit-message` and `ignore`
+    settings also apply to them once the config is active: new security PRs carry the `deps:`
+    prefix. The first security PRs, opened before the config was active, kept the default
+    `chore(deps):` title and have to be retitled or closed.
   - **Ignores** (`dependency-name` and `versions` keys; `update-types` only affects version
     updates): `blinker`, `selenium-wire` and `undetected-chromedriver` (all versions, exact
     pins that `selenium-wire` depends on), `pyopenssl` >= 26.2, `cryptography` >= 48 and

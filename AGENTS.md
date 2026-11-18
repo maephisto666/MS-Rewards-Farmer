@@ -79,8 +79,13 @@ Rules:
 
 ## Branching rules
 
-- Always create a separate branch for code changes (e.g. `fix/`, `feat/`).
-- Exceptions: documentation updates and version bumps can be committed directly to `main`.
+- Always create a separate branch for every change (e.g. `fix/`, `feat/`, `docs/`, `ci/`).
+- **`main` is protected by rulesets** (no bypass actors): the `dependency-review` check is
+  required, and the branch cannot be deleted or force-pushed. A direct push to `main` is
+  rejected, so documentation updates go through a PR as well (version bumps are made by
+  release-please PRs). The check can take about two minutes to start after a push: wait for it
+  before merging. If the check infrastructure itself is broken, an admin has to disable the
+  `require-dependency-review` ruleset temporarily.
 - **Cleanup after merge**: PRs are **squash-merged**, and the remote branch is deleted
   automatically (`delete_branch_on_merge`). The local branch is left behind and, because
   squash-merging rewrites history, `git branch --merged` will **not** list it — so delete it

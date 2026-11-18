@@ -46,11 +46,18 @@ types and footers.
 | `feat:` | New user-visible feature | minor bump |
 | `fix:` | Bug fix | patch bump |
 | `feat!:` / `fix!:` | Breaking change (or add `BREAKING CHANGE:` footer) | major bump |
-| `refactor:` | Code restructure with no behaviour change | none |
+| `refactor:` | Code restructure with no behaviour change | patch bump |
+| `perf:` | Performance improvement | patch bump |
+| `deps:` | Dependency updates that are part of the shipped code | patch bump |
+| `revert:` | Revert a previous change | patch bump |
 | `docs:` | Documentation only | none |
 | `chore:` | Tooling, dependency, config updates | none |
 | `ci:` | CI/CD pipeline changes | none |
-| `test:` | Test additions or fixes | none |
+| `build:` / `style:` / `test:` | Build tweaks, formatting, test additions or fixes | none |
+
+Which types release is defined by `changelog-sections` in `release-please-config.json`: every
+type that is not marked `"hidden": true` there lands in the CHANGELOG and opens (or updates)
+a release PR. Keep this table in sync with that file.
 
 **Format:**
 ```
@@ -65,8 +72,9 @@ Rules:
 - Subject line: imperative mood, no capital first letter, no trailing period, ≤72 chars.
 - Body/footers separated by a blank line.
 - `BREAKING CHANGE: <description>` footer (or `!` suffix) triggers a major version bump.
-- `docs:` / `chore:` / `ci:` / `test:` / `refactor:` commits are hidden in the CHANGELOG and
-  do **not** trigger a release by themselves.
+- `docs:` / `chore:` / `ci:` / `build:` / `style:` / `test:` commits are hidden in the CHANGELOG
+  and do **not** trigger a release by themselves. `refactor:`, `perf:`, `deps:` and `revert:`
+  commits **do** (patch bump), even when the behaviour is unchanged.
 - **Never commit or push unless explicitly asked.** Wait for the user to say "commit" or "push".
 
 ## Branching rules
@@ -111,8 +119,9 @@ How it works:
 - On every push to `main`, release-please maintains a standing **release PR** that accumulates
   the next version bump and changelog. Merging that PR cuts the tag and GitHub Release.
 - The version is derived from commit types since the last release: `feat:` → minor, `fix:` →
-  patch, `feat!:`/`BREAKING CHANGE` → major. `docs:`/`chore:`/`ci:`/etc. are hidden and do not
-  trigger a release.
+  patch (as are `refactor:`, `perf:`, `deps:` and `revert:`), `feat!:`/`BREAKING CHANGE` →
+  major. `docs:`/`chore:`/`ci:`/`build:`/`style:`/`test:` are hidden and do not trigger a
+  release.
 - **The repo is squash-merge only**, so a merged PR becomes a single commit whose subject is the
   **PR title**. That means the PR title's conventional prefix is what determines the release —
   keep PR titles conventional (e.g. `feat: ...`, `fix: ...`).

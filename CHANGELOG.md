@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.3](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.0.2...5.0.3) (2026-11-18)
+
+
+### Fixed
+
+* **deps:** pin pyopenssl below 26.2 ([#65](https://github.com/maephisto666/MS-Rewards-Farmer/issues/65)) ([a812c20](https://github.com/maephisto666/MS-Rewards-Farmer/commit/a812c204f39760a12f3b09e56c1f5864648ff2f3))
+* **deps:** upgrade pyasn1, urllib3 and requests ([#68](https://github.com/maephisto666/MS-Rewards-Farmer/issues/68)) ([85316cd](https://github.com/maephisto666/MS-Rewards-Farmer/commit/85316cd714b1c29da7ad45f039d5c90ae45b9f53))
+
+
+### Changed
+
+* bump brotli from 1.2.0 to 1.2.1 ([#73](https://github.com/maephisto666/MS-Rewards-Farmer/issues/73)) ([c3555e7](https://github.com/maephisto666/MS-Rewards-Farmer/commit/c3555e74d9dac2606b2bd63e7ae9fe2efe6289f1))
+* bump h2 and hpack ([#84](https://github.com/maephisto666/MS-Rewards-Farmer/issues/84)) ([3929272](https://github.com/maephisto666/MS-Rewards-Farmer/commit/392927225423ca6e68ab046293ebcb0e8c50be01))
+* bump idna from 3.13 to 3.15 ([#85](https://github.com/maephisto666/MS-Rewards-Farmer/issues/85)) ([0a1104b](https://github.com/maephisto666/MS-Rewards-Farmer/commit/0a1104b0a9c11494f7c79752c5ef36447ea31952))
+* bump numpy, psutil, pyotp and selenium ([#77](https://github.com/maephisto666/MS-Rewards-Farmer/issues/77)) ([a8dc747](https://github.com/maephisto666/MS-Rewards-Farmer/commit/a8dc747186d644b5599ced236db5e7e83ff8b6d4))
+* bump pycountry from 24.6.1 to 26.2.16 ([#79](https://github.com/maephisto666/MS-Rewards-Farmer/issues/79)) ([ac5af58](https://github.com/maephisto666/MS-Rewards-Farmer/commit/ac5af58836f7835b03d679a9182876519c1cf55b))
+* remove unused VERSION constant ([#62](https://github.com/maephisto666/MS-Rewards-Farmer/issues/62)) ([cd16cf7](https://github.com/maephisto666/MS-Rewards-Farmer/commit/cd16cf7deb738f5fbd93b41db4287d48c68afd06))
+
 ## [5.0.2](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.0.1...5.0.2) (2026-11-17)
 
 

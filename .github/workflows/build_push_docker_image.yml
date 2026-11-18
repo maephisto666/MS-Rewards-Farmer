@@ -1,9 +1,6 @@
 name: Build and Push Docker Image
 
 on:
-  push:
-    tags:
-      - "*"
   workflow_dispatch:
 
 jobs:

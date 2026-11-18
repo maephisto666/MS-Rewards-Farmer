@@ -125,6 +125,18 @@ How it works:
 - **The repo is squash-merge only**, so a merged PR becomes a single commit whose subject is the
   **PR title**. That means the PR title's conventional prefix is what determines the release —
   keep PR titles conventional (e.g. `feat: ...`, `fix: ...`).
+- **release-please runs with the `RELEASE_PLEASE_TOKEN` repository secret** (a fine-grained
+  personal access token limited to this repo, with Contents and Pull requests read/write),
+  falling back to `GITHUB_TOKEN` if the secret is missing. PRs and pushes made with
+  `GITHUB_TOKEN` do not start `pull_request` workflows on their own: they sit in
+  `action_required` until someone clicks "Approve workflows to run", and are closed as failed
+  when the PR is merged. With the token, the release PR is authored by the token owner and
+  Dependency Review runs automatically on open and on every update. The token expires: rotate
+  it with `gh secret set RELEASE_PLEASE_TOKEN --repo maephisto666/MS-Rewards-Farmer`.
+- Tags and releases created with that token would trigger tag-based workflows, so
+  `build_push_docker_image.yml` is **manual only** (`workflow_dispatch`): it needs the
+  `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets, which do not exist yet. Re-add its
+  `push: tags` trigger once the Docker publishing is fixed.
 
 ## Key conventions
 

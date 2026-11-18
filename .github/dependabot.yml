@@ -5,8 +5,14 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "uv"
+    directory: "/"
     schedule:
       interval: "weekly"
-    target-branch: "develop"
+    commit-message:
+      prefix: "deps"
+      prefix-development: "chore"
+    ignore:
+      # selenium-wire 5.1.0 breaks with pyOpenSSL 26.2.0 and later, see AGENTS.md
+      - dependency-name: "pyopenssl"
+        versions: [">=26.2"]

@@ -133,7 +133,7 @@ How it works:
   when the PR is merged. With the token, the release PR is authored by the token owner and
   Dependency Review runs automatically on open and on every update. The token expires: rotate
   it with `gh secret set RELEASE_PLEASE_TOKEN --repo maephisto666/MS-Rewards-Farmer`.
-- **Dependabot** (`.github/dependabot.yml`) opens weekly version-update PRs against `main` for the `uv` ecosystem, titled `deps: ...` (or `chore: ...` for dev dependencies) so they follow the conventional-commit rules above. It ignores `pyopenssl` >= 26.2 (see the pin below). `deps:` PRs trigger a patch release once merged.
+- **Dependabot** (`.github/dependabot.yml`) opens weekly version-update PRs against `main` for the `uv` ecosystem, at most 3 at a time, with minor and patch updates grouped into one PR. PR titles start with `deps:` (or `chore:` for dev dependencies) so they follow the conventional-commit rules above; a merged `deps:` PR triggers a patch release. It never proposes bumps for `blinker`, `selenium-wire` and `undetected-chromedriver` (exact pins that `selenium-wire` depends on), for `pyopenssl` >= 26.2 or for `setuptools` >= 81. These ignores also silence security-update PRs for those packages: their alerts stay visible and need a manual decision. There is no test workflow on PRs yet, so check a dependency PR by hand (real login and a search) before merging it.
 - Tags and releases created with that token would trigger tag-based workflows, so
   `build_push_docker_image.yml` is **manual only** (`workflow_dispatch`): it needs the
   `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets, which do not exist yet. Re-add its

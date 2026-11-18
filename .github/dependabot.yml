@@ -5,8 +5,25 @@
 
 version: 2
 updates:
-  - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "uv"
+    directory: "/"
     schedule:
       interval: "weekly"
-    target-branch: "develop"
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "deps"
+      prefix-development: "chore"
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # selenium-wire is unmaintained and only works with these exact versions, see AGENTS.md
+      - dependency-name: "blinker"
+      - dependency-name: "selenium-wire"
+      - dependency-name: "undetected-chromedriver"
+      - dependency-name: "pyopenssl"
+        versions: [">=26.2"]
+      - dependency-name: "setuptools"
+        versions: [">=81"]

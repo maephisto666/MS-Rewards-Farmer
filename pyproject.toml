@@ -19,7 +19,7 @@ dependencies = [
     "requests-oauthlib~=2.0.0",
     "selenium>=4.15.2",
     "selenium-wire~=5.1.0",
-    "setuptools<81",
+    "setuptools<85",
     "trendspyg==1.9.0",
     "undetected-chromedriver==3.5.5",
     "urllib3>=2.2.2",

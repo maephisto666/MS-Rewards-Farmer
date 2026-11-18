@@ -138,7 +138,31 @@ How it works:
   when the PR is merged. With the token, the release PR is authored by the token owner and
   Dependency Review runs automatically on open and on every update. The token expires: rotate
   it with `gh secret set RELEASE_PLEASE_TOKEN --repo maephisto666/MS-Rewards-Farmer`.
-- **Dependabot** (`.github/dependabot.yml`) opens weekly version-update PRs against `main` for the `uv` ecosystem, at most 3 at a time, with minor and patch updates grouped into one PR. PR titles start with `deps:` (or `chore:` for dev dependencies) so they follow the conventional-commit rules above; a merged `deps:` PR triggers a patch release. It never proposes bumps for `blinker`, `selenium-wire` and `undetected-chromedriver` (exact pins that `selenium-wire` depends on), for `pyopenssl` >= 26.2 or for `setuptools` >= 81. These ignores also silence security-update PRs for those packages: their alerts stay visible and need a manual decision. There is no test workflow on PRs yet, so check a dependency PR by hand (real login and a search) before merging it.
+- **Dependabot** (`.github/dependabot.yml`) is configured for the `uv` ecosystem against `main`.
+  - **This repo is a fork, so Dependabot version updates must be enabled in the repository
+    settings** (Settings > Advanced Security > Dependabot version updates). While they are
+    off, GitHub does not apply `dependabot.yml` at all, not even to security updates: no
+    ignores, no `deps:` prefix, no grouping.
+  - **Version updates** run weekly, at most 3 open PRs at a time (`open-pull-requests-limit`),
+    with minor and patch updates grouped into one PR. Titles start with `deps:` (or `chore:`
+    for dev dependencies) so they follow the conventional-commit rules above; a merged `deps:`
+    PR triggers a patch release.
+  - **Security updates are not subject to that limit.** They have their own fixed limit of 10
+    open PRs, so many can appear at once (7 on the first run). According to the GitHub docs the
+    `commit-message` and `ignore` settings also apply to them once the config is active (verified
+    in the version-update job logs; not yet observed on a new security PR).
+  - **Ignores** (`dependency-name` and `versions` keys; `update-types` only affects version
+    updates): `blinker`, `selenium-wire` and `undetected-chromedriver` (all versions, exact
+    pins that `selenium-wire` depends on), `pyopenssl` >= 26.2, `cryptography` >= 48 and
+    `setuptools` >= 81. They stop Dependabot from opening PRs for those versions, both
+    version and security updates. They do **not** dismiss alerts: the alerts stay open until
+    dismissed by hand, which was done for `cryptography` and `setuptools` ("tolerable risk"),
+    tracked in #80 and #81.
+  - Dependabot comment commands (`@dependabot ignore ...`) were not processed on some PRs
+    (for example a minor-update PR). If a command gets no reply, report it instead of closing
+    the PR by hand.
+  - There is no test workflow on PRs yet, so check a dependency PR by hand (real login and a
+    search) before merging it.
 - Tags and releases created with that token would trigger tag-based workflows, so
   `build_push_docker_image.yml` is **manual only** (`workflow_dispatch`): it needs the
   `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` secrets, which do not exist yet. Re-add its

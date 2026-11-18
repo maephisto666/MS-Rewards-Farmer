@@ -15,7 +15,7 @@ dependencies = [
     "pyopenssl<26.2",
     "pyotp~=2.9.0",
     "pyyaml~=6.0.3",
-    "requests~=2.32.5",
+    "requests~=2.33",
     "requests-oauthlib~=2.0.0",
     "selenium>=4.15.2",
     "selenium-wire~=5.1.0",

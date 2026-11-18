@@ -28,7 +28,7 @@ src/
   readToEarn.py          # Read-to-earn task completion
   rsc.py                 # Next.js RSC wire-format parser: DashboardData, DailySetItem
   utils.py               # Config class (YAML), CLI arg parsing, Selenium helpers, Apprise wrapper
-  constants.py           # REWARDS_URL, SEARCH_URL, VERSION
+  constants.py           # REWARDS_URL, SEARCH_URL
   userAgentGenerator.py  # User-agent string generation
   loggingColoredFormatter.py  # Colored terminal log formatter
 localized_activities/    # Per-language activity definitions (en, es, fr, it)

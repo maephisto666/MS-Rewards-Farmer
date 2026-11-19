@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.0.4](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.0.3...5.0.4) (2026-11-19)
+
+
+### Changed
+
+* bump oauthlib from 3.3.1 to 4.0.1 ([#71](https://github.com/maephisto666/MS-Rewards-Farmer/issues/71)) ([274d144](https://github.com/maephisto666/MS-Rewards-Farmer/commit/274d1447d51bdeb3a31a0f5597eca0ec263475e5))
+
 ## [5.0.3](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.0.2...5.0.3) (2026-11-18)
 
 

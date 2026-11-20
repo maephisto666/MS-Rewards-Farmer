@@ -1,4 +1,5 @@
 REWARDS_URL = "https://rewards.bing.com/"
 REWARDS_DASHBOARD_URL = "https://rewards.bing.com/dashboard"
 REWARDS_EARN_URL = "https://rewards.bing.com/earn"
+REWARDS_QUEST_URL = "https://rewards.bing.com/earn/quest/"
 SEARCH_URL = "https://bing.com/search?q=Microsoft+Rewards"

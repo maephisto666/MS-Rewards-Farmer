@@ -25,8 +25,9 @@ src/
   activities.py          # Daily set activities (dashboard card click → new tab wait)
   bonusPoints.py         # Streak bonus + banner bonus claiming
   punchCards.py          # Punch card stub (skipped — not exposed in RSC data model)
+  quests.py              # Quests section of /earn: one step per quest and run (monthly quest, found by offer id)
   readToEarn.py          # Read-to-earn task completion
-  rsc.py                 # Next.js RSC wire-format parser: DashboardData, DailySetItem
+  rsc.py                 # Next.js RSC wire-format parser: DashboardData, DailySetItem, QuestPage
   utils.py               # Config class (YAML), CLI arg parsing, Selenium helpers, Apprise wrapper
   constants.py           # REWARDS_URL, SEARCH_URL
   userAgentGenerator.py  # User-agent string generation

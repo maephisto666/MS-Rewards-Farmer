@@ -262,6 +262,7 @@ You can display this message at any moment using `python main.py -h`.
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
+- Complete the monthly quest of the Earn page (one step per day)
 - Claim bonus points automatically
 - Headless Mode
 - Multi-Account Management

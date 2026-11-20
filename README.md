@@ -196,7 +196,7 @@ cooldown:
   max: 600 # The maximal wait time between two searches/activities
 channel:
   desktop:
-    enabled: true # Complete dashboard activities and desktop Bing searches.
+    enabled: true # Complete dashboard activities, the monthly quest and desktop Bing searches.
   mobile:
     enabled: true # Complete Read to Earn. Mobile Bing searches are not performed.
 accounts: # The accounts to use. You can put zero, one or an infinite number of accounts here.
@@ -262,6 +262,7 @@ You can display this message at any moment using `python main.py -h`.
 - Complete the daily set automatically
 - Complete punch cards automatically
 - Complete the others promotions automatically
+- Complete the monthly quest of the Earn page
 - Claim bonus points automatically
 - Headless Mode
 - Multi-Account Management
@@ -275,4 +276,10 @@ You can display this message at any moment using `python main.py -h`.
 > [!NOTE]
 > Mobile searches are not automated because they do not yield points through browser
 > automation. The mobile channel remains available for Read to Earn tasks.
+
+> [!NOTE]
+> The monthly quest has a few steps and only the first unfinished one is available (the next
+> unlocks 24 hours later), so the script does one step per account and run and the quest takes
+> a few days. It is recognized by its offer id, not by its title, so each new month is picked up
+> automatically. The Spotify and Rewards App quests are ignored.
 

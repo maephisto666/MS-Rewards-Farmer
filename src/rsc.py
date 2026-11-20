@@ -168,6 +168,47 @@ class DashboardData:
         ]
 
 
+@dataclass
+class QuestStep:
+    """One step of a quest (e.g. the monthly 'guide' quest on the /earn page).
+
+    Only steps that still have a button are present in the RSC payload:
+    a completed step disappears from it, a step that is not yet available
+    (the next one unlocks 24 hours after the previous) is locked.
+    """
+
+    offer_id: str
+    aria_label: str
+    href: str
+    link_text: str
+    is_completed: bool
+    is_locked: bool
+
+    @classmethod
+    def from_rsc(cls, d: dict) -> "QuestStep":
+        return cls(
+            offer_id=d.get("offerId", ""),
+            aria_label=d.get("ariaLabel", ""),
+            href=d.get("href", ""),
+            link_text=d.get("linkText", ""),
+            is_completed=_rsc_bool(d.get("isCompleted"), default=False),
+            is_locked=_rsc_bool(d.get("isLocked"), default=False),
+        )
+
+    @property
+    def is_actionable(self) -> bool:
+        return not self.is_completed and not self.is_locked
+
+
+@dataclass
+class QuestPage:
+    steps: list[QuestStep] = field(default_factory=list)
+    progress: str = ""  # e.g. "1/5 tasks", best effort, only used for logging
+
+    def next_step(self) -> QuestStep | None:
+        return next((s for s in self.steps if s.is_actionable), None)
+
+
 def _collect_rsc_text(html: str) -> str:
     """
     Collect all RSC payload text from the page HTML.
@@ -289,3 +330,38 @@ def parse_dashboard(html: str) -> DashboardData:
         data.activities_requirement,
     )
     return data
+
+
+def parse_quest_cards(html: str) -> list[str]:
+    """
+    Offer ids of the quest cards on the /earn page, in page order.
+
+    Each card is a link to /earn/quest/<offerId>. The card titles change every
+    month, the offer ids carry the stable part (e.g. 'BingMonthlyPC').
+    """
+    rsc_text = _collect_rsc_text(html)
+    found = re.findall(r'"href"\s*:\s*"/earn/quest/([^"?#]+)"', rsc_text)
+    return list(dict.fromkeys(found))
+
+
+def parse_quest_page(html: str) -> QuestPage:
+    """
+    Extract the steps of a quest from its page. The page must come from a full
+    load (driver.get): a client-side navigation does not embed the RSC payload.
+    """
+    rsc_text = _collect_rsc_text(html)
+    decoder = json.JSONDecoder()
+    steps: list[QuestStep] = []
+    for m in re.finditer(r'\{"ariaLabel"\s*:', rsc_text):
+        try:
+            obj, _ = decoder.raw_decode(rsc_text, m.start())
+        except json.JSONDecodeError:
+            logger.debug("RSC: failed to JSON-parse a quest step")
+            continue
+        if isinstance(obj, dict) and "offerId" in obj:
+            steps.append(QuestStep.from_rsc(obj))
+
+    progress = re.search(r'"children"\s*:\s*"(\d+/\d+ tasks)"', rsc_text)
+    page = QuestPage(steps=steps, progress=progress.group(1) if progress else "")
+    logger.info("RSC: quest steps=%d progress=%s", len(steps), page.progress or "?")
+    return page

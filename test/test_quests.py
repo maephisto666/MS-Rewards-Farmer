@@ -96,7 +96,7 @@ class TestQuests(TestCase):
         self.driver.window_handles = ["main"]
         self.driver.current_window_handle = "main"
         patcher = patch("src.quests.cooldown")
-        patcher.start()
+        self.cooldown = patcher.start()
         self.addCleanup(patcher.stop)
         self.quests = Quests(self.browser)
 
@@ -123,6 +123,16 @@ class TestQuests(TestCase):
         self.quests.completeQuests()
 
         self.driver.get.assert_not_called()
+        self.cooldown.assert_not_called()
+
+    def test_only_the_quest_that_was_acted_on_waits_for_the_cooldown(self):
+        other = "ENWW_pcparent_FY27_Other_punchcard"
+        self.driver.page_source = self.earnCards(MONTHLY, other)
+        with patch.object(Quests, "_completeQuest", side_effect=[False, True]) as complete:
+            self.quests.completeQuests()
+
+        self.assertEqual(complete.call_count, 2)
+        self.cooldown.assert_called_once()
 
     def test_an_error_does_not_propagate_so_the_run_can_go_on(self):
         self.driver.page_source = self.earnCards(MONTHLY)
@@ -142,6 +152,7 @@ class TestQuests(TestCase):
             self.quests.completeQuests()
 
         click.assert_not_called()
+        self.cooldown.assert_not_called()
 
     def test_a_step_is_clicked_and_verified_with_a_reload(self):
         self.driver.page_source = self.earnCards(MONTHLY)
@@ -153,6 +164,7 @@ class TestQuests(TestCase):
             self.quests.completeQuests()
 
         click.assert_called_once_with(before.steps[0])
+        self.cooldown.assert_called_once()
         self.assertEqual(load.call_count, 2)
         self.assertTrue(any("step done (0/5 tasks -> 1/5 tasks)" in m for m in logs.output))
 
@@ -181,6 +193,7 @@ class TestQuests(TestCase):
             self.quests.completeQuests()
 
         self.assertTrue(any("still open" in m and "after the click" in m for m in logs.output))
+        self.cooldown.assert_called_once()
 
     def test_no_reload_happens_when_the_click_did_not_work(self):
         self.driver.page_source = self.earnCards(MONTHLY)
@@ -190,6 +203,7 @@ class TestQuests(TestCase):
             self.quests.completeQuests()
 
         load.assert_called_once()
+        self.cooldown.assert_not_called()
 
     def test_click_with_a_real_pointer_then_the_opened_page_is_closed(self):
         target = parse_quest_page(questPage([step(1)])).steps[0]

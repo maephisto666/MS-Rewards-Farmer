@@ -109,17 +109,18 @@ class Quests:
                 return anchor
         return None
 
-    def _completeQuest(self, offerId: str) -> None:
+    def _completeQuest(self, offerId: str) -> bool:
+        """Returns True if a step was clicked, False if there was nothing to do."""
         page = self._loadQuest(offerId)
         step = page.next_step()
         if step is None:
             logging.info(
                 "[QUESTS] %s: no step available now (%s)", offerId, page.progress or "?"
             )
-            return
+            return False
 
         if not self._clickStep(step):
-            return
+            return False
 
         # The page only reflects the new state after a reload, and the server
         # needs a few seconds to register the step: reload until the step that
@@ -142,11 +143,12 @@ class Quests:
                 "[QUESTS] %s: step %s is still open %d s after the click",
                 offerId, step.offer_id, VERIFY_TIMEOUT,
             )
-            return
+            return True
         logging.info(
             "[QUESTS] %s: step done (%s -> %s)",
             offerId, page.progress or "?", after.progress or "?",
         )
+        return True
 
     def completeQuests(self) -> None:
         """
@@ -161,8 +163,9 @@ class Quests:
                 return
 
             for offerId in offerIds:
-                self._completeQuest(offerId)
-                cooldown()
+                # Only an actual click is spaced out, not a quest with nothing to do.
+                if self._completeQuest(offerId):
+                    cooldown()
         except Exception:
             logging.exception("[QUESTS] Failed to complete the quests")
             return

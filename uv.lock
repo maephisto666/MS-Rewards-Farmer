@@ -452,7 +452,7 @@ requires-dist = [
     { name = "pyautogui", specifier = "~=0.9.54" },
     { name = "pycountry", specifier = ">=24.6.1,<26.3.0" },
     { name = "pyopenssl", specifier = "<26.2" },
-    { name = "pyotp", specifier = ">=2.9,<2.12" },
+    { name = "pyotp", specifier = ">=2.9,<2.13" },
     { name = "pyyaml", specifier = "~=6.0.3" },
     { name = "requests", specifier = "~=2.33" },
     { name = "requests-oauthlib", specifier = "~=2.0.0" },
@@ -730,11 +730,11 @@ wheels = [
 
 [[package]]
 name = "pyotp"
-version = "2.11.2"
+version = "2.12.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5d/01/beed98d5c77fdb2b44dfa82f8ee9dadb120ce7466c0d131ce8a3eafdf62e/pyotp-2.11.2.tar.gz", hash = "sha256:651926820da4adccbe9801c77bdc14558552485b1a957d3e1e842d587597cbb0", size = 25534, upload-time = "2026-11-15T01:24:27.588Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/70/d7/fe43d6cfd1e80081a374c612df6b6555205a7ab761fdd6ba6e30435fd963/pyotp-2.12.1.tar.gz", hash = "sha256:8d0c4192f3c5d1b1a8792df23b9d8acbb7e70abd2b160962af55c5700edbd236", size = 27480, upload-time = "2026-11-19T05:06:24.189Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/22/1b/ec5b1ac0c4aea3702a20e9c7ee1e21926735cc87159e252616e31e0a87dc/pyotp-2.11.2-py3-none-any.whl", hash = "sha256:d693ddda5c2fd2c368a034ec1ad2fbbe0d3f59d9a662ab00f41ae839a0d00474", size = 16075, upload-time = "2026-11-15T01:24:25.584Z" },
+    { url = "https://files.pythonhosted.org/packages/32/d5/ca399f55b474357c42b8d0ee1c0222a22e6f88bbf4588130b75737c3b73b/pyotp-2.12.1-py3-none-any.whl", hash = "sha256:2f65978d0a0afe5588ec960c810cbb974ba1957ffbf29775d8d4e1b2d4b8984c", size = 17026, upload-time = "2026-11-19T05:06:22.922Z" },
 ]
 
 [[package]]
@@ -873,7 +873,7 @@ wheels = [
 
 [[package]]
 name = "selenium"
-version = "4.52.0"
+version = "4.53.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "certifi" },
@@ -883,9 +883,9 @@ dependencies = [
     { name = "urllib3", extra = ["socks"] },
     { name = "websocket-client" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/96/07/d9a9ca4bbcfaad6e07e8034ccd719ef42032ab25a421fb9171baad4ed734/selenium-4.52.0.tar.gz", hash = "sha256:40f423c598cc85390c403ef626c9d3457c1ae834d4cf1f38637ebba3cb6f0d7a", size = 1062139, upload-time = "2026-10-29T13:09:43.51Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/2c/bf42413d7965c0f84cf86bb04214081d268793fc5d1c38b72ddde9f9c57d/selenium-4.53.0.tar.gz", hash = "sha256:efb45b129cbd7f46da99c82e7d327978bda29ed987223465c341f96404a86a2c", size = 1091312, upload-time = "2026-11-17T17:51:29.409Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e6/37/c6d36e31c9d79ff97c5e77345be34f08f39942d9a36afe8b0fa2878344b2/selenium-4.52.0-py3-none-any.whl", hash = "sha256:caa2860d486f71cdeb21fee3248c2f604bba590120dfb4d3d18c4d7cf97c6f1f", size = 12076163, upload-time = "2026-10-29T13:09:41.294Z" },
+    { url = "https://files.pythonhosted.org/packages/dc/ba/dcca843695a4daddd30f746af3a168b7d718b712122249eb7dec4e03e5f8/selenium-4.53.0-py3-none-any.whl", hash = "sha256:f0906a56324f5dfb19b87971a7cfd2162ea473e5afa25ee458aaa5a3816b98ac", size = 12240652, upload-time = "2026-11-17T17:51:26.965Z" },
 ]
 
 [[package]]

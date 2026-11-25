@@ -11,6 +11,7 @@ from src.bonusPoints import BonusPoints
 from src.browser import Browser
 from src.login import Login
 from src.punchCards import PunchCards
+from src.quests import Quests
 from src.searches import Searches
 from src.readToEarn import ReadToEarn
 from src.activities import Activities
@@ -155,6 +156,7 @@ def executeBot(currentAccount):
             BonusPoints(desktopBrowser).claimBonusPoints()
             Activities(desktopBrowser).completeActivities()
             Activities(desktopBrowser).completeMoreActivities()
+            Quests(desktopBrowser).completeQuests()
             PunchCards(desktopBrowser).completePunchCards()
             # VersusGame(desktopBrowser).completeVersusGame()
 

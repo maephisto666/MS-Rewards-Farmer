@@ -17,6 +17,12 @@ from src.browser import Browser
 from src.utils import CONFIG, APPRISE
 
 
+class Totp(TOTP):
+    # Microsoft issues 80-bit secrets (16 base32 characters), below the 112 bits
+    # that pyotp >= 2.12 requires by default; older versions ignore this attribute.
+    min_secret_length_bits = 80
+
+
 class LoginError(Exception):
     """
     Custom exception for login errors.
@@ -301,7 +307,7 @@ class Login:
         if requires_2fa:
             if self.browser.totp is not None:
                 logging.info("[LOGIN] Entering OTP...")
-                otp = TOTP(self.browser.totp.replace(" ", "")).now()
+                otp = Totp(self.browser.totp.replace(" ", "")).now()
                 otpField = self._wait_for_otp_input(wait, 10)
                 otpField.clear()
                 otpField.send_keys(otp)

@@ -40,6 +40,11 @@ from urllib3 import Retry
 
 from .constants import REWARDS_DASHBOARD_URL, REWARDS_EARN_URL, SEARCH_URL
 
+BING_HOME_URL = "https://www.bing.com/"
+BING_REWARDS_FLYOUT_URL = (
+    "https://www.bing.com/rewards/panelflyout?partnerId=MemberCenterPc"
+)
+
 
 class Config(dict):
     """
@@ -302,19 +307,35 @@ class Utils:
         clicking 'Get Started' if the account isn't enrolled yet) re-authenticates
         www.bing.com. Whether it's needed is non-deterministic (Microsoft-side),
         so this checks the isRewardsUser signal and only acts when it's False.
+        Directly opening the flyout is the primary path because its header control
+        is absent in some Bing layouts. The header control remains a fallback.
 
         Never raises: on any failure searches simply proceed with the fallback,
         exactly as before.
         """
         try:
-            self.webdriver.get("https://www.bing.com/")
+            self.webdriver.get(BING_HOME_URL)
             if self._isBingRewardsAuthenticated():
                 logging.debug("[BING AUTH] www.bing.com already authenticated for search.")
                 return
 
             logging.info(
                 "[BING AUTH] www.bing.com not authenticated for search — opening "
-                "Rewards flyout to re-authenticate..."
+                "the Rewards flyout directly to re-authenticate..."
+            )
+            self.webdriver.get(BING_REWARDS_FLYOUT_URL)
+            self._clickGetStartedIfPresent()
+            self.webdriver.get(BING_HOME_URL)
+            if self._isBingRewardsAuthenticated():
+                logging.info(
+                    "[BING AUTH] www.bing.com is now authenticated for search "
+                    "after opening the flyout directly."
+                )
+                return
+
+            logging.info(
+                "[BING AUTH] Direct flyout did not authenticate www.bing.com — "
+                "trying the Rewards header control..."
             )
             pill = self._findFirstVisible([
                 (By.ID, "id_rc"),
@@ -328,19 +349,10 @@ class Utils:
                 )
                 return
             ActionChains(self.webdriver).move_to_element(pill).click().perform()
-            time.sleep(4)
-
-            # Unenrolled accounts show 'Get Started' in the flyout; already-enrolled
-            # accounts show their points and just opening the flyout is enough.
-            getStarted = self._findGetStarted()
-            if getStarted is not None:
-                logging.info("[BING AUTH] Clicking 'Get Started' to enrol...")
-                ActionChains(self.webdriver).move_to_element(getStarted).click().perform()
-                time.sleep(6)
-                self.webdriver.switch_to.default_content()
+            self._clickGetStartedIfPresent()
 
             # Confirm the flip.
-            self.webdriver.get("https://www.bing.com/")
+            self.webdriver.get(BING_HOME_URL)
             if self._isBingRewardsAuthenticated():
                 logging.info("[BING AUTH] www.bing.com is now authenticated for search.")
             else:
@@ -352,6 +364,14 @@ class Utils:
             logging.warning("[BING AUTH] ensureBingSearchAuth failed (%s) — continuing.", exc)
             with contextlib.suppress(Exception):
                 self.webdriver.switch_to.default_content()
+
+    def _clickGetStartedIfPresent(self) -> None:
+        """Click the flyout's optional enrollment control, if it is visible."""
+        getStarted = self._findGetStarted()
+        if getStarted is not None:
+            logging.info("[BING AUTH] Clicking 'Get Started' to enrol...")
+            ActionChains(self.webdriver).move_to_element(getStarted).click().perform()
+            self.webdriver.switch_to.default_content()
 
     def _isBingRewardsAuthenticated(self) -> bool:
         try:

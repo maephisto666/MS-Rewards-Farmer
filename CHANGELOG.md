@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.0.4...5.1.0) (2026-11-25)
+
+
+### Added
+
+* complete the monthly quest of the Earn page ([#88](https://github.com/maephisto666/MS-Rewards-Farmer/issues/88)) ([92e2f56](https://github.com/maephisto666/MS-Rewards-Farmer/commit/92e2f56c9277229fe5eba1ffa5f16ba648976a11))
+
+
+### Fixed
+
+* accept short TOTP secrets with pyotp 2.12 and later ([#92](https://github.com/maephisto666/MS-Rewards-Farmer/issues/92)) ([71e426f](https://github.com/maephisto666/MS-Rewards-Farmer/commit/71e426f49eb7f34be34069f72ff8d496216d4495))
+
+
+### Changed
+
+* bump pyotp and pyyaml ([#93](https://github.com/maephisto666/MS-Rewards-Farmer/issues/93)) ([fb49583](https://github.com/maephisto666/MS-Rewards-Farmer/commit/fb495836d2ccb4ee5818086cc4798c4a97afb793))
+* bump selenium to 4.53.0 ([#94](https://github.com/maephisto666/MS-Rewards-Farmer/issues/94)) ([2f6280f](https://github.com/maephisto666/MS-Rewards-Farmer/commit/2f6280ff6c83d8585fb1b42dc2ba86048a9c9bf9))
+
 ## [5.0.4](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.0.3...5.0.4) (2026-11-19)
 
 

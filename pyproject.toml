@@ -13,7 +13,7 @@ dependencies = [
     "pyautogui~=0.9.54",
     "pycountry>=24.6.1,<26.3.0",
     "pyopenssl<26.2",
-    "pyotp>=2.9,<2.12",
+    "pyotp>=2.9,<2.13",
     "pyyaml~=6.0.3",
     "requests~=2.33",
     "requests-oauthlib~=2.0.0",

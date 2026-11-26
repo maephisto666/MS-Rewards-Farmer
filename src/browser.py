@@ -42,6 +42,7 @@ class Browser:
         self.proxy = CONFIG.browser.proxy
         if not self.proxy and account.get("proxy"):
             self.proxy = account.proxy
+        self.chromePath = self.configuredChromePath()
         self.userDataDir = self.setupProfiles()
         self.browserConfig = getBrowserConfig(self.userDataDir)
         (
@@ -113,6 +114,12 @@ class Browser:
 
         seleniumwireOptions: dict[str, Any] = {"verify_ssl": False}
 
+        # Without it undetected_chromedriver only looks in the standard install
+        # locations of Chrome.
+        chromeKwargs: dict[str, Any] = (
+            {"browser_executable_path": self.chromePath} if self.chromePath else {}
+        )
+
         if self.proxy:
             # Setup proxy if provided
             seleniumwireOptions["proxy"] = {
@@ -128,9 +135,10 @@ class Browser:
                 seleniumwire_options=seleniumwireOptions,
                 user_data_dir=self.userDataDir.as_posix(),
                 driver_executable_path="/usr/bin/chromedriver",
+                **chromeKwargs,
             )
         else:
-            version = self.getChromeVersion()
+            version = self.getChromeVersion(self.chromePath)
             major = int(version.split(".")[0])
             logging.debug(f"browserSetup: launching UC Chrome {major} with profile {self.userDataDir}")
             driver = webdriver.Chrome(
@@ -138,6 +146,7 @@ class Browser:
                 seleniumwire_options=seleniumwireOptions,
                 user_data_dir=self.userDataDir.as_posix(),
                 version_main=major,
+                **chromeKwargs,
             )
             logging.debug("browserSetup: UC Chrome launched")
 
@@ -290,9 +299,25 @@ class Browser:
         return sessionsDir
 
     @staticmethod
-    def getChromeVersion() -> str:
+    def configuredChromePath() -> str | None:
+        """The Chrome executable set in the configuration, checked to exist."""
+        configured = CONFIG.browser.get("chrome-path")
+        if not configured:
+            return None
+        path = Path(str(configured)).expanduser()
+        if not path.is_file():
+            raise FileNotFoundError(
+                f"browser.chrome-path does not point to a file: {path}"
+            )
+        return str(path)
+
+    @staticmethod
+    def getChromeVersion(chromePath: str | None = None) -> str:
         logging.debug("getChromeVersion: starting temporary headless Chrome")
         chrome_options = ChromeOptions()
+        if chromePath:
+            # The version has to be the one of the Chrome that is going to be used
+            chrome_options.binary_location = chromePath
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--no-sandbox")
         chrome_options.add_argument("--no-first-run")

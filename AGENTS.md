@@ -25,7 +25,7 @@ src/
   activities.py          # Daily set activities (dashboard card click → new tab wait)
   bonusPoints.py         # Streak bonus + banner bonus claiming
   punchCards.py          # Punch card stub (skipped — not exposed in RSC data model)
-  quests.py              # Quests section of /earn: one step per quest and run (monthly quest, found by offer id)
+  quests.py              # Quests section of /earn: one step per quest and run (monthly quest, Rewards App weekly quest; found by offer id)
   readToEarn.py          # Read-to-earn task completion
   rsc.py                 # Next.js RSC wire-format parser: DashboardData, DailySetItem, QuestPage
   utils.py               # Config class (YAML), CLI arg parsing, Selenium helpers, Apprise wrapper
@@ -185,6 +185,7 @@ How it works:
 - Points data is tracked in `logs/points_data.csv` and `logs/previous_points_data.json`.
 - **Dashboard data** is read via `browser.utils.getDashboardData()` which calls `src/rsc.py` to parse the Next.js RSC wire format embedded in the page HTML. The result is a `DashboardData` dataclass (balance, level, daily set items, streak bonus points). Never hard-code IDs or selectors for data that is available in the RSC payload.
 - **`pyopenssl` is pinned `<26.2`** because `selenium-wire` 5.1.0 (unmaintained) calls `OpenSSL.crypto.X509.get_extension`, which pyOpenSSL removed in 26.2.0. With a newer version its MITM proxy crashes on every HTTPS connection and Chrome fails with `net::ERR_CONNECTION_CLOSED`, so login never works. Do not lift the pin without replacing `selenium-wire` or re-testing a real login.
+- **Rewards App weekly quest** (offer id contains `RewardsApp`): its daily step is only unlocked (`isLocked: false` in the RSC payload) when the request user agent carries the desktop app's token (`REWARDS_APP_USER_AGENT_MARKER` in `src/constants.py`). The extra `x-rewards-source` header and the WebView2 client hints that the app also sends were tested and are not needed. `Browser.rewardsAppIdentity()` applies the token through CDP only around the quest and restores the regular user agent afterwards, so keep the whole load, click and verification inside it. The pages the click opens in a new tab keep the regular user agent and still register the step. There is one step per weekday and a missed day stays locked.
 - **Timing**: always use `WebDriverWait` on a concrete DOM/JS condition. Never use `time.sleep()` unless there is genuinely no observable condition and a comment explains why.
 - **React Aria buttons** (`data-react-aria-pressable="true"`) require `ActionChains(driver).move_to_element(el).click().perform()`. A plain JS `execute_script("arguments[0].click()")` bypasses pointer-event handlers and will silently do nothing.
 

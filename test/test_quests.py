@@ -1,4 +1,5 @@
 import json
+from contextlib import contextmanager
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
@@ -105,20 +106,26 @@ class TestQuests(TestCase):
             "".join(f'{{"href":"/earn/quest/{o}"}}' for o in offerIds)
         )
 
-    def test_spotify_and_rewards_app_quests_are_ignored(self):
+    def test_spotify_is_ignored_but_the_rewards_app_quest_is_not(self):
         self.driver.page_source = self.earnCards(SPOTIFY, REWARDS_APP, MONTHLY)
 
-        self.assertEqual(self.quests._questOfferIds(), [MONTHLY])
+        self.assertEqual(self.quests._questOfferIds(), [REWARDS_APP, MONTHLY])
         self.browser.utils.goToEarn.assert_called_once()
 
     def test_a_new_monthly_quest_is_picked_up_without_knowing_its_title(self):
         december = "ENWW_pcparent_FY27_BingMonthlyPC_Dec_punchcard"
         self.driver.page_source = self.earnCards(SPOTIFY, REWARDS_APP, december)
 
-        self.assertEqual(self.quests._questOfferIds(), [december])
+        self.assertEqual(self.quests._questOfferIds(), [REWARDS_APP, december])
+
+    def test_the_rewards_app_quest_of_another_week_is_recognized_too(self):
+        nextWeek = REWARDS_APP.replace("Novw3", "Decw1")
+        self.driver.page_source = self.earnCards(nextWeek)
+
+        self.assertEqual(self.quests._questOfferIds(), [nextWeek])
 
     def test_nothing_is_done_when_there_is_no_quest(self):
-        self.driver.page_source = self.earnCards(SPOTIFY, REWARDS_APP)
+        self.driver.page_source = self.earnCards(SPOTIFY)
 
         self.quests.completeQuests()
 
@@ -194,6 +201,67 @@ class TestQuests(TestCase):
 
         self.assertTrue(any("still open" in m and "after the click" in m for m in logs.output))
         self.cooldown.assert_called_once()
+
+    def trackIdentity(self) -> list[str]:
+        events: list[str] = []
+
+        @contextmanager
+        def identity():
+            events.append("app")
+            try:
+                yield
+            finally:
+                events.append("regular")
+
+        self.browser.rewardsAppIdentity = identity
+        return events
+
+    def test_the_rewards_app_quest_is_loaded_clicked_and_verified_as_the_app(self):
+        events = self.trackIdentity()
+        before = parse_quest_page(questPage([step(6)], "1/8 tasks"))
+        after = parse_quest_page(questPage([], "2/8 tasks"))
+        pages = iter([before, after])
+
+        def load(_offerId):
+            events.append("load")
+            return next(pages)
+
+        def click(_step):
+            events.append("click")
+            return True
+
+        with patch.object(Quests, "_loadQuest", side_effect=load), \
+                patch.object(Quests, "_clickStep", side_effect=click):
+            self.assertTrue(self.quests._completeQuest(REWARDS_APP))
+
+        self.assertEqual(events, ["app", "load", "click", "load", "regular"])
+
+    def test_the_regular_identity_is_back_when_the_rewards_app_quest_fails(self):
+        events = self.trackIdentity()
+        with patch.object(Quests, "_loadQuest", side_effect=RuntimeError("boom")):
+            with self.assertRaises(RuntimeError):
+                self.quests._completeQuest(REWARDS_APP)
+
+        self.assertEqual(events, ["app", "regular"])
+
+    def test_the_rewards_app_quest_with_nothing_to_do_does_not_click(self):
+        events = self.trackIdentity()
+        locked = parse_quest_page(questPage([step(7, locked=True)], "2/8 tasks"))
+        with patch.object(Quests, "_loadQuest", return_value=locked), \
+                patch.object(Quests, "_clickStep") as click:
+            self.assertFalse(self.quests._completeQuest(REWARDS_APP))
+
+        click.assert_not_called()
+        self.assertEqual(events, ["app", "regular"])
+
+    def test_the_monthly_quest_is_not_done_as_the_app(self):
+        page = parse_quest_page(questPage([step(1)]))
+        after = parse_quest_page(questPage([], "1/5 tasks"))
+        with patch.object(Quests, "_loadQuest", side_effect=[page, after]), \
+                patch.object(Quests, "_clickStep", return_value=True):
+            self.assertTrue(self.quests._completeQuest(MONTHLY))
+
+        self.browser.rewardsAppIdentity.assert_not_called()
 
     def test_no_reload_happens_when_the_click_did_not_work(self):
         self.driver.page_source = self.earnCards(MONTHLY)

@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.1.1](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.1.0...5.1.1) (2026-11-25)
+
+
+### Fixed
+
+* add direct Bing Rewards auth fallback ([#95](https://github.com/maephisto666/MS-Rewards-Farmer/issues/95)) ([13001e3](https://github.com/maephisto666/MS-Rewards-Farmer/commit/13001e3a1cde710411f6a0025b0c664ae6c29714))
+
 ## [5.1.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.0.4...5.1.0) (2026-11-25)
 
 

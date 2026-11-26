@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [5.2.0](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.1.1...5.2.0) (2026-11-26)
+
+
+### Added
+
+* add a browser.chrome-path setting for non-standard Chrome installs ([#98](https://github.com/maephisto666/MS-Rewards-Farmer/issues/98)) ([28ec647](https://github.com/maephisto666/MS-Rewards-Farmer/commit/28ec647542f3fbd7517422c4c1b60cb4ffca8a3b))
+* complete the daily step of the Rewards App weekly quest ([#97](https://github.com/maephisto666/MS-Rewards-Farmer/issues/97)) ([7a821a7](https://github.com/maephisto666/MS-Rewards-Farmer/commit/7a821a72b732c12a839de11b9ef2434c11182bcc))
+
 ## [5.1.1](https://github.com/maephisto666/MS-Rewards-Farmer/compare/5.1.0...5.1.1) (2026-11-25)
 
 

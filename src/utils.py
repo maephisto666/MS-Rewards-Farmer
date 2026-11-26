@@ -192,6 +192,7 @@ DEFAULT_CONFIG: Config = Config(
             "language": None,
             "visible": False,
             "proxy": None,
+            "chrome-path": None,
         },
         "logging": {
             "format": "%(asctime)s [%(levelname)s] %(message)s",
@@ -636,6 +637,13 @@ def argumentParser() -> Namespace:
         "\n`(ex: http://user:pass@host:port)`",
     )
     parser.add_argument(
+        "--chrome-path",
+        type=str,
+        default=None,
+        help="Path of the Chrome executable to use, for an installation that"
+        " is not in a standard location (ex: a portable or Scoop install)",
+    )
+    parser.add_argument(
         "--desktop-channel",
         action=BooleanOptionalAction,
         default=None,
@@ -690,6 +698,10 @@ def commandLineArgumentsAsConfig(args: Namespace) -> Config:
         if "browser" not in config:
             config.browser = Config()
         config.browser.proxy = args.proxy
+    if args.chrome_path:
+        if "browser" not in config:
+            config.browser = Config()
+        config.browser["chrome-path"] = args.chrome_path
     if args.disable_apprise:
         config.apprise = Config()
         config.apprise.enabled = False

@@ -50,7 +50,9 @@ This project uses [uv](https://docs.astral.sh/uv/) for dependency management.
    uv sync
    ```
 
-2. Make sure you have Chrome installed.
+2. Make sure you have Chrome installed. If it is not in a standard location (a portable or
+   Scoop install, for example) the bot cannot find it: set `browser.chrome-path` in the
+   configuration file or pass `--chrome-path`.
 
 
 3. (Windows Only) Make sure Visual C++ redistributable DLLs are installed.
@@ -183,6 +185,9 @@ browser:
   visible: false # set it to true to show the browser window, can be overridden with command-line arguments.
   proxy: null # set the global proxy using the 'http://user:pass@host:port' syntax.
   # Override per-account proxies. Can be overridden with command-line arguments.
+  chrome-path: null # set the path of the Chrome executable if Chrome is not installed in a standard
+  # location (for example a portable or Scoop install), e.g. 'D:\Scoop\apps\googlechrome\current\chrome.exe'.
+  # Can be overridden with command-line arguments.
 logging:
   level: INFO # Set to DEBUG, WARNING, ERROR or CRITICAL to change the level of displayed information in the terminal
   # See https://docs.python.org/3/library/logging.html#logging-levels. Can be overridden with command-line arguments.
@@ -215,7 +220,8 @@ accounts: # The accounts to use. You can put zero, one or an infinite number of 
 
 ```
 usage: main.py [-h] [-c CONFIG] [-C] [-v] [-l LANG] [-g GEO] [-em EMAIL] [-pw PASSWORD]
-               [-totp TOTP] [-p PROXY] [--desktop-channel | --no-desktop-channel]
+               [-totp TOTP] [-p PROXY] [--chrome-path CHROME_PATH]
+               [--desktop-channel | --no-desktop-channel]
                [--mobile-channel | --no-mobile-channel] [-da] [-d] [-r]
 
 A simple bot that uses Selenium to farm M$ Rewards in Python
@@ -239,6 +245,9 @@ options:
   -p PROXY, --proxy PROXY
                         Global Proxy, supports http/https/socks4/socks5 (overrides config per-
                         account proxies) `(ex: http://user:pass@host:port)`
+  --chrome-path CHROME_PATH
+                        Path of the Chrome executable to use, for an installation that is
+                        not in a standard location (ex: a portable or Scoop install)
   --desktop-channel, --no-desktop-channel
                         Enable or disable the desktop channel
   --mobile-channel, --no-mobile-channel

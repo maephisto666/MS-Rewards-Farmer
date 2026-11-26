@@ -201,7 +201,7 @@ cooldown:
   max: 600 # The maximal wait time between two searches/activities
 channel:
   desktop:
-    enabled: true # Complete dashboard activities, the monthly quest and desktop Bing searches.
+    enabled: true # Complete dashboard activities, the quests and desktop Bing searches.
   mobile:
     enabled: true # Complete Read to Earn. Mobile Bing searches are not performed.
 accounts: # The accounts to use. You can put zero, one or an infinite number of accounts here.
@@ -272,6 +272,7 @@ You can display this message at any moment using `python main.py -h`.
 - Complete punch cards automatically
 - Complete the others promotions automatically
 - Complete the monthly quest of the Earn page
+- Complete the daily step of the Rewards App weekly quest
 - Claim bonus points automatically
 - Headless Mode
 - Multi-Account Management
@@ -290,5 +291,15 @@ You can display this message at any moment using `python main.py -h`.
 > The monthly quest has a few steps and only the first unfinished one is available (the next
 > unlocks 24 hours later), so the script does one step per account and run and the quest takes
 > a few days. It is recognized by its offer id, not by its title, so each new month is picked up
-> automatically. The Spotify and Rewards App quests are ignored.
+> automatically. The Spotify quest is ignored.
+
+> [!NOTE]
+> The Rewards App weekly quest has one step per day of the week (10 points each), and only
+> today's step is unlocked: a missed day cannot be made up. Microsoft only unlocks it for
+> requests that come from the Microsoft Rewards desktop app, so while the script handles this
+> quest it adds the app's `MSRewards/Desktop/<version>` token to the browser's user agent,
+> then goes back to the regular one for everything else. Installing the app is not needed.
+> The quest is recognized by its offer id, so each new week is picked up automatically. This
+> presents the browser as an app that it is not: as with the rest of the script, it is at your
+> own risk.
 

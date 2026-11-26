@@ -1,9 +1,10 @@
 import logging
 import os
 import random
+from contextlib import contextmanager
 from pathlib import Path
 from types import TracebackType
-from typing import Any, Type
+from typing import Any, Iterator, Type
 
 import seleniumwire.undetected_chromedriver as webdriver
 import undetected_chromedriver
@@ -11,6 +12,7 @@ from selenium.webdriver import ChromeOptions
 from selenium.webdriver.chrome.webdriver import WebDriver
 from selenium.webdriver.common.virtual_authenticator import VirtualAuthenticatorOptions, Protocol, Transport
 
+from src.constants import REWARDS_APP_USER_AGENT_MARKER
 from src.userAgentGenerator import GenerateUserAgent
 from src.utils import (
     CONFIG,
@@ -218,15 +220,38 @@ class Browser:
         )
 
         driver.execute_cdp_cmd(
-            "Emulation.setUserAgentOverride",
-            {
-                "userAgent": self.userAgent,
-                "platform": self.userAgentMetadata["platform"],
-                "userAgentMetadata": self.userAgentMetadata,
-            },
+            "Emulation.setUserAgentOverride", self.userAgentOverride()
         )
 
         return driver
+
+    def userAgentOverride(self, suffix: str = "") -> dict[str, Any]:
+        """Parameters of the CDP user agent override, optionally with a suffix."""
+        return {
+            "userAgent": f"{self.userAgent} {suffix}".strip(),
+            "platform": self.userAgentMetadata["platform"],
+            "userAgentMetadata": self.userAgentMetadata,
+        }
+
+    @contextmanager
+    def rewardsAppIdentity(self) -> Iterator[None]:
+        """
+        Present the browser as the Microsoft Rewards desktop app while the block runs.
+
+        Only the tab the driver controls is affected, so the pages that the block opens in
+        new tabs keep the regular user agent. The regular one is restored on exit, whatever
+        happens, so that nothing else in the run is sent as the app.
+        """
+        self.webdriver.execute_cdp_cmd(
+            "Emulation.setUserAgentOverride",
+            self.userAgentOverride(REWARDS_APP_USER_AGENT_MARKER),
+        )
+        try:
+            yield
+        finally:
+            self.webdriver.execute_cdp_cmd(
+                "Emulation.setUserAgentOverride", self.userAgentOverride()
+            )
 
     def setupProfiles(self) -> Path:
         """
